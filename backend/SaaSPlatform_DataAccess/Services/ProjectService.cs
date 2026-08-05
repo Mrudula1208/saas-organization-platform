@@ -69,8 +69,8 @@ namespace SaaSPlatform.Application.Services
                 OwnerId = dto.OwnerId,
                 Status = dto.Status ?? "Backlog",
                 Priority = dto.Priority ?? "Medium",
-                StartDate = dto.StartDate ?? DateTime.UtcNow,
-                EndDate = dto.EndDate ?? DateTime.UtcNow.AddMonths(1),
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
                 IsActive = true,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
@@ -93,8 +93,8 @@ namespace SaaSPlatform.Application.Services
             project.Description = dto.Description ?? string.Empty;
             project.Status = dto.Status ?? project.Status;
             project.Priority = dto.Priority ?? project.Priority;
-            project.StartDate = dto.StartDate ?? project.StartDate;
-            project.EndDate = dto.EndDate ?? project.EndDate;
+            project.StartDate = dto.StartDate;
+            project.EndDate = dto.EndDate;
             project.IsActive = dto.IsActive;
 
             await _projectRepository.UpdateAsync(project);

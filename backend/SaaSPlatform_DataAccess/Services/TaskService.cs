@@ -69,7 +69,7 @@ namespace SaaSPlatform.Application.Services
                 AssignedUserId = dto.AssignedUserId,
                 Status = dto.Status ?? "To Do",
                 Priority = dto.Priority ?? "Medium",
-                DueDate = dto.DueDate ?? DateTime.UtcNow.AddDays(7),
+                DueDate = dto.DueDate,
                 IsCompleted = false,
                 IsDeleted = false,
                 TenantId = dto.TenantId,
@@ -94,7 +94,7 @@ namespace SaaSPlatform.Application.Services
             task.AssignedUserId = dto.AssignedUserId;
             task.Status = dto.Status ?? task.Status;
             task.Priority = dto.Priority ?? task.Priority;
-            task.DueDate = dto.DueDate ?? task.DueDate;
+            task.DueDate = dto.DueDate;
             task.IsCompleted = dto.IsCompleted;
 
             if (task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) || task.Status.Equals("Done", StringComparison.OrdinalIgnoreCase))

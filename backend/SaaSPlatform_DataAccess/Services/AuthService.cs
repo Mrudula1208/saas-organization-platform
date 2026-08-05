@@ -39,7 +39,7 @@ namespace SaaSPlatform.Application.Services
             // 🚫 Check Lockout
             if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
             {
-                throw new Exception($"Account is locked. Try again in {Math.CeRounding(user.LockoutEnd.Value.Subtract(DateTime.UtcNow).TotalMinutes)} minutes.");
+                throw new Exception($"Account is locked. Try again in {Math.Ceiling(user.LockoutEnd.Value.Subtract(DateTime.UtcNow).TotalMinutes)} minutes.");
             }
 
             // 🔐 Verify Password
@@ -58,16 +58,13 @@ namespace SaaSPlatform.Application.Services
             // Reset Lockout upon success
             user.FailedLoginAttempts = 0;
             user.LockoutEnd = null;
-            user.LastLogin = DateTime.UtcNow;
-
-            // Generate Tokens
-            var tokenResponse = GenerateTokensForUser(user);
-            user.RefreshToken = tokenResponse.RefreshToken;
-            user.RefreshTokenExpiryTime = tokenResponse.RefreshTokenExpiryTime;
 
             await _unitOfWork.Users.UpdateUser(user.Id, user);
-            await _unitOfWork.SystemLogs.LogAsync("USER_LOGIN", $"User logged in successfully: {user.Email}", user.Id, user.TenantId);
 
+            // Log successful authentication event
+            await _unitOfWork.SystemLogs.LogAsync("LOGIN_SUCCESS", $"User {user.Email} successfully authenticated", user.Id, user.TenantId);
+
+            var tokenResponse = GenerateTokensForUser(user);
             return tokenResponse;
         }
 
@@ -81,7 +78,7 @@ namespace SaaSPlatform.Application.Services
             }
 
             // Fetch Subscription Plan from DB
-            var plans = await _unitOfWork.SubscriptionPlans.GetAllPlans();
+            var plans = await _unitOfWork.SubscriptionPlans.GetAllAsync();
             var matchedPlan = System.Linq.Enumerable.FirstOrDefault(plans, p => p.Name.Equals(dto.Plan, StringComparison.OrdinalIgnoreCase));
             if (matchedPlan == null)
             {
