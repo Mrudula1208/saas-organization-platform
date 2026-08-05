@@ -1,0 +1,104 @@
+<div class="notifications-container animate-fade">
+  <div class="notifications-header">
+    <div>
+      <h1>Notifications Dashboard</h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+        Manage activity updates and task assignments.
+      </p>
+    </div>
+    
+    <div class="actions-group">
+      @if (hasUnread()) {
+        <button class="btn btn-outline" (click)="markAllRead()">
+          <span class="material-symbols-outlined" style="font-size: 1.15rem;">done_all</span>
+          Mark All Read
+        </button>
+      }
+      <button class="btn btn-danger" (click)="clearAll()">
+        <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete_sweep</span>
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding: 1.5rem;">
+    <!-- Filters Row -->
+    <div class="filters-row">
+      <div class="tabs-group">
+        <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">
+          All Notifications ({{ notifications.length }})
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'unread'" (click)="setTab('unread')">
+          Unread ({{ unreadCount() }})
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <div class="form-group" style="margin-bottom: 0; flex-direction: row; align-items: center; gap: 0.5rem;">
+          <label class="form-label" style="white-space: nowrap;">Filter Project:</label>
+          <select class="form-select" style="padding: 0.4rem 2rem 0.4rem 1rem; font-size: 0.85rem;" (change)="filterByProject($event)">
+            <option value="All">All Projects</option>
+            <option value="Website Redesign">Website Redesign</option>
+            <option value="Mobile App Development">Mobile App Development</option>
+            <option value="Database Migration">Database Migration</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Table -->
+    <div class="table-container">
+      <table class="custom-table notif-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">Status</th>
+            <th>Message</th>
+            <th>Date</th>
+            <th>Project</th>
+            <th style="width: 120px; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredNotifications().length === 0) {
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                No notifications to display.
+              </td>
+            </tr>
+          } @else {
+            @for (notif of filteredNotifications(); track notif.id) {
+              <tr [style.background]="notif.status === 'Unread' ? 'rgba(255,255,255,0.01)' : 'transparent'">
+                <td>
+                  <span class="notif-bullet" [class.unread]="notif.status === 'Unread'" [class.read]="notif.status === 'Read'"></span>
+                </td>
+                <td>
+                  <div class="notif-message-cell">
+                    <span [style.font-weight]="notif.status === 'Unread' ? '600' : '400'">
+                      {{ notif.message }}
+                    </span>
+                  </div>
+                </td>
+                <td style="color: var(--text-secondary);">{{ notif.date }}</td>
+                <td>
+                  <span class="badge badge-info">{{ notif.project }}</span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                    @if (notif.status === 'Unread') {
+                      <button class="btn btn-outline" style="padding: 0.4rem; border-radius: var(--radius-sm);" (click)="markRead(notif)" title="Mark as Read">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
+                      </button>
+                    }
+                    <button class="btn btn-danger" style="padding: 0.4rem; border-radius: var(--radius-sm);" (click)="deleteNotif(notif)" title="Delete Notification">
+                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,145 @@
+<div class="auth-layout" style="display: flex; align-items: center; justify-content: center; padding: 2rem;">
+  <div class="glass-card glow-secondary animate-slide-up" style="width: 100%; max-width: 600px; padding: 2.5rem; border-color: rgba(236, 72, 153, 0.2);">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <div style="width: 2.5rem; height: 2.5rem; background: var(--secondary-color); color: #fff; border-radius: var(--radius-md); display: grid; place-content: center; font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">S</div>
+        <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">SaaS Platform</span>
+      </div>
+      <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin-top: 0.5rem;">Create Organization</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Register your business tenant environment and admin credentials</p>
+    </div>
+
+    @if (errorMessage) {
+      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+        <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    @if (successMessage) {
+      <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+        <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+        <span>{{ successMessage }}</span>
+      </div>
+    }
+
+    <form (submit)="onSubmit($event)">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <!-- Org Name -->
+        <div class="form-group">
+          <label class="form-label" for="org-name">Organization Name *</label>
+          <input 
+            type="text" 
+            id="org-name" 
+            class="form-input" 
+            placeholder="e.g. Acme Corp" 
+            name="name"
+            [(ngModel)]="name"
+            (input)="onNameChange()"
+            required 
+            #orgName="ngModel"
+          />
+        </div>
+
+        <!-- Domain -->
+        <div class="form-group">
+          <label class="form-label" for="domain-slug">Domain Name *</label>
+          <input 
+            type="text" 
+            id="domain-slug" 
+            class="form-input" 
+            placeholder="acme.saasapp.com" 
+            name="domain"
+            [(ngModel)]="domain"
+            required 
+          />
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+        <!-- Admin Name -->
+        <div class="form-group">
+          <label class="form-label" for="admin-name">Admin Full Name *</label>
+          <input 
+            type="text" 
+            id="admin-name" 
+            class="form-input" 
+            placeholder="e.g. Jane Smith" 
+            name="adminName"
+            [(ngModel)]="adminName"
+            required 
+          />
+        </div>
+
+        <!-- Admin Email -->
+        <div class="form-group">
+          <label class="form-label" for="admin-email">Admin Email Address *</label>
+          <input 
+            type="email" 
+            id="admin-email" 
+            class="form-input" 
+            placeholder="admin@example.com" 
+            name="adminEmail"
+            [(ngModel)]="adminEmail"
+            required 
+            #emailInput="ngModel"
+          />
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="pass">Password *</label>
+          <input 
+            type="password" 
+            id="pass" 
+            class="form-input" 
+            placeholder="••••••••••••" 
+            name="password"
+            [(ngModel)]="password"
+            required 
+            #passInput="ngModel"
+          />
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label" for="confirm-pass">Confirm Password *</label>
+          <input 
+            type="password" 
+            id="confirm-pass" 
+            class="form-input" 
+            placeholder="••••••••••••" 
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            required 
+            #confirmPassInput="ngModel"
+          />
+        </div>
+      </div>
+
+      <!-- Plan Selection -->
+      <div class="form-group" style="margin-top: 0.5rem;">
+        <label class="form-label" for="sub-plan">Choose Subscription Plan *</label>
+        <select id="sub-plan" class="form-select" name="plan" [(ngModel)]="plan">
+          <option value="Basic">Basic ($15/mo - Max 20 Users, 30 Projects)</option>
+          <option value="Pro">Pro ($45/mo - Max 40 Users, 100 Projects)</option>
+          <option value="Enterprise">Enterprise ($180/mo - Max 180 Users, 200 Projects)</option>
+        </select>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 2rem;">
+        <a routerLink="/login" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-secondary" [disabled]="orgName.invalid || emailInput.invalid || passInput.invalid || confirmPassInput.invalid">
+          Create Organization
+        </button>
+      </div>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+      Already have an organization? 
+      <a routerLink="/login" style="color: var(--secondary-color); text-decoration: none; font-weight: 600; margin-left: 0.25rem;">Sign In</a>
+    </div>
+  </div>
+</div>

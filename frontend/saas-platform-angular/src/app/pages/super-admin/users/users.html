@@ -1,0 +1,98 @@
+<div class="animate-fade">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; font-weight: 800;">Global Users Directory</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor member access, role configuration, tenant alignment, and diagnostic audit statuses</p>
+  </div>
+
+  <!-- Search and filter controls bar -->
+  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+        <input 
+          type="text" 
+          class="form-input" 
+          placeholder="Search by user name, email address, tenant..." 
+          [(ngModel)]="searchQuery" 
+          (input)="onSearch()" 
+        />
+      </div>
+      
+      <div class="form-group" style="width: 200px; margin-bottom: 0;">
+        <select class="form-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
+          <option value="">All Platform Roles</option>
+          <option value="Admin">Super Admin</option>
+          <option value="TenantAdmin">Tenant Admin</option>
+          <option value="Manager">Manager</option>
+          <option value="Member">Member</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="glass-card glow-secondary" style="padding: 0; overflow: hidden;">
+    <div class="table-container" style="border: none; margin-top: 0;">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Name & Avatar</th>
+            <th>Email</th>
+            <th>Tenant Organization</th>
+            <th>System Role</th>
+            <th>Access Status</th>
+            <th>Created Date</th>
+            <th>Last Login</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers; track user.id) {
+            <tr>
+              <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
+                {{ user.id.substring(0, 8) }}...
+              </td>
+              <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+                <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
+                <span>{{ user.fullName }}</span>
+              </td>
+              <td>{{ user.email }}</td>
+              <td style="font-weight: 600; color: var(--accent-color);">
+                {{ user.tenantName || 'Acme Corp' }}
+              </td>
+              <td>
+                <span class="badge" [class.badge-success]="user.role === 'Admin' || user.role === 'TenantAdmin'" [class.badge-info]="user.role === 'Manager'" [class.badge-purple]="user.role === 'Member'">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-success]="user.isActive" [class.badge-danger]="!user.isActive">
+                  {{ user.isActive ? 'Active' : 'Suspended' }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date:'mediumDate' }}</td>
+              <td style="color: var(--text-secondary); font-size: 0.85rem;">{{ user.lastLogin }}</td>
+              <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" [class.btn-outline]="!user.isActive" [class.btn-danger]="user.isActive" (click)="toggleUserStatus(user)">
+                  <span class="material-symbols-outlined" style="font-size: 1rem;">
+                    {{ user.isActive ? 'lock' : 'lock_open' }}
+                  </span>
+                </button>
+                <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteUser(user.id)">
+                  <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
+                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">person_off</span>
+                <div>No users match your selection criteria.</div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+<div class="auth-layout">
+  <div class="login-split">
+    <!-- Brand Banner Left -->
+    <div class="login-left">
+      <div class="brand-wrapper">
+        <div class="brand-icon">S</div>
+        <span class="logo-text" style="font-size: 1.5rem; font-weight: 800;">SaaS Platform</span>
+      </div>
+      <div class="left-content">
+        <h1>All-in-One <br><span>Organization</span> <br>Management Platform</h1>
+        <p style="margin-top: 1.5rem;">Streamline your organization tools, projects, and users in one highly secure dashboard environment built with .NET and Angular.</p>
+        
+        <!-- Interactive visual widget -->
+        <div class="glass-card" style="margin-top: 3rem; display: flex; align-items: center; gap: 1.5rem; border-color: rgba(99, 102, 241, 0.2);">
+          <div class="kpi-icon" style="background: rgba(99, 102, 241, 0.15);">
+            <span class="material-symbols-outlined" style="color: var(--primary-color);">insights</span>
+          </div>
+          <div>
+            <h4 style="font-size: 0.9rem; color: var(--text-secondary);">Enterprise Platform Performance</h4>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-top: 0.25rem;">99.99% Uptime</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Container Right -->
+    <div class="login-right">
+      <div class="glass-card login-card glow-primary">
+        <h2>Login</h2>
+        <p>Login to access your organization dashboard</p>
+
+        @if (errorMessage) {
+          <div class="api-error-alert animate-fade">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem;">error</span>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <form (submit)="onSubmit($event)">
+          <div class="form-group">
+            <label class="form-label" for="email">Email address</label>
+            <input 
+              type="email" 
+              id="email" 
+              class="form-input" 
+              placeholder="name@example.com" 
+              name="email"
+              [(ngModel)]="email" 
+              required 
+              #emailInput="ngModel"
+            />
+            @if (emailInput.invalid && emailInput.touched) {
+              <span class="validation-error">Email is required</span>
+            }
+          </div>
+
+          <div class="form-group" style="margin-top: 1.25rem;">
+            <label class="form-label" for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              class="form-input" 
+              placeholder="••••••••••••" 
+              name="password"
+              [(ngModel)]="password" 
+              required
+              #passInput="ngModel"
+            />
+            @if (passInput.invalid && passInput.touched) {
+              <span class="validation-error">Password is required</span>
+            }
+          </div>
+
+          <div class="form-actions-row">
+            <label class="checkbox-group">
+              <input type="checkbox" class="checkbox-input" name="rememberMe" [(ngModel)]="rememberMe" />
+              <span style="color: var(--text-secondary);">Remember me</span>
+            </label>
+            <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;" [disabled]="emailInput.invalid || passInput.invalid">
+            Login
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 2rem; font-size: 0.875rem; color: var(--text-secondary);">
+          Don't have an account? 
+          <a routerLink="/register-tenant" style="color: var(--primary-color); text-decoration: none; font-weight: 600; margin-left: 0.25rem;">Register Tenant</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,133 @@
+<div class="animate-fade">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; font-weight: 800;">Workspace Settings</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Configure your personal profile details, preferences, security, and interface theme</p>
+  </div>
+
+  @if (successMessage) {
+    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
+    
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Profile Card -->
+      <div class="glass-card glow-primary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">account_circle</span>
+          Edit Profile Information
+        </h3>
+        
+        <form (submit)="saveProfile()">
+          <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <img [src]="profileForm.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'" style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px solid var(--primary-color); object-fit: cover;" />
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label class="form-label" for="profile-avatar">Profile Avatar URL</label>
+              <input type="text" id="profile-avatar" class="form-input" [(ngModel)]="profileForm.profileImageUrl" name="profileImageUrl" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="profile-name">Full Name</label>
+              <input type="text" id="profile-name" class="form-input" [(ngModel)]="profileForm.fullName" name="fullName" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-email">Email Address</label>
+              <input type="email" id="profile-email" class="form-input" [(ngModel)]="profileForm.email" name="email" disabled />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
+            Save Profile Details
+          </button>
+        </form>
+      </div>
+
+      <!-- Password Card -->
+      <div class="glass-card glow-secondary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <span class="material-symbols-outlined" style="color: var(--secondary-color);">vpn_key</span>
+          Change Password Credentials
+        </h3>
+        
+        <form (submit)="changePassword()">
+          <div class="form-group">
+            <label class="form-label" for="pass-current">Current Password</label>
+            <input type="password" id="pass-current" class="form-input" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" placeholder="••••••••••••" required />
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label" for="pass-new">New Password</label>
+              <input type="password" id="pass-new" class="form-input" [(ngModel)]="passwordForm.newPassword" name="newPassword" placeholder="••••••••••••" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pass-confirm">Confirm New Password</label>
+              <input type="password" id="pass-confirm" class="form-input" [(ngModel)]="passwordForm.confirmPassword" name="confirmPassword" placeholder="••••••••••••" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">
+            Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Side: Preferences and Theme -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Theme preference -->
+      <div class="glass-card glow-secondary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--secondary-color);">contrast</span>
+          Theme Preference
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">
+          Change your interface style preference. The selected preference is saved on your active device configuration.
+        </p>
+        <button class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
+          <span class="material-symbols-outlined">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</span>
+          Toggle {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
+        </button>
+      </div>
+
+      <!-- Notifications preference -->
+      <div class="glass-card glow-primary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">notifications</span>
+          Preferences
+        </h3>
+        
+        <form (submit)="savePreferences()">
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <label class="checkbox-group">
+              <input type="checkbox" class="checkbox-input" [(ngModel)]="preferencesForm.emailNotifications" name="emailNotifications" />
+              <span style="color: var(--text-secondary); font-size: 0.9rem;">Email digests & assignments</span>
+            </label>
+            
+            <label class="checkbox-group">
+              <input type="checkbox" class="checkbox-input" [(ngModel)]="preferencesForm.inAppNotifications" name="inAppNotifications" />
+              <span style="color: var(--text-secondary); font-size: 0.9rem;">In-App alerts & logs</span>
+            </label>
+          </div>
+          
+          <button type="submit" class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; font-size: 0.85rem;">
+            Save Preferences
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>

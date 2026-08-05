@@ -1,0 +1,111 @@
+<header class="navbar">
+  <div class="nav-left">
+    <button class="nav-btn mobile-toggle" (click)="toggleSidebar()" aria-label="Toggle Navigation Menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="search-box">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input type="text" placeholder="Search dashboard..." aria-label="Search" />
+    </div>
+  </div>
+
+  <div class="nav-right">
+    <!-- Theme Toggle -->
+    <button class="nav-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Toggle Light Theme' : 'Toggle Dark Theme'" aria-label="Toggle Theme">
+      <span class="material-symbols-outlined">
+        {{ isDarkTheme ? 'light_mode' : 'dark_mode' }}
+      </span>
+    </button>
+
+    <!-- Notification Bell -->
+    <div style="position: relative;">
+      <button class="nav-btn" (click)="toggleNotifications()" aria-label="Notifications Panel">
+        <span class="material-symbols-outlined">notifications</span>
+        @if (unreadCount() > 0) {
+          <span class="badge-unread">{{ unreadCount() }}</span>
+        }
+      </button>
+
+      <!-- Notification Dropdown Panel -->
+      @if (showNotifications) {
+        <div class="dropdown-panel">
+          <div class="dropdown-header">
+            <h4>Notifications</h4>
+            @if (unreadCount() > 0) {
+              <button class="clear-btn" (click)="markAllAsRead()">Mark all as read</button>
+            }
+          </div>
+          <div class="notification-list">
+            @if (notifications.length === 0) {
+              <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem;">
+                No notifications found
+              </div>
+            } @else {
+              @for (notif of notifications; track notif.id) {
+                <div class="notification-item" (click)="readNotification(notif)">
+                  <div class="notification-icon" [style.background]="getNotifBackground(notif.type)" [style.color]="getNotifColor(notif.type)">
+                    <span class="material-symbols-outlined" style="font-size: 1.15rem;">
+                      {{ getNotifIcon(notif.type) }}
+                    </span>
+                  </div>
+                  <div class="notification-content">
+                    <p [style.font-weight]="notif.status === 'Unread' ? '600' : '400'">{{ notif.message }}</p>
+                    <div class="notification-time">{{ notif.date }}</div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+          <div class="profile-divider"></div>
+          <a [href]="getNotificationsLink()" class="profile-item" style="justify-content: center; font-size: 0.8rem; color: var(--primary-color);" (click)="showNotifications = false">
+            View All Notifications
+          </a>
+        </div>
+      }
+    </div>
+
+    <!-- Profile Menu -->
+    <div class="profile-menu">
+      <button class="profile-trigger" (click)="toggleProfile()" aria-label="User Profile Menu">
+        @if (user()?.email === 'admin@saas.com') {
+          <img class="profile-avatar" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100" alt="Super Admin Avatar" />
+        } @else if (user()?.email === 'tenant@acme.com') {
+          <img class="profile-avatar" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100" alt="Tenant Admin Avatar" />
+        } @else {
+          <div class="avatar-fallback">{{ getInitials() }}</div>
+        }
+        <div class="profile-info">
+          <div class="profile-name">{{ user()?.fullName || 'User' }}</div>
+          <div class="profile-role">{{ getRoleLabel(user()?.role) }}</div>
+        </div>
+        <span class="material-symbols-outlined" style="color: var(--text-muted); font-size: 1.25rem;">
+          keyboard_arrow_down
+        </span>
+      </button>
+
+      <!-- Profile Dropdown Panel -->
+      @if (showProfile) {
+        <div class="dropdown-panel profile-panel">
+          <div style="padding: 0.5rem 1.25rem;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); word-break: break-all;">
+              {{ user()?.email }}
+            </div>
+          </div>
+          <div class="profile-divider"></div>
+          
+          <button (click)="navigateToSettings()" class="profile-item">
+            <span class="material-symbols-outlined">settings</span>
+            Settings
+          </button>
+          
+          <div class="profile-divider"></div>
+          
+          <button (click)="onLogout()" class="profile-item" style="color: var(--danger-color);">
+            <span class="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

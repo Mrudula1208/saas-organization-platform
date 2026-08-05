@@ -1,0 +1,246 @@
+<div class="landing-container">
+  <!-- Header Navbar -->
+  <header class="landing-header">
+    <a href="#" class="brand">
+      <div class="brand-icon">S</div>
+      <span>SaaS Platform</span>
+    </a>
+    
+    <nav class="header-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    
+    <div class="header-actions">
+      <a routerLink="/login" class="btn btn-outline" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">Login</a>
+      <a routerLink="/register-tenant" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">Register</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-tag">
+      <span class="material-symbols-outlined" style="font-size: 1rem; margin-right: 0.4rem; vertical-align: middle;">verified</span>
+      The Next-Gen SaaS Management Platform
+    </div>
+    <h1>Streamline Your Entire <br><span>SaaS Ecosystem</span></h1>
+    <p>Get answers in intuitive dashboards, manage multi-tenant environments, handle user projects, and automate workflows with advanced security protocols.</p>
+    <div class="hero-btns">
+      <a routerLink="/register-tenant" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="#features" class="btn btn-outline btn-lg">Explore Features</a>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="features-section">
+    <div class="section-title">
+      <h2>Key Platform Features</h2>
+      <p>All-in-one suite designed to optimize organizational collaboration and multi-tenant performance.</p>
+    </div>
+    
+    <div class="features-grid">
+      <div class="glass-card feature-card glow-primary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">shield</span>
+        </div>
+        <h3>Manage your Architecture</h3>
+        <p>Advanced security architecture to manage enterprise roles, users, and tenants safely.</p>
+      </div>
+
+      <div class="glass-card feature-card glow-secondary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">vpn_key</span>
+        </div>
+        <h3>Secure Feature</h3>
+        <p>Robust authorization layers, encrypted passwords, and secure RESTful endpoints.</p>
+      </div>
+
+      <div class="glass-card feature-card">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">hub</span>
+        </div>
+        <h3>Numelia Platform</h3>
+        <p>Core microservices structure serving dynamic project actions and tasks efficiently.</p>
+      </div>
+
+      <div class="glass-card feature-card glow-primary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+        <h3>Team Management</h3>
+        <p>Invite, configure, and activate multiple users with role controls (Admin, Manager, Member).</p>
+      </div>
+
+      <div class="glass-card feature-card glow-secondary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">visibility_off</span>
+        </div>
+        <h3>Secret Seeming</h3>
+        <p>Hidden audit trails and security event logs to track platform interactions securely.</p>
+      </div>
+
+      <div class="glass-card feature-card">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">layers</span>
+        </div>
+        <h3>Entire Management</h3>
+        <p>Comprehensive layout control dashboard for super admin configurations and subscription plan creation.</p>
+      </div>
+
+      <div class="glass-card feature-card glow-primary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">draw</span>
+        </div>
+        <h3>UI Design</h3>
+        <p>Ultra-modern glassmorphic layouts, neon styles, visual graphs, and dynamic grids.</p>
+      </div>
+
+      <div class="glass-card feature-card glow-secondary">
+        <div class="feature-icon">
+          <span class="material-symbols-outlined">support_agent</span>
+        </div>
+        <h3>Customer Support</h3>
+        <p>Support ticket metrics dashboard to maintain high system availability and client trust.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Grid -->
+  <section id="pricing" class="pricing-section">
+    <div class="section-title">
+      <h2>Flexible Pricing Plans</h2>
+      <p>Pricing scales with your team. Get full features in any tier with transparent billing.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Basic Plan -->
+      <div class="glass-card pricing-card">
+        <div class="pricing-header">
+          <h3>Basic</h3>
+          <p style="color: var(--text-muted);">For small teams starting out</p>
+        </div>
+        <div class="pricing-price">
+          $15 <span>/ month</span>
+        </div>
+        <ul class="pricing-features">
+          <li><i class="fa-solid fa-check"></i> Max Users: 20</li>
+          <li><i class="fa-solid fa-check"></i> Max Projects: 30</li>
+          <li><i class="fa-solid fa-check"></i> Storage Limit: 2 GB</li>
+          <li><i class="fa-solid fa-check"></i> Basic Analytics</li>
+          <li><i class="fa-solid fa-check"></i> Shared Email Support</li>
+        </ul>
+        <button routerLink="/register-tenant" class="btn btn-outline" style="width: 100%;">Select Basic</button>
+      </div>
+
+      <!-- Pro Plan -->
+      <div class="glass-card pricing-card popular glow-primary">
+        <span class="pricing-badge">RECOMMENDED</span>
+        <div class="pricing-header">
+          <h3>Pro</h3>
+          <p style="color: var(--text-muted);">For growing businesses</p>
+        </div>
+        <div class="pricing-price">
+          $45 <span>/ month</span>
+        </div>
+        <ul class="pricing-features">
+          <li><i class="fa-solid fa-check"></i> Max Users: 40</li>
+          <li><i class="fa-solid fa-check"></i> Max Projects: 100</li>
+          <li><i class="fa-solid fa-check"></i> Storage Limit: 10 GB</li>
+          <li><i class="fa-solid fa-check"></i> Advanced Revenue Reports</li>
+          <li><i class="fa-solid fa-check"></i> Interactive Kanban Board</li>
+          <li><i class="fa-solid fa-check"></i> 24/7 Priority Support</li>
+        </ul>
+        <button routerLink="/register-tenant" class="btn btn-primary" style="width: 100%;">Get Started</button>
+      </div>
+
+      <!-- Enterprise Plan -->
+      <div class="glass-card pricing-card glow-secondary">
+        <div class="pricing-header">
+          <h3>Enterprise</h3>
+          <p style="color: var(--text-muted);">For large scale deployments</p>
+        </div>
+        <div class="pricing-price">
+          $180 <span>/ month</span>
+        </div>
+        <ul class="pricing-features">
+          <li><i class="fa-solid fa-check"></i> Max Users: 180</li>
+          <li><i class="fa-solid fa-check"></i> Max Projects: 200</li>
+          <li><i class="fa-solid fa-check"></i> Storage Limit: 50 GB</li>
+          <li><i class="fa-solid fa-check"></i> Global Analytics Dashboard</li>
+          <li><i class="fa-solid fa-check"></i> Custom Audit Logs</li>
+          <li><i class="fa-solid fa-check"></i> Dedicated Account Manager</li>
+        </ul>
+        <button routerLink="/register-tenant" class="btn btn-outline" style="width: 100%;">Select Enterprise</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Carousel -->
+  <section id="testimonials" class="testimonials-section">
+    <div class="section-title">
+      <h2>Client Testimonials</h2>
+      <p>See what organization managers have to say about the platform.</p>
+    </div>
+    
+    <div class="glass-card testimonial-card glow-primary">
+      <div class="testimonial-stars">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+      </div>
+      <div class="testimonial-text">
+        "Implementing this SaaS platform has completely revolutionized how we track project items and manage users. The visual Kanban board is lightning fast, and having separate tenant dashboards keeps our customer files isolated and secure."
+      </div>
+      <div class="testimonial-user">
+        <img class="testimonial-avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="Client Avatar" />
+        <div class="testimonial-info">
+          <h4>Laura Wilson</h4>
+          <p>Product Operations, CodeAxis</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact-section">
+    <div class="section-title" style="margin-bottom: 2rem;">
+      <h2>Contact Us</h2>
+      <p>Have questions? Reach out and we'll reply as soon as possible.</p>
+    </div>
+    
+    <div class="glass-card contact-form">
+      <form (submit)="submitContact($event)">
+        <div class="contact-grid">
+          <div class="form-group">
+            <label class="form-label" for="first-name">First Name</label>
+            <input type="text" id="first-name" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="last-name">Last Name</label>
+            <input type="text" id="last-name" class="form-input" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="message">Your Message</label>
+          <textarea id="message" class="form-input" rows="4" style="resize: none;" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Send Message
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <p>&copy; 2026 SaaS Organization Platform. All rights reserved.</p>
+  </footer>
+</div>

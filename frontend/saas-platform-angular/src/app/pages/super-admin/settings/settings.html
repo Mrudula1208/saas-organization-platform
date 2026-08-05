@@ -1,0 +1,109 @@
+<div class="animate-fade">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; font-weight: 800;">System Settings</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Adjust global platform configurations, security protocols, system notifications, and themes</p>
+  </div>
+
+  @if (successMessage) {
+    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
+    <div class="glass-card glow-primary" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <h3 style="font-family: var(--font-heading); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="material-symbols-outlined" style="color: var(--primary-color);">tune</span>
+        Global Configuration Parameters
+      </h3>
+      
+      <form (submit)="saveSettings()">
+        <!-- Platform Name -->
+        <div class="form-group">
+          <label class="form-label" for="plat-name">Platform Public Name</label>
+          <input type="text" id="plat-name" class="form-input" [(ngModel)]="platformName" name="platformName" required />
+        </div>
+
+        <!-- Support Email -->
+        <div class="form-group" style="margin-top: 1rem;">
+          <label class="form-label" for="support-mail">System Support Contact Email</label>
+          <input type="email" id="support-mail" class="form-input" [(ngModel)]="supportEmail" name="supportEmail" required />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+          <!-- Timeout -->
+          <div class="form-group">
+            <label class="form-label" for="sess-timeout">Session Inactivity Timeout (mins)</label>
+            <input type="number" id="sess-timeout" class="form-input" [(ngModel)]="sessionTimeout" name="sessionTimeout" min="5" max="120" required />
+          </div>
+          
+          <!-- MFA Toggle -->
+          <div class="form-group">
+            <label class="form-label">Multi-Factor Authentication (MFA)</label>
+            <label class="checkbox-group" style="margin-top: 0.75rem;">
+              <input type="checkbox" class="checkbox-input" [(ngModel)]="mfaRequired" name="mfaRequired" />
+              <span style="color: var(--text-secondary);">Enforce for all accounts</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+          <!-- Registrations lock toggle -->
+          <div class="form-group">
+            <label class="form-label">Registrations Portal</label>
+            <label class="checkbox-group" style="margin-top: 0.75rem;">
+              <input type="checkbox" class="checkbox-input" [(ngModel)]="allowRegistrations" name="allowRegistrations" />
+              <span style="color: var(--text-secondary);">Allow new organization registers</span>
+            </label>
+          </div>
+          
+          <!-- Maintenance mode toggle -->
+          <div class="form-group">
+            <label class="form-label">System Operations Flag</label>
+            <label class="checkbox-group" style="margin-top: 0.75rem;">
+              <input type="checkbox" class="checkbox-input" [(ngModel)]="maintenanceMode" name="maintenanceMode" />
+              <span style="color: var(--text-secondary);">Enable System Maintenance Mode</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%;">
+          Save Changes
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Column: Quick Toggles -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Theme Selection Card -->
+      <div class="glass-card glow-secondary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--secondary-color);">contrast</span>
+          Theme Preference
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">
+          Switch between dark and light UI color schemes. Your choices will be saved to your profile cache.
+        </p>
+        <button class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
+          <span class="material-symbols-outlined">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</span>
+          Toggle {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
+        </button>
+      </div>
+
+      <!-- Quick Platform Info -->
+      <div class="glass-card" style="border-color: rgba(255,255,255,0.05);">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--accent-color);">info</span>
+          System Version
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+          <div>Environment: <strong style="color: var(--text-primary);">Production</strong></div>
+          <div>API Server: <strong style="color: var(--text-primary);">v1.4.2-dotnet8</strong></div>
+          <div>Front-End UI: <strong style="color: var(--text-primary);">v1.1.0-angular17</strong></div>
+          <div>Database Cluster: <strong style="color: var(--text-primary);">PostgreSQL 16</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

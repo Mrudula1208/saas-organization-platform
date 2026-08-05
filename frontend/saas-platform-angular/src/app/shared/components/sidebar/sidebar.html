@@ -1,0 +1,22 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon">S</div>
+    <div class="logo-text">SaaS Platform</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    @for (link of navLinks(); track link.path) {
+      <a [routerLink]="link.path" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+        <span class="material-symbols-outlined nav-icon">{{ link.icon }}</span>
+        <span>{{ link.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="logout-btn" (click)="onLogout()">
+      <span class="material-symbols-outlined">logout</span>
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>

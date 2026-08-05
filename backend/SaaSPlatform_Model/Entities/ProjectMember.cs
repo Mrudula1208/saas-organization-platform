@@ -1,0 +1,21 @@
+﻿using SaaSPlatform_Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SaaSPlatform.Domain.Entities
+{
+    public class ProjectMember
+    {
+        public Guid Id { get; set; }
+
+        public Guid ProjectId { get; set; }
+
+        public Guid UserId { get; set; }    
+
+        public Project Project { get; set; }
+        public User User { get; set; }
+    }
+}
