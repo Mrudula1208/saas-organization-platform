@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SaaSPlatform.Infrastructure.Data;
 using SaaSPlatform_Model;
+using SaaSPlatform.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
