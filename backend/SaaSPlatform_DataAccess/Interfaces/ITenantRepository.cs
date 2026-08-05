@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SaaSPlatform.Infrastructure.Repositories
+namespace SaaSPlatform.Application.Interfaces
 {
     public interface ITenantRepository
     {
