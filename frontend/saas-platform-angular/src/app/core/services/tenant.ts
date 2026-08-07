@@ -81,8 +81,55 @@ export class TenantService {
 
   constructor(private http: HttpClient) {}
 
+  private mapPlanIdToName(planId: string): string {
+    if (!planId) return 'Basic';
+    const id = planId.toLowerCase();
+    if (id === 'bbbb1111-2222-3333-4444-555566667777') return 'Basic';
+    if (id === 'cccc1111-2222-3333-4444-555566667777') return 'Pro';
+    if (id === 'eeee1111-2222-3333-4444-555566667777') return 'Enterprise';
+    return 'Basic';
+  }
+
+  private mapPlanNameToId(name: string): string {
+    if (!name) return 'bbbb1111-2222-3333-4444-555566667777';
+    const n = name.toLowerCase();
+    if (n === 'basic') return 'bbbb1111-2222-3333-4444-555566667777';
+    if (n === 'pro') return 'cccc1111-2222-3333-4444-555566667777';
+    if (n === 'enterprise') return 'eeee1111-2222-3333-4444-555566667777';
+    return 'bbbb1111-2222-3333-4444-555566667777';
+  }
+
+  private mapBackendTenantToFrontend(t: any): Tenant {
+    return {
+      id: t.id,
+      name: t.name,
+      domain: t.domain,
+      emailAddress: t.contactEmail || t.emailAddress || '',
+      plan: t.plan || this.mapPlanIdToName(t.subscriptionPlanId),
+      status: t.isActive ? 'Active' : 'Suspended',
+      createdAt: t.createdAt,
+      usersCount: t.usersCount || (t.users ? t.users.length : 0) || 0,
+      projectsCount: t.projectsCount || (t.projects ? t.projects.length : 0) || 0,
+      monthlyRevenue: t.monthlyRevenue || 0,
+      lastUsed: t.lastUsed || 'Recently'
+    };
+  }
+
+  private mapFrontendTenantToBackend(t: any): any {
+    return {
+      id: t.id,
+      name: t.name,
+      domain: t.domain,
+      contactEmail: t.emailAddress || t.contactEmail || '',
+      contactPhone: t.contactPhone || '',
+      subscriptionPlanId: this.mapPlanNameToId(t.plan || 'Basic'),
+      isActive: t.status === 'Active' || t.isActive === true
+    };
+  }
+
   getAll(): Observable<Tenant[]> {
-    return this.http.get<Tenant[]>(this.apiUrl).pipe(
+    return this.http.get<any[]>(this.apiUrl).pipe(
+      map(tenants => tenants.map(t => this.mapBackendTenantToFrontend(t))),
       catchError(() => {
         console.warn('Tenant API offline. Using mock tenants list.');
         return of([...this.mockTenants]);
@@ -91,7 +138,8 @@ export class TenantService {
   }
 
   getById(id: string): Observable<Tenant | null> {
-    return this.http.get<Tenant>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(tenant => this.mapBackendTenantToFrontend(tenant)),
       catchError(() => {
         console.warn(`Tenant API offline. Searching mock tenants for ID: ${id}`);
         const found = this.mockTenants.find(t => t.id === id) || null;
@@ -101,35 +149,39 @@ export class TenantService {
   }
 
   create(tenant: any): Observable<Tenant> {
-    // Backend expects specific entities, so mapping
-    const newTenant: Tenant = {
-      id: crypto.randomUUID(),
+    const frontendTenant: Tenant = {
+      id: tenant.id || crypto.randomUUID(),
       name: tenant.name,
       domain: tenant.domain || `${tenant.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.saasapp.com`,
       emailAddress: tenant.emailAddress || tenant.adminEmail || '',
       plan: tenant.plan || 'Basic',
-      status: 'Upgraded',
-      createdAt: new Date().toISOString(),
-      usersCount: 1,
-      projectsCount: 0,
-      monthlyRevenue: tenant.plan === 'Enterprise' ? 500 : tenant.plan === 'Pro' ? 180 : 15,
+      status: tenant.status || 'Active',
+      createdAt: tenant.createdAt || new Date().toISOString(),
+      usersCount: tenant.usersCount || 1,
+      projectsCount: tenant.projectsCount || 0,
+      monthlyRevenue: tenant.plan === 'Enterprise' ? 180 : tenant.plan === 'Pro' ? 45 : 15,
       lastUsed: 'Just now'
     };
 
-    return this.http.post<Tenant>(this.apiUrl, newTenant).pipe(
+    const backendPayload = this.mapFrontendTenantToBackend(frontendTenant);
+
+    return this.http.post<any>(this.apiUrl, backendPayload).pipe(
+      map(res => this.mapBackendTenantToFrontend(res)),
       tap((res) => {
         this.mockTenants.push(res);
       }),
       catchError(() => {
         console.warn('Tenant API post failed. Saving tenant to local mock cache.');
-        this.mockTenants.push(newTenant);
-        return of(newTenant);
+        this.mockTenants.push(frontendTenant);
+        return of(frontendTenant);
       })
     );
   }
 
   update(id: string, tenant: any): Observable<boolean> {
-    return this.http.put(`${this.apiUrl}/${id}`, tenant).pipe(
+    const backendPayload = this.mapFrontendTenantToBackend({ ...tenant, id });
+
+    return this.http.put(`${this.apiUrl}/${id}`, backendPayload).pipe(
       map(() => true),
       catchError(() => {
         console.warn(`Tenant API update failed. Updating mock tenant cache for ID: ${id}`);
