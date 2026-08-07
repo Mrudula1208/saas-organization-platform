@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-reset-password',
@@ -10,13 +11,28 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
-export class ResetPassword {
+export class ResetPassword implements OnInit {
   password = '';
   confirmPassword = '';
+  email = '';
+  token = '';
   errorMessage = '';
   successMessage = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private auth: Auth
+  ) {}
+
+  ngOnInit() {
+    this.email = this.route.snapshot.queryParams['email'] || '';
+    this.token = this.route.snapshot.queryParams['token'] || '';
+
+    if (!this.email || !this.token) {
+      this.errorMessage = 'Invalid or missing password reset link context.';
+    }
+  }
 
   onSubmit(event: Event) {
     event.preventDefault();
@@ -33,11 +49,22 @@ export class ResetPassword {
       return;
     }
 
-    // Simulate password reset
-    this.successMessage = 'Your password has been successfully reset! Redirecting to login...';
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 2000);
+    this.auth.resetPassword({
+      email: this.email,
+      token: this.token,
+      password: this.password,
+      confirmPassword: this.confirmPassword
+    }).subscribe({
+      next: (res) => {
+        this.successMessage = 'Your password has been successfully reset! Redirecting to login...';
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Failed to reset password. Check details or token expiry.';
+      }
+    });
   }
 }
 

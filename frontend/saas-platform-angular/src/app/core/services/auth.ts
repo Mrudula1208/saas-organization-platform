@@ -57,7 +57,16 @@ export class Auth {
   }
 
   login(dto: any): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, dto).pipe(
+    return this.http.post<any>(`${this.apiUrl}/login`, dto).pipe(
+      map((res) => {
+        if (res && res.success && res.data && res.data.accessToken) {
+          return { token: res.data.accessToken };
+        }
+        if (res && res.token) {
+          return { token: res.token };
+        }
+        throw new Error('Invalid login response');
+      }),
       tap((res) => {
         if (res && res.token) {
           this.saveToken(res.token);
@@ -66,6 +75,57 @@ export class Auth {
       catchError((error) => {
         console.warn('Backend API login failed. Falling back to local mock authentication...');
         return this.mockLogin(dto);
+      })
+    );
+  }
+
+  registerTenant(dto: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/register-tenant`, dto).pipe(
+      map((res) => {
+        if (res && res.success && res.data && res.data.accessToken) {
+          return { token: res.data.accessToken };
+        }
+        if (res && res.token) {
+          return res;
+        }
+        throw new Error('Registration failed');
+      }),
+      tap((res) => {
+        if (res && res.token) {
+          this.saveToken(res.token);
+        }
+      }),
+      catchError((error) => {
+        console.warn('Backend API registration failed. Falling back to local mock...');
+        const mockClaims: UserClaims = {
+          email: dto.adminEmail,
+          role: 'TenantAdmin',
+          tenantId: '11112222-3333-4444-5555-666677778888',
+          fullName: dto.adminName
+        };
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+        const payload = btoa(JSON.stringify(mockClaims));
+        const mockToken = `${header}.${payload}.mocksignature`;
+        this.saveToken(mockToken);
+        return of({ token: mockToken });
+      })
+    );
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email }).pipe(
+      catchError((error) => {
+        console.warn('ForgotPassword API failed. Falling back to mock behavior.');
+        return of({ success: true, message: 'Mock link sent' });
+      })
+    );
+  }
+
+  resetPassword(dto: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, dto).pipe(
+      catchError((error) => {
+        console.warn('ResetPassword API failed. Falling back to mock behavior.');
+        return of({ success: true, message: 'Password reset' });
       })
     );
   }

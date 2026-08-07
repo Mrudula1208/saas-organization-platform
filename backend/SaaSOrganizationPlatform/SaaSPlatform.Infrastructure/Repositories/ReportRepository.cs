@@ -66,13 +66,13 @@ namespace SaaSPlatform.Infrastructure.Repositories
             // Recent activity feed
             var recentActivities = await _context.SystemLogs
                 .Where(l => l.TenantId == tenantId)
-                .OrderByDescending(l => l.Timestamp)
+                .OrderByDescending(l => l.CreatedAt)
                 .Take(5)
                 .Select(l => new
                 {
                     l.Action,
-                    l.Message,
-                    l.Timestamp
+                    Message = l.Description,
+                    Timestamp = l.CreatedAt
                 })
                 .ToListAsync();
 
@@ -121,13 +121,13 @@ namespace SaaSPlatform.Infrastructure.Repositories
 
             // Recent system audit logs
             var recentLogs = await _context.SystemLogs
-                .OrderByDescending(l => l.Timestamp)
+                .OrderByDescending(l => l.CreatedAt)
                 .Take(8)
                 .Select(l => new
                 {
                     l.Action,
-                    l.Message,
-                    l.Timestamp
+                    Message = l.Description,
+                    Timestamp = l.CreatedAt
                 })
                 .ToListAsync();
 

@@ -24,10 +24,10 @@ namespace SaaSPlatform.Infrastructure.Repositories
             {
                 Id = Guid.NewGuid(),
                 Action = action,
-                Message = message,
+                Description = message,
                 UserId = userId,
                 TenantId = tenantId ?? Guid.Empty,
-                Timestamp = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
             await _context.SystemLogs.AddAsync(log);
             // Save inside LogAsync because log calls might be immediate and independent of main business transaction saving
@@ -50,15 +50,15 @@ namespace SaaSPlatform.Infrastructure.Repositories
 
             if (startDate.HasValue)
             {
-                query = query.Where(l => l.Timestamp >= startDate.Value);
+                query = query.Where(l => l.CreatedAt >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                query = query.Where(l => l.Timestamp <= endDate.Value);
+                query = query.Where(l => l.CreatedAt <= endDate.Value);
             }
 
-            return await query.OrderByDescending(l => l.Timestamp).Take(200).ToListAsync();
+            return await query.OrderByDescending(l => l.CreatedAt).Take(200).ToListAsync();
         }
     }
 }

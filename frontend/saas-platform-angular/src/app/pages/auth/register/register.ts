@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { TenantService } from '../../../core/services/tenant';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-register',
@@ -22,7 +22,7 @@ export class Register {
   errorMessage = '';
   successMessage = '';
 
-  constructor(private tenantService: TenantService, private router: Router) {}
+  constructor(private auth: Auth, private router: Router) {}
 
   onNameChange() {
     // Automatically generate a slug domain name on typing the organization name
@@ -53,10 +53,12 @@ export class Register {
       domain: this.domain,
       adminEmail: this.adminEmail,
       adminName: this.adminName,
+      password: this.password,
+      confirmPassword: this.confirmPassword,
       plan: this.plan
     };
 
-    this.tenantService.create(payload).subscribe({
+    this.auth.registerTenant(payload).subscribe({
       next: () => {
         this.successMessage = 'Organization created successfully! Redirecting you to login...';
         setTimeout(() => {

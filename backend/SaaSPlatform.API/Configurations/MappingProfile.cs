@@ -3,6 +3,7 @@ using SaaSPlatform.Application.DTOS.Auth;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.DTOS.Users;
+using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform_Model;
 using SaaSPlatform_Model.Entities;
 using SaaSPlatform.Domain.Entities;
