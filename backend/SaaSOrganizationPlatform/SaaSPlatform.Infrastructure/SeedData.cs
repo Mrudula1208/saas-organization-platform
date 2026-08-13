@@ -19,45 +19,51 @@ namespace SaaSPlatform.Infrastructure
             var proPlanId = Guid.Parse("cccc1111-2222-3333-4444-555566667777");
             var enterprisePlanId = Guid.Parse("eeee1111-2222-3333-4444-555566667777");
 
-            if (!await context.SubscriptionPlans.AnyAsync())
+            if (!await context.SubscriptionPlans.AnyAsync(p => p.Id == basicPlanId))
             {
-                await context.SubscriptionPlans.AddRangeAsync(
-                    new SubscriptionPlan
-                    {
-                        Id = basicPlanId,
-                        Name = "Basic",
-                        Price = 15,
-                        MaxUsers = 20,
-                        MaxProjects = 30,
-                        StorageLimitMB = 2048,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    },
-                    new SubscriptionPlan
-                    {
-                        Id = proPlanId,
-                        Name = "Pro",
-                        Price = 45,
-                        MaxUsers = 40,
-                        MaxProjects = 100,
-                        StorageLimitMB = 10240,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    },
-                    new SubscriptionPlan
-                    {
-                        Id = enterprisePlanId,
-                        Name = "Enterprise",
-                        Price = 180,
-                        MaxUsers = 180,
-                        MaxProjects = 200,
-                        StorageLimitMB = 51200,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    }
-                );
-                await context.SaveChangesAsync();
+                await context.SubscriptionPlans.AddAsync(new SubscriptionPlan
+                {
+                    Id = basicPlanId,
+                    Name = "Basic",
+                    Price = 15,
+                    MaxUsers = 20,
+                    MaxProjects = 30,
+                    StorageLimitMB = 2048,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
+
+            if (!await context.SubscriptionPlans.AnyAsync(p => p.Id == proPlanId))
+            {
+                await context.SubscriptionPlans.AddAsync(new SubscriptionPlan
+                {
+                    Id = proPlanId,
+                    Name = "Pro",
+                    Price = 45,
+                    MaxUsers = 40,
+                    MaxProjects = 100,
+                    StorageLimitMB = 10240,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (!await context.SubscriptionPlans.AnyAsync(p => p.Id == enterprisePlanId))
+            {
+                await context.SubscriptionPlans.AddAsync(new SubscriptionPlan
+                {
+                    Id = enterprisePlanId,
+                    Name = "Enterprise",
+                    Price = 180,
+                    MaxUsers = 180,
+                    MaxProjects = 200,
+                    StorageLimitMB = 51200,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            await context.SaveChangesAsync();
 
             // 2. Seed System Tenant
             var systemTenantId = Guid.Parse("dddd1111-2222-3333-4444-555566667777");
