@@ -7,5 +7,7 @@ namespace SaaSPlatform.Application.Interfaces
     {
         Task<object> GetTenantDashboardAsync(Guid tenantId);
         Task<object> GetSuperAdminDashboardAsync();
+        Task<object> GetTenantReportAsync(Guid tenantId);
+        Task<object> GetAdminReportAsync();
     }
 }

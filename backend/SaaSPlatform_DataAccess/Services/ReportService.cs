@@ -22,5 +22,15 @@ namespace SaaSPlatform.Application.Services
         {
             return await _reportRepository.GetSuperAdminDashboardDataAsync();
         }
+
+        public async Task<object> GetTenantReportAsync(Guid tenantId)
+        {
+            return await _reportRepository.GetTenantReportDataAsync(tenantId);
+        }
+
+        public async Task<object> GetAdminReportAsync()
+        {
+            return await _reportRepository.GetAdminReportDataAsync();
+        }
     }
 }
