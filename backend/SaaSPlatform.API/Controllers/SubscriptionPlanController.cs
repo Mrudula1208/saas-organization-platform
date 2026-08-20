@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS.SubscriptionPlans;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
 
@@ -16,12 +17,14 @@ namespace SaaSPlatform.API.Controllers
         {
             _subscriptionPlanService = subscriptionPlanService;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var plans = await _subscriptionPlanService.GetAllAsync();
             return Ok(plans);
         }
+
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetById(Guid Id)
         {
@@ -32,41 +35,54 @@ namespace SaaSPlatform.API.Controllers
             return Ok(plan);
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "SuperAdmin")]
         [HttpPost]
-        public async Task<IActionResult> Create(SubscriptionPlan subscriptionPlan)
+        public async Task<IActionResult> Create([FromBody] CreateSubscriptionPlanDto dto)
         {
-            var created = await _subscriptionPlanService.AddAsync(subscriptionPlan);
+            var plan = new SubscriptionPlan
+            {
+                Name = dto.Name,
+                Price = dto.Price,
+                MaxUsers = dto.MaxUsers,
+                MaxProjects = dto.MaxProjects,
+                StorageLimitMB = dto.StorageLimitMB,
+                IsActive = true
+            };
+
+            var created = await _subscriptionPlanService.AddAsync(plan);
             return Ok(created);
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "SuperAdmin")]
         [HttpPut("{Id}")]
-        public async Task<IActionResult> Update(Guid Id, SubscriptionPlan subscriptionPlan)
+        public async Task<IActionResult> Update(Guid Id, [FromBody] UpdateSubscriptionPlanDto dto)
         {
-            var result = await _subscriptionPlanService.UpdateAsync(Id, subscriptionPlan);
+            var plan = new SubscriptionPlan
             {
-                if (!result)
-                    return NotFound();
+                Name = dto.Name,
+                Price = dto.Price,
+                MaxUsers = dto.MaxUsers,
+                MaxProjects = dto.MaxProjects,
+                StorageLimitMB = dto.StorageLimitMB,
+                IsActive = dto.IsActive
+            };
 
-                return NoContent();
+            var result = await _subscriptionPlanService.UpdateAsync(Id, plan);
+            if (!result)
+                return NotFound();
 
-            }
+            return NoContent();
         }
-        //[Authorize(Roles = "Admin")]
+
+        [Authorize(Roles = "SuperAdmin")]
         [HttpDelete("{Id}")]
-            public async Task<IActionResult> Delete(Guid Id)
-            {
-                var result = await _subscriptionPlanService.DeleteAsync(Id);
-                if (!result)
-                {
-                    return NotFound();
-                }
-                    return NoContent();
-                
-            }
+        public async Task<IActionResult> Delete(Guid Id)
+        {
+            var result = await _subscriptionPlanService.DeleteAsync(Id);
+            if (!result)
+                return NotFound();
 
-
-
+            return NoContent();
         }
     }
+}

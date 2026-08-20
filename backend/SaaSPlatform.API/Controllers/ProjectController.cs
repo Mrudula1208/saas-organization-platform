@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform_Model;
+using System.Security.Claims;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -14,66 +15,64 @@ namespace SaaSPlatform.API.Controllers
     {
         private readonly IProjectService _projectService;
 
-        // Inject service
         public ProjectController(IProjectService projectService)
         {
             _projectService = projectService;
         }
-        [Authorize]
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects(
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
             [FromQuery] string? priority = null)
         {
-            var tenantClaim = User.FindFirst("TenantId")?.Value ?? HttpContext.Items["tenantId"]?.ToString();
-            if (tenantClaim == null) return Unauthorized();
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
 
-            var tenantId = Guid.Parse(tenantClaim);
-            var projects = await _projectService.GetAllAsync(tenantId, search, status, priority);
+            var projects = await _projectService.GetAllAsync(tenantId.Value, search, status, priority);
             return Ok(projects);
         }
-
-
-
-
-
-
 
         [HttpGet("{Id}")]
         public async Task<ActionResult<Project>> GetById(Guid Id)
         {
             var project = await _projectService.GetByIdAsync(Id);
             if (project == null)
-            {
                 return NotFound();
-            }
+
             return Ok(project);
         }
 
-
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<ActionResult<Project>> Create(CreateProjectDto dto)
         {
             var project = await _projectService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
         }
+
         [HttpPut("{id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Update(Guid id, UpdateProjectDto dto)
         {
             await _projectService.UpdateAsync(id, dto);
-
             return NoContent();
         }
 
-
         [HttpDelete("{id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _projectService.DeleteAsync(id);
-
             return NoContent();
+        }
 
+        private Guid? GetTenantId()
+        {
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
+                return tenantId;
+            return null;
         }
     }
 }

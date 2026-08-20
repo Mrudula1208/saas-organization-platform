@@ -14,6 +14,7 @@ namespace SaaSPlatform.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -29,14 +30,10 @@ namespace SaaSPlatform.API.Controllers
             [FromQuery] string? role = null,
             [FromQuery] bool? isActive = null)
         {
-            var tenantClaim = User.FindFirst("TenantId")?.Value ?? HttpContext.Items["tenantId"]?.ToString();
-            if (tenantClaim == null)
-            {
-                return Unauthorized(new { success = false, message = "Tenant ID is missing or unauthorized." });
-            }
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
 
-            var tenantId = Guid.Parse(tenantClaim);
-            var users = await _userService.GetAllUser(tenantId, search, role, isActive);
+            var users = await _userService.GetAllUser(tenantId.Value, search, role, isActive);
             return Ok(users);
         }
 
@@ -62,18 +59,22 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
         {
             try
             {
+                var tenantId = GetTenantId();
+                if (tenantId == null) return Unauthorized();
+
                 var user = new User
                 {
                     Id = Guid.NewGuid(),
                     FullName = dto.Name,
                     Email = dto.Email,
-                    PasswordHash = dto.Password, // UserService will hash it
-                    Role = "Member", // default employee role
-                    TenantId = dto.TenantId,
+                    PasswordHash = dto.Password,
+                    Role = "Member",
+                    TenantId = tenantId.Value,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     LastLogin = DateTime.UtcNow,
@@ -96,15 +97,41 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPut("{Id}")]
-        public async Task<ActionResult<User>> UpdateUser(Guid Id, [FromBody] User user)
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        public async Task<ActionResult<User>> UpdateUser(Guid Id, [FromBody] UpdateUserDto dto)
         {
-            var result = await _userService.UpdateUser(Id, user);
-            if (!result)
+            var existingUser = await _userService.GetUserById(Id);
+            if (existingUser == null)
             {
                 return NotFound(new ApiResponse<User>
                 {
                     Success = false,
                     Message = "User not found",
+                    Data = null
+                });
+            }
+
+            var tenantId = GetTenantId();
+            if (tenantId == null || existingUser.TenantId != tenantId.Value)
+            {
+                return Forbid();
+            }
+
+            var user = new User
+            {
+                FullName = dto.Name,
+                Email = dto.Email,
+                Role = dto.Role,
+                ProfileImageUrl = dto.ProfileImageUrl ?? string.Empty
+            };
+
+            var result = await _userService.UpdateUser(Id, user);
+            if (!result)
+            {
+                return BadRequest(new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = "Update failed",
                     Data = null
                 });
             }
@@ -117,6 +144,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpDelete("{Id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<ActionResult> DeleteUser(Guid Id)
         {
             var result = await _userService.DeleteUser(Id);
@@ -139,18 +167,15 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost("invite")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> InviteUser([FromBody] InviteUserDto dto)
         {
             try
             {
-                var tenantClaim = User.FindFirst("TenantId")?.Value ?? HttpContext.Items["tenantId"]?.ToString();
-                if (tenantClaim == null)
-                {
-                    return Unauthorized(new { success = false, message = "Tenant ID is missing or unauthorized." });
-                }
+                var tenantId = GetTenantId();
+                if (tenantId == null) return Unauthorized();
 
-                var tenantId = Guid.Parse(tenantClaim);
-                var invitedUser = await _userService.InviteUserAsync(tenantId, dto);
+                var invitedUser = await _userService.InviteUserAsync(tenantId.Value, dto);
                 
                 return Ok(new ApiResponse<User>
                 {
@@ -166,6 +191,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost("{Id}/toggle-status")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> ToggleStatus(Guid Id, [FromBody] ToggleStatusRequest request)
         {
             var result = await _userService.ToggleUserStatusAsync(Id, request.IsActive);
@@ -174,6 +200,14 @@ namespace SaaSPlatform.API.Controllers
                 return NotFound(new { success = false, message = "User not found." });
             }
             return Ok(new { success = true, message = $"User status changed to {(request.IsActive ? "Active" : "Inactive")}." });
+        }
+
+        private Guid? GetTenantId()
+        {
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
+                return tenantId;
+            return null;
         }
     }
 

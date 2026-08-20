@@ -30,6 +30,10 @@ export class Tasks implements OnInit {
   isCreateModalOpen = false;
   newTask = { title: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '' };
 
+  // Drag & Drop State
+  // Holds the reference to the task item that is currently being dragged by the user
+  draggedTask: TaskItem | null = null;
+
   constructor(
     private projectService: ProjectService,
     private userService: UserService
@@ -139,6 +143,36 @@ export class Tasks implements OnInit {
         }
       }
     });
+  }
+
+  // DRAG AND DROP HANDLERS
+
+  // This method triggers when the user starts dragging a task card.
+  // We store the task object reference in memory so we know which card is being moved.
+  onDragStart(event: DragEvent, task: TaskItem) {
+    this.draggedTask = task;
+    // Set visual feedback (e.g., move effect)
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  // This method prevents default behavior when a card is dragged over a column.
+  // By default, browsers do not allow drop events on general container elements.
+  // Calling preventDefault() turns on the drop zone.
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  // This method handles dropping the task card into a new status column.
+  // We extract the stored task, verify it exists, and call the service to update status.
+  onDrop(event: DragEvent, newStatus: string) {
+    event.preventDefault();
+    if (this.draggedTask && this.draggedTask.status !== newStatus) {
+      this.moveTask(this.draggedTask, newStatus);
+    }
+    // Clear the reference once the operation is completed
+    this.draggedTask = null;
   }
 
   // ACTIONS

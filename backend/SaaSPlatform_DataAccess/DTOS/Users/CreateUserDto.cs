@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SaaSPlatform.Application.DTOS.Users
 {
     public class CreateUserDto
     {
-        [Required (ErrorMessage ="Name is Required")]
-        public string Name { get; set; }
-        [Required(ErrorMessage ="Email is Required")]
-        [EmailAddress(ErrorMessage ="Invalid email format")]
-        public string Email { get; set; }
-        [Required(ErrorMessage ="Password is required")]
-        [MaxLength(6,ErrorMessage ="password must be at least 6  characters")]
-        public string Password { get; set; }
-        public Guid TenantId { get; set; }
+        [Required(ErrorMessage = "Name is Required")]
+        public string Name { get; set; } = string.Empty;
 
-       
+        [Required(ErrorMessage = "Email is Required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = string.Empty;
     }
 }

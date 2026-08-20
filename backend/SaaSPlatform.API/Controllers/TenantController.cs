@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform_Model.Entities;
 using System;
@@ -12,6 +13,7 @@ namespace SaaSPlatform.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TenantController : ControllerBase
     {
         private readonly ITenantService _tenantService;
@@ -22,6 +24,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<ActionResult<IEnumerable<Tenant>>> GetAll()
         {
             var tenants = await _tenantService.GetAllAsync();
@@ -40,10 +43,23 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Tenant>> Create([FromBody] Tenant tenant)
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<ActionResult<Tenant>> Create([FromBody] CreateTenantDto dto)
         {
             try
             {
+                var tenant = new Tenant
+                {
+                    Id = Guid.NewGuid(),
+                    Name = dto.Name,
+                    Domain = dto.Domain,
+                    ContactEmail = dto.ContactEmail,
+                    ContactPhone = dto.ContactPhone,
+                    SubscriptionPlanId = dto.SubscriptionPlanId,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
                 var created = await _tenantService.CreateAsync(tenant);
                 return CreatedAtAction(nameof(GetById), new { Id = created.Id }, created);
             }
@@ -54,10 +70,19 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPut("{Id}")]
-        public async Task<ActionResult> Update(Guid Id, [FromBody] Tenant tenant)
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        public async Task<ActionResult> Update(Guid Id, [FromBody] UpdateTenantDto dto)
         {
             try
             {
+                var tenant = new Tenant
+                {
+                    Name = dto.Name,
+                    ContactEmail = dto.ContactEmail,
+                    ContactPhone = dto.ContactPhone,
+                    IsActive = dto.IsActive
+                };
+
                 var result = await _tenantService.UpdateAsync(Id, tenant);
                 if (!result)
                 {
@@ -72,6 +97,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpDelete("{Id}")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _tenantService.DeleteAsync(Id);
@@ -83,6 +109,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost("{Id}/upload-logo")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> UploadLogo(Guid Id, [FromForm] IFormFile file)
         {
             try
@@ -98,10 +125,7 @@ namespace SaaSPlatform.API.Controllers
                     return BadRequest(new { success = false, message = "No file selected." });
                 }
 
-                // Simulate saving logo image to disk or using local URL path
                 var fileName = $"{Id}_logo{Path.GetExtension(file.FileName)}";
-                
-                // Save logo URL in tenant settings
                 var logoUrl = $"/assets/logos/{fileName}";
                 await _tenantService.UpdateLogoAsync(Id, logoUrl);
 

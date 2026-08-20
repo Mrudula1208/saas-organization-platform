@@ -1,19 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SaaSPlatform.Application.DTOS.Tenants
 {
     public class CreateTenantDto
     {
-        [Required]
-        public string Name { get; set; }
+        [Required(ErrorMessage = "Tenant name is required.")]
+        public string Name { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Domain is required.")]
+        public string Domain { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Contact email is required.")]
         [EmailAddress]
-        public string EmailAddress { get; set; }
+        public string ContactEmail { get; set; } = string.Empty;
+
+        public string ContactPhone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Subscription plan is required.")]
+        public Guid SubscriptionPlanId { get; set; }
     }
 }

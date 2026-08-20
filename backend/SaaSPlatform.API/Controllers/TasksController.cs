@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
-using SaaSPlatform_Model.Entities;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -20,18 +19,16 @@ namespace SaaSPlatform.API.Controllers
             _taskService = taskService;
         }
 
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks(
             [FromQuery] Guid? projectId = null,
             [FromQuery] string? status = null,
             [FromQuery] string? search = null)
         {
-            var tenantClaim = User.FindFirst("TenantId")?.Value ?? HttpContext.Items["tenantId"]?.ToString();
-            if (tenantClaim == null) return Unauthorized();
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
 
-            var tenantId = Guid.Parse(tenantClaim);
-            var tasks = await _taskService.GetAllAsync(tenantId, projectId, status, search);
+            var tasks = await _taskService.GetAllAsync(tenantId.Value, projectId, status, search);
             return Ok(tasks);
         }
 
@@ -46,46 +43,44 @@ namespace SaaSPlatform.API.Controllers
             return Ok(new { success = true, message = "Task status updated." });
         }
 
-
-
         [HttpGet("single/{Id}")]
         public async Task<ActionResult<TaskItem>> GetById(Guid Id)
         {
             var task = await _taskService.GetByIdAsync(Id);
-
             if (task == null)
                 return NotFound();
 
             return Ok(task);
         }
 
-        
         [HttpPost]
         public async Task<ActionResult<TaskItem>> Create(CreateTaskDto dto)
         {
             var task = await _taskService.CreateAsync(dto);
-
             return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
         }
 
-        
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid Id, UpdateTaskDto dto)
         {
             await _taskService.UpdateAsync(Id, dto);
-
             return NoContent();
         }
 
-      
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             await _taskService.DeleteAsync(Id);
-
             return NoContent();
         }
-    
+
+        private Guid? GetTenantId()
+        {
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
+                return tenantId;
+            return null;
+        }
     }
 
     public class UpdateTaskStatusDto
@@ -93,58 +88,3 @@ namespace SaaSPlatform.API.Controllers
         public string Status { get; set; } = string.Empty;
     }
 }
-
-//context.Request.Headers["TenantId"]
-//👉 Read TenantId from request
-
-//context.Items["TenantId"] = tenantId
-//👉 Store TenantId globally
-
-//HttpContext.Items["TenantId"]
-//👉 Get TenantId in controller
-
-//_taskService.GetAllAsync(tenantId)
-//👉 Send tenantId to service
-
-//_taskRepository.GetAllAsync(tenantId)
-//👉 Service passes tenantId to repository
-
-//_context.Tasks
-//👉 Access Tasks table
-
-//Include(t → Project)
-//👉 Load related Project
-
-//Where(t → Project.TenantId == tenantId)
-//👉 🔥 Filter tasks of that tenant
-
-//ToListAsync()
-//👉 Execute query and get datacontext.Request.Headers["TenantId"]
-//👉 Read TenantId from request
-
-//context.Items["TenantId"] = tenantId
-//👉 Store TenantId globally
-
-//HttpContext.Items["TenantId"]
-//👉 Get TenantId in controller
-
-//_taskService.GetAllAsync(tenantId)
-//👉 Send tenantId to service
-
-//_taskRepository.GetAllAsync(tenantId)
-//👉 Service passes tenantId to repository
-
-//_context.Tasks
-//👉 Access Tasks table
-
-//Include(t → Project)
-//👉 Load related Project
-
-//Where(t → Project.TenantId == tenantId)
-//👉 🔥 Filter tasks of that tenant
-
-//ToListAsync()
-//👉 Execute query and get data
-
-
-//Task → Project → Tenant → Filter

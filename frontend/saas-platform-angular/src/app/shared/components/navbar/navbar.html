@@ -10,14 +10,12 @@
   </div>
 
   <div class="nav-right">
-    <!-- Theme Toggle -->
     <button class="nav-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Toggle Light Theme' : 'Toggle Dark Theme'" aria-label="Toggle Theme">
       <span class="material-symbols-outlined">
         {{ isDarkTheme ? 'light_mode' : 'dark_mode' }}
       </span>
     </button>
 
-    <!-- Notification Bell -->
     <div style="position: relative;">
       <button class="nav-btn" (click)="toggleNotifications()" aria-label="Notifications Panel">
         <span class="material-symbols-outlined">notifications</span>
@@ -26,7 +24,6 @@
         }
       </button>
 
-      <!-- Notification Dropdown Panel -->
       @if (showNotifications) {
         <div class="dropdown-panel">
           <div class="dropdown-header">
@@ -43,14 +40,14 @@
             } @else {
               @for (notif of notifications; track notif.id) {
                 <div class="notification-item" (click)="readNotification(notif)">
-                  <div class="notification-icon" [style.background]="getNotifBackground(notif.type)" [style.color]="getNotifColor(notif.type)">
+                  <div class="notification-icon" [style.background]="!notif.isRead ? 'rgba(59, 130, 246, 0.15)' : 'rgba(107, 114, 128, 0.15)'" [style.color]="!notif.isRead ? '#60a5fa' : '#6b7280'">
                     <span class="material-symbols-outlined" style="font-size: 1.15rem;">
-                      {{ getNotifIcon(notif.type) }}
+                      {{ getNotifIcon(notif) }}
                     </span>
                   </div>
                   <div class="notification-content">
-                    <p [style.font-weight]="notif.status === 'Unread' ? '600' : '400'">{{ notif.message }}</p>
-                    <div class="notification-time">{{ notif.date }}</div>
+                    <p [style.font-weight]="!notif.isRead ? '600' : '400'">{{ notif.message }}</p>
+                    <div class="notification-time">{{ formatDate(notif.createdAt) }}</div>
                   </div>
                 </div>
               }
@@ -64,7 +61,6 @@
       }
     </div>
 
-    <!-- Profile Menu -->
     <div class="profile-menu">
       <button class="profile-trigger" (click)="toggleProfile()" aria-label="User Profile Menu">
         @if (user()?.email === 'admin@saas.com') {
@@ -83,7 +79,6 @@
         </span>
       </button>
 
-      <!-- Profile Dropdown Panel -->
       @if (showProfile) {
         <div class="dropdown-panel profile-panel">
           <div style="padding: 0.5rem 1.25rem;">

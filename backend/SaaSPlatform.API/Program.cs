@@ -49,6 +49,10 @@ namespace SaaSPlatform.API
             // 🔐 Register New Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
+
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // 🔄 AutoMapper & FluentValidation
@@ -67,6 +71,12 @@ namespace SaaSPlatform.API
                 });
             });
 
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
+            {
+                throw new InvalidOperationException("Jwt:Key must be configured in appsettings.Development.json or environment variables and must be at least 32 characters.");
+            }
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -77,7 +87,7 @@ namespace SaaSPlatform.API
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
                         ValidAudience = builder.Configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "DefaultSecretKeyThatIsVeryLongAndSecure123"))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                     };
                 });
 

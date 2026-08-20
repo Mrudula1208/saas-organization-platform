@@ -4,6 +4,7 @@ using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.DTOS.Users;
 using SaaSPlatform.Application.DTOS.Tasks;
+using SaaSPlatform.Application.DTOS.Notifications;
 using SaaSPlatform_Model;
 using SaaSPlatform_Model.Entities;
 using SaaSPlatform.Domain.Entities;
@@ -49,6 +50,9 @@ namespace SaaSPlatform.API.Configurations
                 .ForMember(dest => dest.IsCompleted, opt => opt.MapFrom(src => false))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
             CreateMap<UpdateTaskDto, TaskItem>();
+
+            // Notification Mappings
+            CreateMap<Notification, SaaSPlatform.Application.DTOS.Notifications.NotificationResponseDto>();
         }
     }
 }

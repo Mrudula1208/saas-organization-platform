@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.Interfaces;
+using System.Security.Claims;
 
 namespace SaaSPlatform.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
@@ -13,23 +16,31 @@ namespace SaaSPlatform.API.Controllers
         {
             _reportService = reportService;
         }
+
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
-            var tenantClaim = User.FindFirst("TenantId")?.Value ?? HttpContext.Items["tenantId"]?.ToString();
-            if (tenantClaim == null) return Unauthorized();
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
 
-            var tenantId = Guid.Parse(tenantClaim);
-            var data = await _reportService.GetTenantDashboardAsync(tenantId);
-            return Ok(data);    
+            var data = await _reportService.GetTenantDashboardAsync(tenantId.Value);
+            return Ok(data);
         }
 
         [HttpGet("admin-dashboard")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> GetAdminDashboard()
         {
-            // Optional: verify user is in Admin role
             var data = await _reportService.GetSuperAdminDashboardAsync();
             return Ok(data);
+        }
+
+        private Guid? GetTenantId()
+        {
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
+                return tenantId;
+            return null;
         }
     }
 }

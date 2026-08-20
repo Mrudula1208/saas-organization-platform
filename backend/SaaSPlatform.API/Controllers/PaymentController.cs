@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS.Payments;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
 using SaaSPlatform_Utility;
+using System;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -21,19 +23,27 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var tenantId = Guid.Parse(User.FindFirst("TenantId")!.Value);
-            // 👉 Get TenantId from JWT token
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
 
-            var payments = await _paymentService.GetAllAsync(tenantId);
+            var payments = await _paymentService.GetAllAsync(tenantId.Value);
             return Ok(payments);
         }
 
-
         [HttpPost]
-        public async Task<IActionResult>Create(Payment payment)
+        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
         {
-            var tenantId = Guid.Parse(User.FindFirst("TenantId")!.Value);
-            payment.TenantId = tenantId;
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var payment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId.Value,
+                SubscriptionPlanId = dto.SubscriptionPlanId,
+                Amount = dto.Amount,
+                PaymentMethod = dto.PaymentMethod
+            };
 
             var created = await _paymentService.CreateAsync(payment);
             return Ok(new ApiResponse<Payment>
@@ -48,14 +58,18 @@ namespace SaaSPlatform.API.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _paymentService.DeleteAsync(id);
-            
-
             if (!result)
                 return NotFound();
-            
 
             return NoContent();
-          
+        }
+
+        private Guid? GetTenantId()
+        {
+            var tenantClaim = User.FindFirst("TenantId")?.Value;
+            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
+                return tenantId;
+            return null;
         }
     }
 }

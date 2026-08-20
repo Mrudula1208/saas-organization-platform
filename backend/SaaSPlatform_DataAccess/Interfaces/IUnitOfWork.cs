@@ -14,6 +14,7 @@ namespace SaaSPlatform.Application.Interfaces
         IReportRepository Reports { get; }
         IProjectMemberRepository ProjectMembers { get; }
         ISystemLogRepository SystemLogs { get; }
+        INotificationRepository Notifications { get; }
         Task<int> SaveChangesAsync();
     }
 }

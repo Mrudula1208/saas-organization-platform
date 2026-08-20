@@ -1,15 +1,8 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
-
-export interface DropdownNotification {
-  id: string;
-  message: string;
-  date: string;
-  status: 'Read' | 'Unread';
-  type: 'info' | 'success' | 'warning' | 'danger';
-}
+import { NotificationService, AppNotification } from '../../../core/services/notification';
 
 @Component({
   selector: 'app-navbar',
@@ -18,45 +11,36 @@ export interface DropdownNotification {
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
-export class Navbar {
+export class Navbar implements OnInit {
   isDarkTheme = true;
   showNotifications = false;
   showProfile = false;
 
-  // Unread count signal
-  unreadCount = signal(3);
-
-  // Quick lists of notifications for dropdown
-  notifications: DropdownNotification[] = [
-    {
-      id: 'n-1',
-      message: 'New Tenant "Globex Corp" created successfully.',
-      date: '2 hours ago',
-      status: 'Unread',
-      type: 'success'
-    },
-    {
-      id: 'n-2',
-      message: 'System upgrade scheduled for next Sunday at 02:00 UTC.',
-      date: '5 hours ago',
-      status: 'Unread',
-      type: 'warning'
-    },
-    {
-      id: 'n-3',
-      message: 'Failed login attempt detected from IP 192.168.1.144.',
-      date: '1 day ago',
-      status: 'Unread',
-      type: 'danger'
-    }
-  ];
-
-  constructor(private auth: Auth, private router: Router) {
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    public notifService: NotificationService
+  ) {
     this.detectSystemTheme();
+  }
+
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.notifService.loadUnreadCount();
+      this.notifService.loadNotifications();
+    }
   }
 
   get user() {
     return this.auth.currentUser;
+  }
+
+  get unreadCount() {
+    return this.notifService.unreadCount;
+  }
+
+  get notifications() {
+    return this.notifService.notifications();
   }
 
   detectSystemTheme() {
@@ -82,6 +66,9 @@ export class Navbar {
   toggleNotifications() {
     this.showNotifications = !this.showNotifications;
     this.showProfile = false;
+    if (this.showNotifications) {
+      this.notifService.loadNotifications();
+    }
   }
 
   toggleProfile() {
@@ -90,14 +77,12 @@ export class Navbar {
   }
 
   markAllAsRead() {
-    this.notifications.forEach(n => n.status = 'Read');
-    this.unreadCount.set(0);
+    this.notifService.markAllRead().subscribe();
   }
 
-  readNotification(notif: DropdownNotification) {
-    if (notif.status === 'Unread') {
-      notif.status = 'Read';
-      this.unreadCount.update(c => Math.max(0, c - 1));
+  readNotification(notif: AppNotification) {
+    if (!notif.isRead) {
+      this.notifService.markRead(notif.id).subscribe();
     }
     this.showNotifications = false;
     this.router.navigate([this.getNotificationsLink()]);
@@ -124,31 +109,9 @@ export class Navbar {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   }
 
-  getNotifIcon(type: string): string {
-    switch (type) {
-      case 'success': return 'check_circle';
-      case 'warning': return 'warning';
-      case 'danger': return 'error';
-      default: return 'info';
-    }
-  }
-
-  getNotifBackground(type: string): string {
-    switch (type) {
-      case 'success': return 'rgba(16, 185, 129, 0.15)';
-      case 'warning': return 'rgba(245, 158, 11, 0.15)';
-      case 'danger': return 'rgba(239, 68, 68, 0.15)';
-      default: return 'rgba(59, 130, 246, 0.15)';
-    }
-  }
-
-  getNotifColor(type: string): string {
-    switch (type) {
-      case 'success': return '#34d399';
-      case 'warning': return '#fbbf24';
-      case 'danger': return '#f87171';
-      default: return '#60a5fa';
-    }
+  getNotifIcon(notif: AppNotification): string {
+    if (!notif.isRead) return 'notifications_active';
+    return 'notifications';
   }
 
   toggleSidebar() {
@@ -172,7 +135,21 @@ export class Navbar {
     this.router.navigate(['/logout']);
   }
 
-  // Click outside to close dropdowns
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {
     const target = event.target as HTMLElement;

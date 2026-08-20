@@ -19,7 +19,8 @@ namespace SaaSPlatform.Infrastructure.Repositories
             IPaymentRepository paymentRepository,
             IReportRepository reportRepository,
             IProjectMemberRepository projectMemberRepository,
-            ISystemLogRepository systemLogRepository)
+            ISystemLogRepository systemLogRepository,
+            INotificationRepository notificationRepository)
         {
             _context = context;
             Users = userRepository;
@@ -31,6 +32,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
             Reports = reportRepository;
             ProjectMembers = projectMemberRepository;
             SystemLogs = systemLogRepository;
+            Notifications = notificationRepository;
         }
 
         public IUserRepository Users { get; }
@@ -42,6 +44,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public IReportRepository Reports { get; }
         public IProjectMemberRepository ProjectMembers { get; }
         public ISystemLogRepository SystemLogs { get; }
+        public INotificationRepository Notifications { get; }
 
         public async Task<int> SaveChangesAsync()
         {
