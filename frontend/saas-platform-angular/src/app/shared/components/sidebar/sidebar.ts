@@ -23,7 +23,7 @@ export class Sidebar {
     const user = this.auth.currentUser();
     if (!user) return [];
 
-    if (user.role === 'Admin') {
+    if (user.role === 'SuperAdmin') {
       return [
         { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard' },
         { path: '/admin/tenants', icon: 'corporate_fare', label: 'Tenants' },

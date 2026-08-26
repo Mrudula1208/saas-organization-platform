@@ -72,7 +72,7 @@ namespace SaaSPlatform.API.Controllers
                     Id = Guid.NewGuid(),
                     FullName = dto.Name,
                     Email = dto.Email,
-                    PasswordHash = dto.Password,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                     Role = "Member",
                     TenantId = tenantId.Value,
                     IsActive = true,

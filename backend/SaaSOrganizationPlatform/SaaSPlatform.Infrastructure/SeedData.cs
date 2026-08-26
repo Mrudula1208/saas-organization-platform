@@ -93,7 +93,7 @@ namespace SaaSPlatform.Infrastructure
                     FullName = "JD Dewifrav", // Matches frontend active username
                     Email = "admin@saas.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    Role = "Admin",
+                    Role = "SuperAdmin",
                     TenantId = systemTenantId,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
@@ -155,6 +155,24 @@ namespace SaaSPlatform.Infrastructure
                     CreatedAt = DateTime.UtcNow,
                     LastLogin = DateTime.UtcNow
                 });
+                await context.SaveChangesAsync();
+            }
+
+            // 7. Normalize any legacy role names so all users use the app's role naming
+            var legacyRoles = await context.Users.Where(u => u.Role == "Admin" || u.Role == "TenantUSer").ToListAsync();
+            foreach (var legacyUser in legacyRoles)
+            {
+                if (legacyUser.Role == "Admin")
+                {
+                    legacyUser.Role = "SuperAdmin";
+                }
+                else if (legacyUser.Role == "TenantUSer")
+                {
+                    legacyUser.Role = "Member";
+                }
+            }
+            if (legacyRoles.Count > 0)
+            {
                 await context.SaveChangesAsync();
             }
         }

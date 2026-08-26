@@ -8,9 +8,8 @@ namespace SaaSPlatform.Domain.Enums
 {
     public enum  UserRole
     {
-SuperAdmin,
-TenantAdmin,
-TenantUSer
-
+        SuperAdmin,
+        TenantAdmin,
+        Member
     }
 }

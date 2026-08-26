@@ -90,7 +90,7 @@ export class Navbar implements OnInit {
 
   getNotificationsLink(): string {
     const role = this.user()?.role;
-    if (role === 'Admin') {
+    if (role === 'SuperAdmin') {
       return '/admin/system-logs';
     }
     return '/tenant/notifications';
@@ -98,7 +98,7 @@ export class Navbar implements OnInit {
 
   getRoleLabel(role?: string): string {
     if (!role) return '';
-    if (role === 'Admin') return 'Super Admin';
+    if (role === 'SuperAdmin') return 'Super Admin';
     if (role === 'TenantAdmin') return 'Tenant Admin';
     return role;
   }
@@ -123,7 +123,7 @@ export class Navbar implements OnInit {
   navigateToSettings() {
     this.showProfile = false;
     const role = this.user()?.role;
-    if (role === 'Admin') {
+    if (role === 'SuperAdmin') {
       this.router.navigate(['/admin/settings']);
     } else {
       this.router.navigate(['/tenant/settings']);

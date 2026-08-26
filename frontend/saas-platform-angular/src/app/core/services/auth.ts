@@ -139,7 +139,7 @@ export class Auth {
     if (email === 'admin@saas.com' && password === 'admin123') {
       mockClaims = {
         email: 'admin@saas.com',
-        role: 'Admin',
+        role: 'SuperAdmin',
         fullName: 'JD Dewifrav'
       };
     } else if (email === 'tenant@acme.com' && password === 'tenant123') {

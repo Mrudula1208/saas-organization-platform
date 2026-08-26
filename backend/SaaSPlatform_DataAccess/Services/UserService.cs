@@ -56,7 +56,7 @@ namespace SaaSPlatform.Application.Services
         public async Task<User> CreateUser(User user)
         {
             // Hash password if not already hashed
-            if (!user.PasswordHash.StartsWith("$2b$") && !user.PasswordHash.StartsWith("$2a$"))
+            if (!string.IsNullOrEmpty(user.PasswordHash) && !user.PasswordHash.StartsWith("$2b$") && !user.PasswordHash.StartsWith("$2a$"))
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
             }

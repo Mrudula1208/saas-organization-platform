@@ -22,7 +22,7 @@ export class Logout {
     const user = this.auth.currentUser();
     if (!user) {
       this.router.navigate(['/']);
-    } else if (user.role === 'Admin') {
+    } else if (user.role === 'SuperAdmin') {
       this.router.navigate(['/admin/dashboard']);
     } else {
       this.router.navigate(['/tenant/dashboard']);

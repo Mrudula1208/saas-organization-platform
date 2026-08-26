@@ -29,7 +29,7 @@ export class Login {
       next: () => {
         const currentUser = this.auth.currentUser();
         if (currentUser) {
-          if (currentUser.role === 'Admin') {
+          if (currentUser.role === 'SuperAdmin') {
             this.router.navigate(['/admin/dashboard']);
           } else {
             this.router.navigate(['/tenant/dashboard']);
