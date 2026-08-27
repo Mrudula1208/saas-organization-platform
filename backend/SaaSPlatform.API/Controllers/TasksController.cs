@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
@@ -35,6 +34,15 @@ namespace SaaSPlatform.API.Controllers
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateTaskStatusDto dto)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var existing = await _taskService.GetByIdAsync(id);
+            if (existing == null || existing.TenantId != tenantId.Value)
+            {
+                return NotFound(new { success = false, message = "Task not found." });
+            }
+
             var result = await _taskService.UpdateStatusAsync(id, dto.Status);
             if (!result)
             {
@@ -46,8 +54,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("single/{Id}")]
         public async Task<ActionResult<TaskItem>> GetById(Guid Id)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
             var task = await _taskService.GetByIdAsync(Id);
-            if (task == null)
+            if (task == null || task.TenantId != tenantId.Value)
                 return NotFound();
 
             return Ok(task);
@@ -56,13 +67,31 @@ namespace SaaSPlatform.API.Controllers
         [HttpPost]
         public async Task<ActionResult<TaskItem>> Create(CreateTaskDto dto)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            dto.TenantId = tenantId.Value;
+
             var task = await _taskService.CreateAsync(dto);
+
+            // Clear navigation references to avoid a JSON reference cycle
+            // (the tracked Project will navigate back to this task).
+            task.Project = null;
+            task.AssignedUser = null;
+
             return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid Id, UpdateTaskDto dto)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var existing = await _taskService.GetByIdAsync(Id);
+            if (existing == null || existing.TenantId != tenantId.Value)
+                return NotFound();
+
             await _taskService.UpdateAsync(Id, dto);
             return NoContent();
         }
@@ -70,6 +99,13 @@ namespace SaaSPlatform.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid Id)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var existing = await _taskService.GetByIdAsync(Id);
+            if (existing == null || existing.TenantId != tenantId.Value)
+                return NotFound();
+
             await _taskService.DeleteAsync(Id);
             return NoContent();
         }

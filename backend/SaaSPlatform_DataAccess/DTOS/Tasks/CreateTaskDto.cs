@@ -19,7 +19,7 @@ namespace SaaSPlatform.Application.DTOS.Tasks
 
         public Guid TenantId { get; set; }
 
-        public string Status { get; set; } = "ToDo";
+        public string Status { get; set; } = "To Do";
 
         public string Priority { get; set; } = "Medium";
 

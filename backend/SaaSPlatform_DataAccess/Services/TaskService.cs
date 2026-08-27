@@ -1,6 +1,7 @@
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
+using SaaSPlatform_Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +12,13 @@ namespace SaaSPlatform.Application.Services
     public class TaskService : ITaskService
     {
         private readonly ITaskRepository _taskRepository;
+        private readonly IProjectRepository _projectRepository;
         private readonly ISystemLogRepository _systemLogs;
 
-        public TaskService(ITaskRepository taskRepository, ISystemLogRepository systemLogs)
+        public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, ISystemLogRepository systemLogs)
         {
             _taskRepository = taskRepository;
+            _projectRepository = projectRepository;
             _systemLogs = systemLogs;
         }
 
@@ -43,7 +46,19 @@ namespace SaaSPlatform.Application.Services
                 query = query.Where(t => t.Name.ToLower().Contains(lowerSearch) || t.Description.ToLower().Contains(lowerSearch));
             }
 
-            return query.ToList();
+            var result = query.ToList();
+
+            // Break the JSON reference cycle: EF navigation fix-up fills
+            // Project.Tasks with the loaded tasks, and that cycles back here.
+            foreach (var task in result)
+            {
+                if (task.Project != null)
+                {
+                    task.Project.Tasks = null;
+                }
+            }
+
+            return result;
         }
 
         public async Task<TaskItem?> GetByIdAsync(Guid id)
@@ -60,6 +75,12 @@ namespace SaaSPlatform.Application.Services
                 throw new Exception("Task name is required.");
             }
 
+            var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
+            if (project == null || project.IsDeleted || project.TenantId != dto.TenantId)
+            {
+                throw new Exception("Selected project was not found in this tenant.");
+            }
+
             var task = new TaskItem
             {
                 Id = Guid.NewGuid(),
@@ -72,7 +93,7 @@ namespace SaaSPlatform.Application.Services
                 DueDate = dto.DueDate,
                 IsCompleted = false,
                 IsDeleted = false,
-                TenantId = dto.TenantId,
+                TenantId = project.TenantId,
                 CreatedAt = DateTime.UtcNow
             };
 

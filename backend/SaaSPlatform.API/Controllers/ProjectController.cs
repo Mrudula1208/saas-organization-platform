@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
@@ -36,8 +35,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("{Id}")]
         public async Task<ActionResult<Project>> GetById(Guid Id)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
             var project = await _projectService.GetByIdAsync(Id);
-            if (project == null)
+            if (project == null || project.TenantId != tenantId.Value)
                 return NotFound();
 
             return Ok(project);
@@ -47,6 +49,13 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<ActionResult<Project>> Create(CreateProjectDto dto)
         {
+            var tenantId = GetTenantId();
+            var userId = GetCurrentUserId();
+            if (tenantId == null || userId == null) return Unauthorized();
+
+            dto.TenantId = tenantId.Value;
+            dto.OwnerId = userId.Value;
+
             var project = await _projectService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
         }
@@ -55,6 +64,13 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Update(Guid id, UpdateProjectDto dto)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var existing = await _projectService.GetByIdAsync(id);
+            if (existing == null || existing.TenantId != tenantId.Value)
+                return NotFound();
+
             await _projectService.UpdateAsync(id, dto);
             return NoContent();
         }
@@ -63,6 +79,13 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var existing = await _projectService.GetByIdAsync(id);
+            if (existing == null || existing.TenantId != tenantId.Value)
+                return NotFound();
+
             await _projectService.DeleteAsync(id);
             return NoContent();
         }
@@ -72,6 +95,14 @@ namespace SaaSPlatform.API.Controllers
             var tenantClaim = User.FindFirst("TenantId")?.Value;
             if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
                 return tenantId;
+            return null;
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
+                return userId;
             return null;
         }
     }

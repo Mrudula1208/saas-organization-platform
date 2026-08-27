@@ -22,6 +22,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public async Task<IEnumerable<TaskItem>> GetAllAsync(Guid tenantId)
         {
             return await _context.TaskItems
+                .AsNoTracking()
                 .Include(t=>t.Project)
                 .Where(t =>t.Project.TenantId == tenantId).ToListAsync();
         }
