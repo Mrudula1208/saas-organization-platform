@@ -55,7 +55,9 @@ namespace SaaSPlatform.Infrastructure.Repositories
 
             if (endDate.HasValue)
             {
-                query = query.Where(l => l.CreatedAt <= endDate.Value);
+                // Include the whole day of the selected end date
+                // (endDate often comes from a date input as midnight).
+                query = query.Where(l => l.CreatedAt < endDate.Value.AddDays(1));
             }
 
             return await query.OrderByDescending(l => l.CreatedAt).Take(200).ToListAsync();

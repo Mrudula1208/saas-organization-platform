@@ -25,7 +25,18 @@ namespace SaaSPlatform.API.Controllers
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null)
         {
-            var tenantId = GetTenantId();
+            // SuperAdmin sees global system logs (all tenants).
+            // Everyone else only sees the logs of their own tenant.
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var isSuperAdmin = string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+
+            Guid? tenantId = null;
+            if (!isSuperAdmin)
+            {
+                tenantId = GetTenantId();
+                if (tenantId == null) return Unauthorized();
+            }
+
             var logs = await _systemLogRepository.GetAllAsync(tenantId, actionType, startDate, endDate);
             return Ok(logs);
         }

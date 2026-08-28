@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
+using SaaSPlatform.Application.Interfaces;
 
 namespace SaaSPlatform.API.Middleware
 {
@@ -11,7 +13,7 @@ namespace SaaSPlatform.API.Middleware
         {
             _next = next;
         }
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context, ISystemLogRepository systemLogs)
         {
             try
             {
@@ -19,8 +21,30 @@ namespace SaaSPlatform.API.Middleware
             }
             catch (Exception ex)
             {
+                await LogErrorAsync(context, systemLogs, ex);
                 await HandleExceptionAsync(context, ex);
             }
+        }
+
+        private static async Task LogErrorAsync(HttpContext context, ISystemLogRepository systemLogs, Exception ex)
+        {
+            try
+            {
+                var userId = ParseGuidClaim(context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var tenantId = ParseGuidClaim(context.User.FindFirst("TenantId")?.Value);
+                await systemLogs.LogAsync("SYSTEM_ERROR", $"Unexpected error: {ex.Message}", userId, tenantId);
+            }
+            catch
+            {
+                // Logging must never break the normal error response.
+            }
+        }
+
+        private static Guid? ParseGuidClaim(string? value)
+        {
+            if (value != null && Guid.TryParse(value, out var id) && id != Guid.Empty)
+                return id;
+            return null;
         }
         private Task HandleExceptionAsync(HttpContext context, Exception ex)
         {
