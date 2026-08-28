@@ -14,16 +14,16 @@ import { TenantService } from '../../../core/services/tenant';
 })
 export class Settings implements OnInit {
   currentUser: UserClaims | null = null;
-  
+
   // Profile form
   profileForm = { fullName: '', email: '', profileImageUrl: '' };
   isLoadingProfile = false;
   isSavingProfile = false;
-  
+
   // Password form
   passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
   isChangingPassword = false;
-  
+
   // Preferences form (persisted tenant settings, loaded from/saved via the backend)
   preferencesForm = { emailNotifications: true, inAppNotifications: true };
 

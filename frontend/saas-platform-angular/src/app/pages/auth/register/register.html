@@ -28,31 +28,38 @@
         <!-- Org Name -->
         <div class="form-group">
           <label class="form-label" for="org-name">Organization Name *</label>
-          <input 
-            type="text" 
-            id="org-name" 
-            class="form-input" 
-            placeholder="e.g. Acme Corp" 
+          <input
+            type="text"
+            id="org-name"
+            class="form-input"
+            placeholder="e.g. Acme Corp"
             name="name"
             [(ngModel)]="name"
             (input)="onNameChange()"
-            required 
+            required
             #orgName="ngModel"
           />
+          @if (orgName.invalid && orgName.touched) {
+            <span class="validation-error">Organization name is required</span>
+          }
         </div>
 
         <!-- Domain -->
         <div class="form-group">
           <label class="form-label" for="domain-slug">Domain Name *</label>
-          <input 
-            type="text" 
-            id="domain-slug" 
-            class="form-input" 
-            placeholder="acme.saasapp.com" 
+          <input
+            type="text"
+            id="domain-slug"
+            class="form-input"
+            placeholder="acme.saasapp.com"
             name="domain"
             [(ngModel)]="domain"
-            required 
+            required
+            #domainInput="ngModel"
           />
+          @if (domainInput.invalid && domainInput.touched) {
+            <span class="validation-error">Domain name is required</span>
+          }
         </div>
       </div>
 
@@ -60,30 +67,42 @@
         <!-- Admin Name -->
         <div class="form-group">
           <label class="form-label" for="admin-name">Admin Full Name *</label>
-          <input 
-            type="text" 
-            id="admin-name" 
-            class="form-input" 
-            placeholder="e.g. Jane Smith" 
+          <input
+            type="text"
+            id="admin-name"
+            class="form-input"
+            placeholder="e.g. Jane Smith"
             name="adminName"
             [(ngModel)]="adminName"
-            required 
+            required
+            #adminNameInput="ngModel"
           />
+          @if (adminNameInput.invalid && adminNameInput.touched) {
+            <span class="validation-error">Admin name is required</span>
+          }
         </div>
 
         <!-- Admin Email -->
         <div class="form-group">
           <label class="form-label" for="admin-email">Admin Email Address *</label>
-          <input 
-            type="email" 
-            id="admin-email" 
-            class="form-input" 
-            placeholder="admin@example.com" 
+          <input
+            type="email"
+            id="admin-email"
+            class="form-input"
+            placeholder="admin@example.com"
             name="adminEmail"
             [(ngModel)]="adminEmail"
-            required 
+            required
+            pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
             #emailInput="ngModel"
           />
+          @if (emailInput.invalid && emailInput.touched) {
+            @if (emailInput.errors?.['required']) {
+              <span class="validation-error">Admin email is required</span>
+            } @else {
+              <span class="validation-error">Enter a valid email address</span>
+            }
+          }
         </div>
       </div>
 
@@ -91,31 +110,44 @@
         <!-- Password -->
         <div class="form-group">
           <label class="form-label" for="pass">Password *</label>
-          <input 
-            type="password" 
-            id="pass" 
-            class="form-input" 
-            placeholder="••••••••••••" 
+          <input
+            type="password"
+            id="pass"
+            class="form-input"
+            placeholder="••••••••••••"
             name="password"
             [(ngModel)]="password"
-            required 
+            required
+            minlength="6"
             #passInput="ngModel"
           />
+          @if (passInput.invalid && passInput.touched) {
+            @if (passInput.errors?.['required']) {
+              <span class="validation-error">Password is required</span>
+            } @else {
+              <span class="validation-error">Password must be at least 6 characters</span>
+            }
+          }
         </div>
 
         <!-- Confirm Password -->
         <div class="form-group">
           <label class="form-label" for="confirm-pass">Confirm Password *</label>
-          <input 
-            type="password" 
-            id="confirm-pass" 
-            class="form-input" 
-            placeholder="••••••••••••" 
+          <input
+            type="password"
+            id="confirm-pass"
+            class="form-input"
+            placeholder="••••••••••••"
             name="confirmPassword"
             [(ngModel)]="confirmPassword"
-            required 
+            required
             #confirmPassInput="ngModel"
           />
+          @if (confirmPassInput.invalid && confirmPassInput.touched) {
+            <span class="validation-error">Please confirm your password</span>
+          } @else if (confirmPassInput.dirty && confirmPassword && password !== confirmPassword) {
+            <span class="validation-error">Passwords do not match</span>
+          }
         </div>
       </div>
 
@@ -131,14 +163,14 @@
 
       <div class="modal-actions" style="margin-top: 2rem;">
         <a routerLink="/login" class="btn btn-outline">Cancel</a>
-        <button type="submit" class="btn btn-secondary" [disabled]="orgName.invalid || emailInput.invalid || passInput.invalid || confirmPassInput.invalid">
-          Create Organization
+        <button type="submit" class="btn btn-secondary" [disabled]="submitting || orgName.invalid || domainInput.invalid || adminNameInput.invalid || emailInput.invalid || passInput.invalid || confirmPassInput.invalid">
+          {{ submitting ? 'Creating...' : 'Create Organization' }}
         </button>
       </div>
     </form>
 
     <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
-      Already have an organization? 
+      Already have an organization?
       <a routerLink="/login" style="color: var(--secondary-color); text-decoration: none; font-weight: 600; margin-left: 0.25rem;">Sign In</a>
     </div>
   </div>

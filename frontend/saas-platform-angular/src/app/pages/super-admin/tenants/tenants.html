@@ -4,7 +4,7 @@
       <h1 style="font-size: 2rem; font-weight: 800;">Tenants Directory</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization workspaces, plan quotas, monthly billings, and status states</p>
     </div>
-    
+
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-symbols-outlined">add_business</span>
       Create Tenant
@@ -15,15 +15,15 @@
   <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input 
-          type="text" 
-          class="form-input" 
-          placeholder="Search by name, domain, admin email..." 
-          [(ngModel)]="searchQuery" 
-          (input)="onSearch()" 
+        <input
+          type="text"
+          class="form-input"
+          placeholder="Search by name, domain, admin email..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
         />
       </div>
-      
+
       <div class="form-group" style="width: 200px; margin-bottom: 0;">
         <select class="form-select" [(ngModel)]="planFilter" (change)="onFilterChange()">
           <option value="">All Subscription Plans</option>
@@ -106,38 +106,38 @@
         <form (submit)="saveNewTenant()">
           <div class="form-group">
             <label class="form-label" for="new-name">Organization Name</label>
-            <input 
-              type="text" 
-              id="new-name" 
-              class="form-input" 
-              placeholder="e.g. Initech Inc" 
-              [(ngModel)]="newTenant.name" 
-              name="name" 
+            <input
+              type="text"
+              id="new-name"
+              class="form-input"
+              placeholder="e.g. Initech Inc"
+              [(ngModel)]="newTenant.name"
+              name="name"
               (input)="onNewTenantNameChange()"
-              required 
+              required
             />
           </div>
           <div class="form-group">
             <label class="form-label" for="new-domain">Domain Slug</label>
-            <input 
-              type="text" 
-              id="new-domain" 
-              class="form-input" 
-              [(ngModel)]="newTenant.domain" 
-              name="domain" 
-              required 
+            <input
+              type="text"
+              id="new-domain"
+              class="form-input"
+              [(ngModel)]="newTenant.domain"
+              name="domain"
+              required
             />
           </div>
           <div class="form-group">
             <label class="form-label" for="new-email">Admin Email Address</label>
-            <input 
-              type="email" 
-              id="new-email" 
-              class="form-input" 
-              placeholder="admin@example.com" 
-              [(ngModel)]="newTenant.contactEmail" 
-              name="email" 
-              required 
+            <input
+              type="email"
+              id="new-email"
+              class="form-input"
+              placeholder="admin@example.com"
+              [(ngModel)]="newTenant.contactEmail"
+              name="email"
+              required
             />
           </div>
           <div class="form-group">
@@ -168,35 +168,35 @@
         <form (submit)="saveEditTenant()">
           <div class="form-group">
             <label class="form-label" for="edit-name">Organization Name</label>
-            <input 
-              type="text" 
-              id="edit-name" 
-              class="form-input" 
-              [(ngModel)]="editTenantForm.name" 
-              name="name" 
-              required 
+            <input
+              type="text"
+              id="edit-name"
+              class="form-input"
+              [(ngModel)]="editTenantForm.name"
+              name="name"
+              required
             />
           </div>
           <div class="form-group">
             <label class="form-label" for="edit-domain">Domain Slug</label>
-            <input 
-              type="text" 
-              id="edit-domain" 
-              class="form-input" 
-              [(ngModel)]="editTenantForm.domain" 
-              name="domain" 
-              required 
+            <input
+              type="text"
+              id="edit-domain"
+              class="form-input"
+              [(ngModel)]="editTenantForm.domain"
+              name="domain"
+              required
             />
           </div>
           <div class="form-group">
             <label class="form-label" for="edit-email">Admin Email Address</label>
-            <input 
-              type="email" 
-              id="edit-email" 
-              class="form-input" 
-              [(ngModel)]="editTenantForm.contactEmail" 
-              name="email" 
-              required 
+            <input
+              type="email"
+              id="edit-email"
+              class="form-input"
+              [(ngModel)]="editTenantForm.contactEmail"
+              name="email"
+              required
             />
           </div>
           <div class="form-group">
@@ -232,7 +232,7 @@
           <h3 class="modal-title">{{ selectedTenant.name }} Details</h3>
           <button class="modal-close" (click)="closeViewModal()">&times;</button>
         </div>
-        
+
         <div style="display: flex; flex-direction: column; gap: 1rem;">
           <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
             <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Organization Info</div>

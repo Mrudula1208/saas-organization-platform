@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-reset-password',
@@ -18,6 +19,7 @@ export class ResetPassword implements OnInit {
   token = '';
   errorMessage = '';
   successMessage = '';
+  submitting = false;
 
   constructor(
     private router: Router,
@@ -44,27 +46,36 @@ export class ResetPassword implements OnInit {
       return;
     }
 
+    if (this.password.length < 6) {
+      this.errorMessage = 'Password must be at least 6 characters.';
+      return;
+    }
+
     if (this.password !== this.confirmPassword) {
       this.errorMessage = 'Passwords do not match.';
       return;
     }
 
+    if (this.submitting) return;
+
+    this.submitting = true;
     this.auth.resetPassword({
       email: this.email,
       token: this.token,
       password: this.password,
       confirmPassword: this.confirmPassword
     }).subscribe({
-      next: (res) => {
+      next: () => {
+        this.submitting = false;
         this.successMessage = 'Your password has been successfully reset! Redirecting to login...';
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2000);
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Failed to reset password. Check details or token expiry.';
+        this.submitting = false;
+        this.errorMessage = getErrorMessage(err, 'Failed to reset password. Check details or token expiry.');
       }
     });
   }
 }
-

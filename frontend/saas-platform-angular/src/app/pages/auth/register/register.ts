@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { getErrorMessage, isValidEmail } from '../../../core/helpers';
 
 @Component({
   selector: 'app-register',
@@ -21,6 +22,7 @@ export class Register {
   plan = 'Basic';
   errorMessage = '';
   successMessage = '';
+  submitting = false;
 
   constructor(private auth: Auth, private router: Router) {}
 
@@ -43,10 +45,22 @@ export class Register {
       return;
     }
 
+    if (!isValidEmail(this.adminEmail)) {
+      this.errorMessage = 'Please enter a valid admin email address.';
+      return;
+    }
+
+    if (this.password.length < 6) {
+      this.errorMessage = 'Password must be at least 6 characters.';
+      return;
+    }
+
     if (this.password !== this.confirmPassword) {
       this.errorMessage = 'Passwords do not match.';
       return;
     }
+
+    if (this.submitting) return;
 
     const payload = {
       name: this.name,
@@ -58,17 +72,19 @@ export class Register {
       plan: this.plan
     };
 
+    this.submitting = true;
     this.auth.registerTenant(payload).subscribe({
       next: () => {
+        this.submitting = false;
         this.successMessage = 'Organization created successfully! Redirecting you to login...';
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2000);
       },
       error: (err) => {
-        this.errorMessage = err.message || 'An error occurred while creating your organization. Please try again.';
+        this.submitting = false;
+        this.errorMessage = getErrorMessage(err, 'An error occurred while creating your organization. Please try again.');
       }
     });
   }
 }
-

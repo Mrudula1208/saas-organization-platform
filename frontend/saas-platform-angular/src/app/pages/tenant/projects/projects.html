@@ -4,7 +4,7 @@
       <h1 style="font-size: 2rem; font-weight: 800;">Projects Workspace</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization deliverables, timeline deadlines, project health, and owner allocations</p>
     </div>
-    
+
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-symbols-outlined">create_new_folder</span>
       Create Project
@@ -15,15 +15,15 @@
   <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input 
-          type="text" 
-          class="form-input" 
-          placeholder="Search projects by name, description..." 
-          [(ngModel)]="searchQuery" 
-          (input)="onSearch()" 
+        <input
+          type="text"
+          class="form-input"
+          placeholder="Search projects by name, description..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
         />
       </div>
-      
+
       <div class="form-group" style="width: 200px; margin-bottom: 0;">
         <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
           <option value="">All Statuses</option>
@@ -130,52 +130,52 @@
         <form (submit)="saveProject()">
           <div class="form-group">
             <label class="form-label" for="proj-name">Project Name *</label>
-            <input 
-              type="text" 
-              id="proj-name" 
-              class="form-input" 
-              placeholder="e.g. Website Overhaul" 
-              [(ngModel)]="newProject.name" 
-              name="name" 
-              required 
+            <input
+              type="text"
+              id="proj-name"
+              class="form-input"
+              placeholder="e.g. Website Overhaul"
+              [(ngModel)]="newProject.name"
+              name="name"
+              required
             />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="proj-desc">Project Description</label>
-            <textarea 
-              id="proj-desc" 
-              class="form-input" 
-              placeholder="Brief summary of project parameters and deliverables..." 
-              rows="3" 
-              [(ngModel)]="newProject.description" 
-              name="description" 
+            <textarea
+              id="proj-desc"
+              class="form-input"
+              placeholder="Brief summary of project parameters and deliverables..."
+              rows="3"
+              [(ngModel)]="newProject.description"
+              name="description"
               style="resize: none;"
             ></textarea>
           </div>
-          
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label" for="proj-start">Start Date *</label>
-              <input 
-                type="date" 
-                id="proj-start" 
-                class="form-input" 
-                [(ngModel)]="newProject.startDate" 
-                name="startDate" 
-                required 
+              <input
+                type="date"
+                id="proj-start"
+                class="form-input"
+                [(ngModel)]="newProject.startDate"
+                name="startDate"
+                required
               />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label" for="proj-end">End Date *</label>
-              <input 
-                type="date" 
-                id="proj-end" 
-                class="form-input" 
-                [(ngModel)]="newProject.endDate" 
-                name="endDate" 
-                required 
+              <input
+                type="date"
+                id="proj-end"
+                class="form-input"
+                [(ngModel)]="newProject.endDate"
+                name="endDate"
+                required
               />
             </div>
           </div>

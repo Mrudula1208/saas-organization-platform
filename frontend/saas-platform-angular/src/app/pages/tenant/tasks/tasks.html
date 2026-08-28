@@ -5,7 +5,7 @@
       <h1 style="font-size: 2rem; font-weight: 800;">Task Management Board</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Organize tasks, assign team members, track priorities, and manage deadlines</p>
     </div>
-    
+
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-symbols-outlined">add_task</span>
       Create Task
@@ -25,28 +25,28 @@
             }
           </select>
         </div>
-        
+
         <!-- Search Query -->
         <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-          <input 
-            type="text" 
-            class="form-input" 
-            placeholder="Search tasks..." 
-            [(ngModel)]="searchQuery" 
-            (input)="onSearch()" 
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Search tasks..."
+            [(ngModel)]="searchQuery"
+            (input)="onSearch()"
           />
         </div>
       </div>
 
       <!-- View Selector Buttons -->
       <div style="display: flex; background: rgba(15, 23, 42, 0.4); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);" 
+        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
                 [class.btn-primary]="activeView === 'board'" [class.btn-outline]="activeView !== 'board'"
                 (click)="switchView('board')">
           <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle; margin-right: 0.25rem;">grid_view</span>
           Kanban Board
         </button>
-        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);" 
+        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
                 [class.btn-primary]="activeView === 'table'" [class.btn-outline]="activeView !== 'table'"
                 (click)="switchView('table')">
           <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle; margin-right: 0.25rem;">list</span>
@@ -68,7 +68,7 @@
           </span>
           <span class="badge badge-info" style="font-size: 0.7rem;">{{ todoTasks.length }}</span>
         </h3>
-        
+
         <!-- Enable Drop zone on this column container -->
         <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'To Do')">
           @for (task of todoTasks; track task.id) {
@@ -86,13 +86,13 @@
                   {{ task.description }}
                 </p>
               </div>
-              
+
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
                 <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
                   <span class="material-symbols-outlined" style="font-size: 0.9rem;">calendar_month</span>
                   {{ task.dueDate | date:'shortDate' }}
                 </span>
-                
+
                 <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
                 </button>
@@ -138,7 +138,7 @@
                 <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'To Do')">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
                 </button>
-                
+
                 <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
                   <span class="material-symbols-outlined" style="font-size: 0.9rem;">calendar_month</span>
                   {{ task.dueDate | date:'shortDate' }}
@@ -189,7 +189,7 @@
                 <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
                 </button>
-                
+
                 <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
                   <span class="material-symbols-outlined" style="font-size: 0.9rem; color: var(--success-color);">check</span>
                   Finished
@@ -281,26 +281,26 @@
         <form (submit)="saveTask()">
           <div class="form-group">
             <label class="form-label" for="task-title">Task Title *</label>
-            <input 
-              type="text" 
-              id="task-title" 
-              class="form-input" 
-              placeholder="e.g. Design Settings Grid" 
-              [(ngModel)]="newTask.name" 
-              name="name" 
-              required 
+            <input
+              type="text"
+              id="task-title"
+              class="form-input"
+              placeholder="e.g. Design Settings Grid"
+              [(ngModel)]="newTask.name"
+              name="name"
+              required
             />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="task-desc">Task Description</label>
-            <textarea 
-              id="task-desc" 
-              class="form-input" 
-              placeholder="Write a brief explanation of task details..." 
-              rows="3" 
-              [(ngModel)]="newTask.description" 
-              name="description" 
+            <textarea
+              id="task-desc"
+              class="form-input"
+              placeholder="Write a brief explanation of task details..."
+              rows="3"
+              [(ngModel)]="newTask.description"
+              name="description"
               style="resize: none;"
             ></textarea>
           </div>
@@ -323,16 +323,16 @@
                 }
               </select>
             </div>
-            
+
             <div class="form-group">
               <label class="form-label" for="task-due">Due Date</label>
-              <input 
-                type="date" 
-                id="task-due" 
-                class="form-input" 
-                [(ngModel)]="newTask.dueDate" 
-                name="dueDate" 
-                required 
+              <input
+                type="date"
+                id="task-due"
+                class="form-input"
+                [(ngModel)]="newTask.dueDate"
+                name="dueDate"
+                required
               />
             </div>
           </div>

@@ -4,7 +4,7 @@
       <h1 style="font-size: 2rem; font-weight: 800;">Team Members Directory</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Manage your organization's user accounts, roles, access permissions, and profiles</p>
     </div>
-    
+
     <button class="btn btn-primary" (click)="openAddModal()">
       <span class="material-symbols-outlined">person_add</span>
       Add User
@@ -15,15 +15,15 @@
   <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input 
-          type="text" 
-          class="form-input" 
-          placeholder="Search team members by name, email..." 
-          [(ngModel)]="searchQuery" 
-          (input)="onSearch()" 
+        <input
+          type="text"
+          class="form-input"
+          placeholder="Search team members by name, email..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
         />
       </div>
-      
+
       <div class="form-group" style="width: 200px; margin-bottom: 0;">
         <select class="form-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
           <option value="">All Roles</option>
@@ -101,40 +101,40 @@
         <form (submit)="saveNewUser()">
           <div class="form-group">
             <label class="form-label" for="add-fullname">Full Name *</label>
-            <input 
-              type="text" 
-              id="add-fullname" 
-              class="form-input" 
-              placeholder="e.g. John Doe" 
-              [(ngModel)]="newUser.fullName" 
-              name="fullName" 
-              required 
+            <input
+              type="text"
+              id="add-fullname"
+              class="form-input"
+              placeholder="e.g. John Doe"
+              [(ngModel)]="newUser.fullName"
+              name="fullName"
+              required
             />
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="add-email">Email Address *</label>
-            <input 
-              type="email" 
-              id="add-email" 
-              class="form-input" 
-              placeholder="name@example.com" 
-              [(ngModel)]="newUser.email" 
-              name="email" 
-              required 
+            <input
+              type="email"
+              id="add-email"
+              class="form-input"
+              placeholder="name@example.com"
+              [(ngModel)]="newUser.email"
+              name="email"
+              required
             />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="add-password">Temporary Password *</label>
-            <input 
-              type="password" 
-              id="add-password" 
-              class="form-input" 
-              placeholder="••••••••••••" 
-              [(ngModel)]="newUser.password" 
-              name="password" 
-              required 
+            <input
+              type="password"
+              id="add-password"
+              class="form-input"
+              placeholder="••••••••••••"
+              [(ngModel)]="newUser.password"
+              name="password"
+              required
             />
           </div>
 
@@ -149,13 +149,13 @@
 
           <div class="form-group">
             <label class="form-label" for="add-avatar">Profile Image URL (optional)</label>
-            <input 
-              type="text" 
-              id="add-avatar" 
-              class="form-input" 
-              placeholder="https://images.unsplash.com/..." 
-              [(ngModel)]="newUser.profileImageUrl" 
-              name="profileImageUrl" 
+            <input
+              type="text"
+              id="add-avatar"
+              class="form-input"
+              placeholder="https://images.unsplash.com/..."
+              [(ngModel)]="newUser.profileImageUrl"
+              name="profileImageUrl"
             />
           </div>
 
@@ -179,25 +179,25 @@
         <form (submit)="saveEditUser()">
           <div class="form-group">
             <label class="form-label" for="edit-fullname">Full Name</label>
-            <input 
-              type="text" 
-              id="edit-fullname" 
-              class="form-input" 
-              [(ngModel)]="editUserForm.fullName" 
-              name="fullName" 
-              required 
+            <input
+              type="text"
+              id="edit-fullname"
+              class="form-input"
+              [(ngModel)]="editUserForm.fullName"
+              name="fullName"
+              required
             />
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="edit-email">Email Address</label>
-            <input 
-              type="email" 
-              id="edit-email" 
-              class="form-input" 
-              [(ngModel)]="editUserForm.email" 
-              name="email" 
-              disabled 
+            <input
+              type="email"
+              id="edit-email"
+              class="form-input"
+              [(ngModel)]="editUserForm.email"
+              name="email"
+              disabled
             />
           </div>
 

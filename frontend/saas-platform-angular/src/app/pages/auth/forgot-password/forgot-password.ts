@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-forgot-password',
@@ -16,6 +17,7 @@ export class ForgotPassword {
   errorMessage = '';
   successMessage = '';
   isSubmitted = false;
+  submitting = false;
 
   constructor(private auth: Auth) {}
 
@@ -23,21 +25,19 @@ export class ForgotPassword {
     event.preventDefault();
     this.errorMessage = '';
     this.successMessage = '';
+    if (!this.email || this.submitting) return;
 
-    if (!this.email) {
-      this.errorMessage = 'Please enter your email address.';
-      return;
-    }
-
+    this.submitting = true;
     this.auth.forgotPassword(this.email).subscribe({
-      next: (res) => {
+      next: () => {
+        this.submitting = false;
         this.isSubmitted = true;
         this.successMessage = `We have sent a password reset link to ${this.email}. Please check your inbox.`;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'An error occurred. Please try again.';
+        this.submitting = false;
+        this.errorMessage = getErrorMessage(err, 'An error occurred. Please try again.');
       }
     });
   }
 }
-

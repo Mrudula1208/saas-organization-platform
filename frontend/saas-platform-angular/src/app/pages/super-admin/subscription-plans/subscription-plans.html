@@ -4,7 +4,7 @@
       <h1 style="font-size: 2rem; font-weight: 800;">Subscription Tiers</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Define, edit, and audit system-wide pricing packages, billing limitations, and account quotes</p>
     </div>
-    
+
     <button class="btn btn-primary" (click)="openCreateModal()">
       <span class="material-symbols-outlined">add_card</span>
       Create New Plan
@@ -28,7 +28,7 @@
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
     @for (plan of plans; track plan.id) {
       <div class="glass-card" [class.glow-primary]="plan.name === 'Pro'" [class.glow-secondary]="plan.name === 'Enterprise'" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 450px; position: relative;">
-        
+
         <!-- Status Indicator Pin -->
         <span class="badge" [class.badge-success]="plan.isActive" [class.badge-danger]="!plan.isActive" style="position: absolute; top: 1rem; right: 1rem;">
           {{ plan.isActive ? 'Active Plan' : 'Suspended' }}
@@ -73,7 +73,7 @@
             <span class="material-symbols-outlined" style="font-size: 1.15rem;">{{ plan.isActive ? 'pause' : 'play_arrow' }}</span>
             {{ plan.isActive ? 'Suspend' : 'Activate' }}
           </button>
-          
+
           @if (plan.name !== 'Basic' && plan.name !== 'Pro' && plan.name !== 'Enterprise') {
             <button class="btn btn-danger" style="padding: 0.75rem;" (click)="deletePlan(plan.id)">
               <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete</span>
@@ -103,41 +103,41 @@
         <form (submit)="saveNewPlan()">
           <div class="form-group">
             <label class="form-label" for="plan-name">Subscription Package Name</label>
-            <input 
-              type="text" 
-              id="plan-name" 
-              class="form-input" 
-              placeholder="e.g. Growth, Developer" 
-              [(ngModel)]="newPlan.name" 
-              name="name" 
-              required 
+            <input
+              type="text"
+              id="plan-name"
+              class="form-input"
+              placeholder="e.g. Growth, Developer"
+              [(ngModel)]="newPlan.name"
+              name="name"
+              required
             />
           </div>
-          
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label" for="plan-price">Monthly Price ($)</label>
-              <input 
-                type="number" 
-                id="plan-price" 
-                class="form-input" 
-                [(ngModel)]="newPlan.price" 
-                name="price" 
+              <input
+                type="number"
+                id="plan-price"
+                class="form-input"
+                [(ngModel)]="newPlan.price"
+                name="price"
                 min="0"
-                required 
+                required
               />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label" for="plan-storage">Storage limit (GB)</label>
-              <input 
-                type="number" 
-                id="plan-storage" 
-                class="form-input" 
-                [(ngModel)]="newPlan.storageLimit" 
-                name="storageLimit" 
+              <input
+                type="number"
+                id="plan-storage"
+                class="form-input"
+                [(ngModel)]="newPlan.storageLimit"
+                name="storageLimit"
                 min="1"
-                required 
+                required
               />
             </div>
           </div>
@@ -145,27 +145,27 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
             <div class="form-group">
               <label class="form-label" for="plan-users">Max Users Allowed</label>
-              <input 
-                type="number" 
-                id="plan-users" 
-                class="form-input" 
-                [(ngModel)]="newPlan.maxUsers" 
-                name="maxUsers" 
+              <input
+                type="number"
+                id="plan-users"
+                class="form-input"
+                [(ngModel)]="newPlan.maxUsers"
+                name="maxUsers"
                 min="1"
-                required 
+                required
               />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label" for="plan-projects">Max Projects Allowed</label>
-              <input 
-                type="number" 
-                id="plan-projects" 
-                class="form-input" 
-                [(ngModel)]="newPlan.maxProjects" 
-                name="maxProjects" 
+              <input
+                type="number"
+                id="plan-projects"
+                class="form-input"
+                [(ngModel)]="newPlan.maxProjects"
+                name="maxProjects"
                 min="1"
-                required 
+                required
               />
             </div>
           </div>

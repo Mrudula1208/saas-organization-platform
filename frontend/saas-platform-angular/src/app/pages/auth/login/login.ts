@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-login',
@@ -16,17 +17,19 @@ export class Login {
   password = '';
   rememberMe = false;
   errorMessage = '';
+  submitting = false;
 
   constructor(private auth: Auth, private router: Router) {}
 
   onSubmit(event: Event) {
     event.preventDefault();
     this.errorMessage = '';
+    if (!this.email || !this.password || this.submitting) return;
 
-    if (!this.email || !this.password) return;
-
+    this.submitting = true;
     this.auth.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
+        this.submitting = false;
         const currentUser = this.auth.currentUser();
         if (currentUser) {
           if (currentUser.role === 'SuperAdmin') {
@@ -37,7 +40,8 @@ export class Login {
         }
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Login failed. Please check your credentials and try again.';
+        this.submitting = false;
+        this.errorMessage = getErrorMessage(err, 'Login failed. Please check your credentials and try again.');
       }
     });
   }
