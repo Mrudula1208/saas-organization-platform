@@ -11,6 +11,19 @@
     </button>
   </div>
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ errorMessage }}
+    </div>
+  }
+
+  @if (loading) {
+    <div style="text-align: center; padding: 5rem 2rem; color: var(--text-muted);">
+      <span class="material-symbols-outlined" style="font-size: 3rem; animation: spin 1s linear infinite; display: inline-block;">progress_activity</span>
+      <div style="margin-top: 1rem;">Loading subscription plans...</div>
+    </div>
+  }
+
   <!-- Plans Pricing Deck -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
     @for (plan of plans; track plan.id) {
@@ -61,7 +74,7 @@
             {{ plan.isActive ? 'Suspend' : 'Activate' }}
           </button>
           
-          @if (plan.id !== '1' && plan.id !== '2' && plan.id !== '3') {
+          @if (plan.name !== 'Basic' && plan.name !== 'Pro' && plan.name !== 'Enterprise') {
             <button class="btn btn-danger" style="padding: 0.75rem;" (click)="deletePlan(plan.id)">
               <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete</span>
             </button>
@@ -69,6 +82,13 @@
         </div>
 
       </div>
+    } @empty {
+      @if (!loading) {
+        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
+          <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">sell</span>
+          <div>No subscription plans available. Create one to get started.</div>
+        </div>
+      }
     }
   </div>
 
