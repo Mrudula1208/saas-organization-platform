@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SaaSPlatform.Application.DTOS.Reports;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Infrastructure.Data;
 using System;
@@ -96,11 +97,6 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 .Where(p => p.PaymentDate >= thirtyDaysAgo)
                 .SumAsync(p => p.Amount);
 
-            if (monthlyRevenue == 0)
-            {
-                monthlyRevenue = 345100;
-            }
-
             var tenantsByPlan = await _context.Tenants
                 .Where(t => !t.IsDeleted)
                 .Join(_context.SubscriptionPlans, t => t.SubscriptionPlanId, p => p.Id, (t, p) => p.Name)
@@ -135,7 +131,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
             };
         }
 
-        public async Task<object> GetTenantReportDataAsync(Guid tenantId)
+        public async Task<TenantReportDto> GetTenantReportDataAsync(Guid tenantId)
         {
             var now = DateTime.UtcNow;
 
@@ -144,7 +140,20 @@ namespace SaaSPlatform.Infrastructure.Repositories
             var monthlyProjects = await _context.Projects
                 .Where(p => p.TenantId == tenantId && !p.IsDeleted && p.CreatedAt >= sixMonthsAgo)
                 .GroupBy(p => new { p.CreatedAt.Year, p.CreatedAt.Month })
-                .Select(g => new
+                .Select(g => new MonthlyStatDto
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToListAsync();
+
+            // Monthly created task counts for last 6 months
+            var monthlyTasksCreated = await _context.TaskItems
+                .Where(t => t.TenantId == tenantId && !t.IsDeleted && t.CreatedAt >= sixMonthsAgo)
+                .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+                .Select(g => new MonthlyStatDto
                 {
                     Year = g.Key.Year,
                     Month = g.Key.Month,
@@ -154,12 +163,12 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 .ToListAsync();
 
             // Monthly completed task counts for last 6 months
-            var monthlyTasks = await _context.TaskItems
+            var monthlyTasksCompleted = await _context.TaskItems
                 .Where(t => t.TenantId == tenantId && !t.IsDeleted
                     && (t.Status == "Completed" || t.Status == "Done")
                     && t.CreatedAt >= sixMonthsAgo)
                 .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
-                .Select(g => new
+                .Select(g => new MonthlyStatDto
                 {
                     Year = g.Key.Year,
                     Month = g.Key.Month,
@@ -169,28 +178,33 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 .ToListAsync();
 
             // Productivity metrics
+            var totalProjects = await _context.Projects.CountAsync(p => p.TenantId == tenantId && !p.IsDeleted);
             var totalTasks = await _context.TaskItems.CountAsync(t => t.TenantId == tenantId && !t.IsDeleted);
             var completedTasks = await _context.TaskItems.CountAsync(t => t.TenantId == tenantId && !t.IsDeleted && (t.Status == "Completed" || t.Status == "Done"));
+            var pendingTasks = await _context.TaskItems.CountAsync(t => t.TenantId == tenantId && !t.IsDeleted && t.Status == "To Do");
+            var inProgressTasks = await _context.TaskItems.CountAsync(t => t.TenantId == tenantId && !t.IsDeleted && t.Status == "In Progress");
             var totalMembers = await _context.Users.CountAsync(u => u.TenantId == tenantId && !u.IsDeleted);
-            var totalProjectsCount = await _context.Projects.CountAsync(p => p.TenantId == tenantId && !p.IsDeleted);
 
             double avgTasksPerMember = totalMembers > 0 ? Math.Round((double)totalTasks / totalMembers, 1) : 0;
             double completionRate = totalTasks > 0 ? Math.Round((double)completedTasks / totalTasks * 100, 1) : 0;
 
-            return new
+            return new TenantReportDto
             {
                 MonthlyProjects = monthlyProjects,
-                MonthlyTasks = monthlyTasks,
+                MonthlyTasksCreated = monthlyTasksCreated,
+                MonthlyTasksCompleted = monthlyTasksCompleted,
+                TotalProjects = totalProjects,
                 TotalTasks = totalTasks,
                 CompletedTasks = completedTasks,
+                PendingTasks = pendingTasks,
+                InProgressTasks = inProgressTasks,
                 TotalMembers = totalMembers,
-                TotalProjects = totalProjectsCount,
                 AvgTasksPerMember = avgTasksPerMember,
                 CompletionRate = completionRate
             };
         }
 
-        public async Task<object> GetAdminReportDataAsync()
+        public async Task<AdminReportDto> GetAdminReportDataAsync()
         {
             var now = DateTime.UtcNow;
 
@@ -199,7 +213,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
             var quarterlyTenants = await _context.Tenants
                 .Where(t => !t.IsDeleted && t.CreatedAt >= oneYearAgo)
                 .GroupBy(t => new { t.CreatedAt.Year, Quarter = (t.CreatedAt.Month - 1) / 3 + 1 })
-                .Select(g => new
+                .Select(g => new QuarterlyStatDto
                 {
                     Year = g.Key.Year,
                     Quarter = g.Key.Quarter,
@@ -213,7 +227,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
             var monthlyUsers = await _context.Users
                 .Where(u => !u.IsDeleted && u.CreatedAt >= sixMonthsAgo)
                 .GroupBy(u => new { u.CreatedAt.Year, u.CreatedAt.Month })
-                .Select(g => new
+                .Select(g => new MonthlyStatDto
                 {
                     Year = g.Key.Year,
                     Month = g.Key.Month,
@@ -243,7 +257,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
             var inactiveTenants = await _context.Tenants.CountAsync(t => !t.IsActive && !t.IsDeleted);
             double churnRate = totalTenants > 0 ? Math.Round((double)inactiveTenants / totalTenants * 100, 2) : 0;
 
-            return new
+            return new AdminReportDto
             {
                 QuarterlyTenants = quarterlyTenants,
                 MonthlyUsers = monthlyUsers,

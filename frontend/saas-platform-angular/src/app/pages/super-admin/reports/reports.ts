@@ -19,12 +19,16 @@ export class Reports implements OnInit {
   tenantGrowth: GrowthRecord[] = [];
   userGrowth: GrowthRecord[] = [];
 
-  avgTenantLifetime = '0 Months';
-  customerAcquisitionCost = '$0 / org';
-  churnRate = '0%';
-  systemLoadAvg = '8.42%';
+  avgTenantLifetime = 0;
+  customerAcquisitionCost = 0;
+  churnRate = 0;
+  totalTenants = 0;
+  totalUsers = 0;
 
   isLoading = true;
+  errorMessage = '';
+
+  private monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
   constructor(private reportService: ReportService) {}
 
@@ -34,79 +38,51 @@ export class Reports implements OnInit {
 
   loadReport() {
     this.isLoading = true;
+    this.errorMessage = '';
+
     this.reportService.getAdminReport().subscribe({
-      next: (data) => {
-        if (data) {
-          this.buildTenantGrowthChart(data.quarterlyTenants);
-          this.buildUserGrowthChart(data.monthlyUsers);
-          this.avgTenantLifetime = data.avgLifetimeMonths + ' Months';
-          this.customerAcquisitionCost = '$' + data.customerAcquisitionCost + ' / org';
-          this.churnRate = data.churnRate + '%';
-        }
+      next: (data: AdminReportData) => {
+        this.tenantGrowth = this.buildTenantGrowthChart(data.quarterlyTenants);
+        this.userGrowth = this.buildUserGrowthChart(data.monthlyUsers);
+        this.avgTenantLifetime = data.avgLifetimeMonths;
+        this.customerAcquisitionCost = data.customerAcquisitionCost;
+        this.churnRate = data.churnRate;
+        this.totalTenants = data.totalTenants;
+        this.totalUsers = data.totalUsers;
         this.isLoading = false;
       },
       error: () => {
-        this.useFallbackData();
         this.isLoading = false;
-      }
+        this.errorMessage = 'Could not load global reports. Please try again later.';
+      },
     });
   }
 
-  private buildTenantGrowthChart(quarterlyData: QuarterlyStat[]) {
+  private buildTenantGrowthChart(quarterlyData: QuarterlyStat[]): GrowthRecord[] {
     if (!quarterlyData || quarterlyData.length === 0) {
-      this.useFallbackTenantGrowth();
-      return;
+      return [];
     }
     const maxCount = Math.max(...quarterlyData.map(q => q.count), 1);
-    this.tenantGrowth = quarterlyData.map(q => ({
+    return quarterlyData.map(q => ({
       label: 'Q' + q.quarter + ' ' + q.year,
       count: q.count,
       heightPercent: Math.round((q.count / maxCount) * 100)
     }));
   }
 
-  private buildUserGrowthChart(monthlyData: MonthlyStat[]) {
+  private buildUserGrowthChart(monthlyData: MonthlyStat[]): GrowthRecord[] {
     if (!monthlyData || monthlyData.length === 0) {
-      this.useFallbackUserGrowth();
-      return;
+      return [];
     }
     const maxCount = Math.max(...monthlyData.map(m => m.count), 1);
-    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    this.userGrowth = monthlyData.map(m => ({
-      label: monthNames[m.month - 1] || '???',
+    return monthlyData.map(m => ({
+      label: this.monthNames[m.month - 1] || '???',
       count: m.count,
       heightPercent: Math.round((m.count / maxCount) * 100)
     }));
-  }
-
-  private useFallbackData() {
-    this.useFallbackTenantGrowth();
-    this.useFallbackUserGrowth();
-    this.avgTenantLifetime = '14.2 Months';
-    this.customerAcquisitionCost = '$124.50 / org';
-    this.churnRate = '1.25%';
-  }
-
-  private useFallbackTenantGrowth() {
-    this.tenantGrowth = [
-      { label: 'Q1 2025', count: 12, heightPercent: 30 },
-      { label: 'Q2 2025', count: 22, heightPercent: 55 },
-      { label: 'Q3 2025', count: 31, heightPercent: 75 },
-      { label: 'Q4 2025', count: 40, heightPercent: 100 }
-    ];
-  }
-
-  private useFallbackUserGrowth() {
-    this.userGrowth = [
-      { label: 'JAN', count: 90, heightPercent: 40 },
-      { label: 'FEB', count: 140, heightPercent: 60 },
-      { label: 'MAR', count: 180, heightPercent: 80 },
-      { label: 'APR', count: 222, heightPercent: 100 }
-    ];
   }
 
   exportData(format: 'PDF' | 'Excel') {
     alert(`System Reports Export sequence initialized! Your file is being compiled into ${format} format and will download shortly.`);
   }
 }
-

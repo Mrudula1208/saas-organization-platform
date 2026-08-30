@@ -17,6 +17,12 @@
     </div>
   </div>
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ errorMessage }}
+    </div>
+  }
+
   @if (isLoading) {
     <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
       <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 3rem; height: 3rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
@@ -70,19 +76,20 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
         <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Avg Tenant Lifetime</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color); margin-top: 0.25rem;">{{ avgTenantLifetime }}</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color); margin-top: 0.25rem;">{{ avgTenantLifetime }} Months</div>
         </div>
         <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Customer Acquisition Cost</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-top: 0.25rem;">{{ customerAcquisitionCost }}</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-top: 0.25rem;">${{ customerAcquisitionCost }} / org</div>
         </div>
         <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Platform Churn Rate</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary-color); margin-top: 0.25rem;">{{ churnRate }}</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary-color); margin-top: 0.25rem;">{{ churnRate }}%</div>
         </div>
         <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary);">System Load Avg</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color); margin-top: 0.25rem;">{{ systemLoadAvg }}</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">Registered Users</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color); margin-top: 0.25rem;">{{ totalUsers }}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalTenants }} organizations</div>
         </div>
       </div>
     </div>

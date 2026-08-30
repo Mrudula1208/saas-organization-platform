@@ -19,14 +19,17 @@ export class Reports implements OnInit {
   projectsCreated: ReportStat[] = [];
   tasksCompleted: ReportStat[] = [];
 
-  avgTaskCycleTime = '0 Days';
-  sprintGoalCompletion = '0%';
-  activeTasksPerMember = '0 Tasks';
+  totalProjects = 0;
   totalTasks = 0;
   completedTasks = 0;
+  pendingTasks = 0;
+  inProgressTasks = 0;
   totalMembers = 0;
+  avgTasksPerMember = 0;
+  completionRate = 0;
 
   isLoading = true;
+  errorMessage = '';
 
   private monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -38,81 +41,39 @@ export class Reports implements OnInit {
 
   loadReport() {
     this.isLoading = true;
+    this.errorMessage = '';
+
     this.reportService.getTenantReport().subscribe({
-      next: (data) => {
-        if (data) {
-          this.buildProjectsChart(data.monthlyProjects);
-          this.buildTasksChart(data.monthlyTasks);
-          this.totalTasks = data.totalTasks;
-          this.completedTasks = data.completedTasks;
-          this.totalMembers = data.totalMembers;
-          this.sprintGoalCompletion = data.completionRate + '%';
-          this.activeTasksPerMember = data.avgTasksPerMember + ' Tasks';
-          this.avgTaskCycleTime = this.totalTasks > 0 ? '3.2 Days' : '0 Days';
-        }
+      next: (data: TenantReportData) => {
+        this.projectsCreated = this.buildChart(data.monthlyProjects);
+        this.tasksCompleted = this.buildChart(data.monthlyTasksCompleted);
+        this.totalProjects = data.totalProjects;
+        this.totalTasks = data.totalTasks;
+        this.completedTasks = data.completedTasks;
+        this.pendingTasks = data.pendingTasks;
+        this.inProgressTasks = data.inProgressTasks;
+        this.totalMembers = data.totalMembers;
+        this.avgTasksPerMember = data.avgTasksPerMember;
+        this.completionRate = data.completionRate;
         this.isLoading = false;
       },
       error: () => {
-        this.useFallbackData();
         this.isLoading = false;
-      }
+        this.errorMessage = 'Could not load workspace analytics. Please try again later.';
+      },
     });
   }
 
-  private buildProjectsChart(monthlyData: MonthlyStat[]) {
+  private buildChart(monthlyData: MonthlyStat[]): ReportStat[] {
     if (!monthlyData || monthlyData.length === 0) {
-      this.useFallbackProjects();
-      return;
+      return [];
     }
     const maxCount = Math.max(...monthlyData.map(m => m.count), 1);
-    this.projectsCreated = monthlyData.map(m => ({
+    return monthlyData.map(m => ({
       month: this.monthNames[m.month - 1] || '???',
       count: m.count,
       heightPercent: Math.round((m.count / maxCount) * 100)
     }));
-  }
-
-  private buildTasksChart(monthlyData: MonthlyStat[]) {
-    if (!monthlyData || monthlyData.length === 0) {
-      this.useFallbackTasks();
-      return;
-    }
-    const maxCount = Math.max(...monthlyData.map(m => m.count), 1);
-    this.tasksCompleted = monthlyData.map(m => ({
-      month: this.monthNames[m.month - 1] || '???',
-      count: m.count,
-      heightPercent: Math.round((m.count / maxCount) * 100)
-    }));
-  }
-
-  private useFallbackData() {
-    this.useFallbackProjects();
-    this.useFallbackTasks();
-    this.avgTaskCycleTime = '3.2 Days';
-    this.sprintGoalCompletion = '94.2%';
-    this.activeTasksPerMember = '2.4 Tasks';
-  }
-
-  private useFallbackProjects() {
-    this.projectsCreated = [
-      { month: 'DEC', count: 1, heightPercent: 20 },
-      { month: 'JAN', count: 2, heightPercent: 40 },
-      { month: 'FEB', count: 2, heightPercent: 40 },
-      { month: 'MAR', count: 3, heightPercent: 60 },
-      { month: 'APR', count: 4, heightPercent: 80 },
-      { month: 'MAY', count: 5, heightPercent: 100 }
-    ];
-  }
-
-  private useFallbackTasks() {
-    this.tasksCompleted = [
-      { month: 'DEC', count: 8, heightPercent: 25 },
-      { month: 'JAN', count: 12, heightPercent: 37 },
-      { month: 'FEB', count: 18, heightPercent: 56 },
-      { month: 'MAR', count: 22, heightPercent: 68 },
-      { month: 'APR', count: 27, heightPercent: 84 },
-      { month: 'MAY', count: 32, heightPercent: 100 }
-    ];
   }
 
   exportReport(format: 'PDF' | 'Excel') {

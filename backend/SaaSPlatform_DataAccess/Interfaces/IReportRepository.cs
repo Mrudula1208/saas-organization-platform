@@ -1,3 +1,4 @@
+using SaaSPlatform.Application.DTOS.Reports;
 using System;
 using System.Threading.Tasks;
 
@@ -10,7 +11,7 @@ namespace SaaSPlatform.Application.Interfaces
         Task<decimal> GetTotalRevenueAsync(Guid tenantId);
         Task<object> GetTenantDashboardDataAsync(Guid tenantId);
         Task<object> GetSuperAdminDashboardDataAsync();
-        Task<object> GetTenantReportDataAsync(Guid tenantId);
-        Task<object> GetAdminReportDataAsync();
+        Task<TenantReportDto> GetTenantReportDataAsync(Guid tenantId);
+        Task<AdminReportDto> GetAdminReportDataAsync();
     }
 }

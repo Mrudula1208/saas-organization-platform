@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface MonthlyStat {
   year: number;
@@ -17,11 +16,14 @@ export interface QuarterlyStat {
 
 export interface TenantReportData {
   monthlyProjects: MonthlyStat[];
-  monthlyTasks: MonthlyStat[];
+  monthlyTasksCreated: MonthlyStat[];
+  monthlyTasksCompleted: MonthlyStat[];
+  totalProjects: number;
   totalTasks: number;
   completedTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
   totalMembers: number;
-  totalProjects: number;
   avgTasksPerMember: number;
   completionRate: number;
 }
@@ -44,23 +46,25 @@ export class ReportService {
 
   constructor(private http: HttpClient) {}
 
-  getTenantReport(): Observable<TenantReportData | null> {
-    return this.http.get<TenantReportData>(`${this.apiUrl}/tenant-report`).pipe(
-      map((res: any) => res),
-      catchError(() => {
-        console.warn('Tenant report API offline. Using fallback data.');
-        return of(null);
-      })
-    );
+  private getHeaders(): HttpHeaders {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('saas_token');
+      if (token) {
+        return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      }
+    }
+    return new HttpHeaders();
   }
 
-  getAdminReport(): Observable<AdminReportData | null> {
-    return this.http.get<AdminReportData>(`${this.apiUrl}/admin-report`).pipe(
-      map((res: any) => res),
-      catchError(() => {
-        console.warn('Admin report API offline. Using fallback data.');
-        return of(null);
-      })
-    );
+  getTenantReport(): Observable<TenantReportData> {
+    return this.http.get<TenantReportData>(`${this.apiUrl}/tenant-report`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  getAdminReport(): Observable<AdminReportData> {
+    return this.http.get<AdminReportData>(`${this.apiUrl}/admin-report`, {
+      headers: this.getHeaders(),
+    });
   }
 }

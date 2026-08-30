@@ -17,6 +17,12 @@
     </div>
   </div>
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ errorMessage }}
+    </div>
+  }
+
   @if (isLoading) {
     <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
       <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 3rem; height: 3rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
@@ -69,18 +75,23 @@
       <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem;">Workspace Productivity Logs</h3>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
         <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Avg Task Cycle Time</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-color); margin-top: 0.25rem;">{{ avgTaskCycleTime }}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalTasks }} total tasks</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Pending Tasks</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-color); margin-top: 0.25rem;">{{ pendingTasks }}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalProjects }} total projects</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">In Progress Tasks</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-top: 0.25rem;">{{ inProgressTasks }}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Currently being worked on</div>
         </div>
         <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
           <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Task Completion Rate</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-top: 0.25rem;">{{ sprintGoalCompletion }}</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-top: 0.25rem;">{{ completionRate }}%</div>
           <div style="font-size: 0.75rem; color: var(--success-color); margin-top: 0.25rem;">{{ completedTasks }} of {{ totalTasks }} tasks completed</div>
         </div>
         <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
           <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Active Tasks / Member</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--secondary-color); margin-top: 0.25rem;">{{ activeTasksPerMember }}</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--secondary-color); margin-top: 0.25rem;">{{ avgTasksPerMember }} Tasks</div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalMembers }} team members</div>
         </div>
       </div>
