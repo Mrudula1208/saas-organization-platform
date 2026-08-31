@@ -1,14 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Auth } from '../../../core/services/auth';
-import { TenantService, Tenant } from '../../../core/services/tenant';
-
-interface Invoice {
-  id: string;
-  date: string;
-  amount: number;
-  status: string;
-}
+import {
+  BillingService,
+  CurrentPlan,
+  PaymentRecord,
+  BillingSummary,
+} from '../../../core/services/billing';
 
 @Component({
   selector: 'app-billing',
@@ -18,20 +15,14 @@ interface Invoice {
   styleUrl: './billing.css',
 })
 export class Billing implements OnInit {
-  currentTenant: Tenant | null = null;
-  paymentMethod = 'Visa ending in 4242';
-  nextBillingDate = '2026-06-25';
-  
-  invoices: Invoice[] = [
-    { id: 'INV-2026-004', date: '2026-05-25', amount: 45, status: 'Paid' },
-    { id: 'INV-2026-003', date: '2026-04-25', amount: 45, status: 'Paid' },
-    { id: 'INV-2026-002', date: '2026-03-25', amount: 45, status: 'Paid' },
-    { id: 'INV-2026-001', date: '2026-02-25', amount: 15, status: 'Paid' } // Basic initially
-  ];
+  currentPlan: CurrentPlan | null = null;
+  summary: BillingSummary | null = null;
+  payments: PaymentRecord[] = [];
 
   isLoading = true;
+  errorMessage = '';
 
-  constructor(private auth: Auth, private tenantService: TenantService) {}
+  constructor(private billingService: BillingService) {}
 
   ngOnInit() {
     this.loadBillingInfo();
@@ -39,34 +30,60 @@ export class Billing implements OnInit {
 
   loadBillingInfo() {
     this.isLoading = true;
-    const tenantId = this.auth.getTenantId();
-    if (!tenantId) {
-      this.isLoading = false;
-      return;
-    }
+    this.errorMessage = '';
 
-    this.tenantService.getById(tenantId).subscribe({
-      next: (tenant: Tenant | null) => {
-        if (tenant) {
-          this.currentTenant = tenant;
-          
-          // Adjust invoice list price to match the tenant's current active plan
-          this.invoices.forEach((inv, index) => {
-            if (index < 3) {
-              inv.amount = tenant.monthlyRevenue || 45;
-            }
-          });
-        }
+    this.billingService.getBillingSummary().subscribe({
+      next: (summary: BillingSummary) => {
+        this.summary = summary;
+        this.currentPlan = summary.currentPlan;
+        this.loadPayments();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage = 'Could not load billing information. Please try again later.';
+      },
+    });
+  }
+
+  private loadPayments() {
+    this.billingService.getPayments().subscribe({
+      next: (payments: PaymentRecord[]) => {
+        this.payments = payments;
         this.isLoading = false;
       },
       error: () => {
         this.isLoading = false;
-      }
+        this.errorMessage = 'Could not load payment history. Please try again later.';
+      },
     });
   }
 
+  get paymentMethod(): string {
+    if (this.payments.length === 0) {
+      return 'Not on file';
+    }
+    return this.payments[0].paymentMethod || 'Not on file';
+  }
+
+  isPaid(status: string): boolean {
+    return status?.toLowerCase() === 'success' || status?.toLowerCase() === 'paid';
+  }
+
+  requestPlanChange() {
+    alert(
+      'Online payments are not configured in this environment. Please contact your platform administrator to change your subscription plan.'
+    );
+  }
+
+  updatePaymentMethod() {
+    alert(
+      'Online payment methods are not configured in this environment. Please contact your platform administrator to update billing details.'
+    );
+  }
+
   downloadInvoice(id: string) {
-    alert(`Downloading Invoice ${id} as PDF...`);
+    alert(
+      `Invoice export is not configured in this environment. Reference: ${id}. Please contact your platform administrator.`
+    );
   }
 }
-

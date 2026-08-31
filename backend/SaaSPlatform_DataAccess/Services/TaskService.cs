@@ -121,6 +121,11 @@ namespace SaaSPlatform.Application.Services
             if (task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) || task.Status.Equals("Done", StringComparison.OrdinalIgnoreCase))
             {
                 task.IsCompleted = true;
+                task.CompletedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                task.CompletedAt = null;
             }
 
             await _taskRepository.UpdateAsync(task);
@@ -150,7 +155,17 @@ namespace SaaSPlatform.Application.Services
 
             var oldStatus = task.Status;
             task.Status = status;
-            task.IsCompleted = status.Equals("Completed", StringComparison.OrdinalIgnoreCase) || status.Equals("Done", StringComparison.OrdinalIgnoreCase);
+
+            if (status.Equals("Completed", StringComparison.OrdinalIgnoreCase) || status.Equals("Done", StringComparison.OrdinalIgnoreCase))
+            {
+                task.IsCompleted = true;
+                task.CompletedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                task.IsCompleted = false;
+                task.CompletedAt = null;
+            }
 
             await _taskRepository.UpdateAsync(task);
             await _systemLogs.LogAsync("TASK_STATUS_UPDATED", $"Task '{task.Name}' moved from '{oldStatus}' to '{status}'.", task.AssignedUserId, task.TenantId);

@@ -49,6 +49,26 @@
         </div>
       </div>
 
+      <!-- Tasks Created Chart -->
+      <div class="glass-card glow-secondary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--secondary-color);">add_task</span>
+          Tasks Opened (Monthly)
+        </h3>
+        <div class="bar-chart-container" style="padding-top: 2rem;">
+          @for (record of tasksCreated; track record.month) {
+            <div class="bar-column">
+              <div class="bar-fill" [style.height.%]="record.heightPercent">
+                <span class="bar-value">{{ record.count }}</span>
+              </div>
+              <span class="bar-label">{{ record.month }}</span>
+            </div>
+          } @empty {
+            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No task data available yet.</div>
+          }
+        </div>
+      </div>
+
       <!-- Tasks Completed Chart -->
       <div class="glass-card glow-secondary">
         <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">

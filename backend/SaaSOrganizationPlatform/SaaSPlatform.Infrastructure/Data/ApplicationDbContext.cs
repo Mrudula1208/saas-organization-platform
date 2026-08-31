@@ -55,6 +55,11 @@ namespace SaaSPlatform.Infrastructure.Data
                 .HasForeignKey(p => p.OwnerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // 🔥 PROJECT MEMBER → PROJECT + USER (unique per project/user)
+            modelBuilder.Entity<ProjectMember>()
+                .HasIndex(pm => new { pm.ProjectId, pm.UserId })
+                .IsUnique();
+
             // 🔥 TASK → PROJECT
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.Project)

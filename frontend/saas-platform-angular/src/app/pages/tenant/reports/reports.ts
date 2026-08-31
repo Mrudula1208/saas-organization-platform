@@ -17,6 +17,7 @@ interface ReportStat {
 })
 export class Reports implements OnInit {
   projectsCreated: ReportStat[] = [];
+  tasksCreated: ReportStat[] = [];
   tasksCompleted: ReportStat[] = [];
 
   totalProjects = 0;
@@ -46,6 +47,7 @@ export class Reports implements OnInit {
     this.reportService.getTenantReport().subscribe({
       next: (data: TenantReportData) => {
         this.projectsCreated = this.buildChart(data.monthlyProjects);
+        this.tasksCreated = this.buildChart(data.monthlyTasksCreated);
         this.tasksCompleted = this.buildChart(data.monthlyTasksCompleted);
         this.totalProjects = data.totalProjects;
         this.totalTasks = data.totalTasks;

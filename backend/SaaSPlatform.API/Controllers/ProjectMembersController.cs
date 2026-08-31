@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.ProjectMembers;
 using SaaSPlatform.Application.Interfaces;
-using SaaSPlatform.Domain.Entities;
 using System;
-using System.Security.Claims;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -14,33 +13,56 @@ namespace SaaSPlatform.API.Controllers
     [Authorize]
     public class ProjectMembersController : ControllerBase
     {
-        private readonly IProjectMemberService _projectservice;
-        public ProjectMembersController(IProjectMemberService projectservice)
+        private readonly IProjectMemberService _projectMemberService;
+
+        public ProjectMembersController(IProjectMemberService projectMemberService)
         {
-            _projectservice = projectservice;
+            _projectMemberService = projectMemberService;
         }
 
-        [HttpGet]
-        public async Task<ActionResult> GetMembers()
+        [HttpGet("project/{projectId}")]
+        public async Task<ActionResult<IEnumerable<ProjectMemberDto>>> GetMembersByProject(Guid projectId)
         {
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var member = await _projectservice.GetMemberAsync(tenantId.Value);
-            return Ok(member);
+            var members = await _projectMemberService.GetMembersByProjectAsync(projectId, tenantId.Value);
+            return Ok(members);
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddMember([FromBody] AddProjectMemberDto dto)
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        public async Task<ActionResult<ProjectMemberDto>> AddMember([FromBody] AddProjectMemberDto dto)
         {
-            var member = await _projectservice.AddMemberAsync(dto);
-            return Ok(member);
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            try
+            {
+                var member = await _projectMemberService.AddMemberAsync(dto, tenantId.Value);
+                return CreatedAtAction(nameof(GetMembersByProject), new { projectId = member.ProjectId }, member);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { success = false, message = ex.Message });
+            }
         }
 
-        [HttpDelete("{Id}")]
-        public async Task<IActionResult> RemoveAsync(Guid Id)
+        [HttpDelete("{memberId}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        public async Task<IActionResult> RemoveMember(Guid memberId)
         {
-            await _projectservice.RemoveAsync(Id);
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var removed = await _projectMemberService.RemoveMemberAsync(memberId, tenantId.Value);
+            if (!removed)
+                return NotFound(new { success = false, message = "Project member not found." });
+
             return NoContent();
         }
 
