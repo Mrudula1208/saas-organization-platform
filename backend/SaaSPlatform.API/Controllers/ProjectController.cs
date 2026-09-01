@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
-using SaaSPlatform_Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -20,7 +23,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Project>>> GetProjects(
+        public async Task<ActionResult<IEnumerable<ProjectViewDto>>> GetProjects(
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
             [FromQuery] string? priority = null)
@@ -32,22 +35,22 @@ namespace SaaSPlatform.API.Controllers
             return Ok(projects);
         }
 
-        [HttpGet("{Id}")]
-        public async Task<ActionResult<Project>> GetById(Guid Id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<ProjectViewDto>> GetById(Guid id)
         {
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var project = await _projectService.GetByIdAsync(Id);
+            var project = await _projectService.GetByIdAsync(id);
             if (project == null || project.TenantId != tenantId.Value)
-                return NotFound();
+                return NotFound(new { success = false, message = "Project not found." });
 
             return Ok(project);
         }
 
         [HttpPost]
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
-        public async Task<ActionResult<Project>> Create(CreateProjectDto dto)
+        public async Task<ActionResult<ProjectViewDto>> Create(CreateProjectDto dto)
         {
             var tenantId = GetTenantId();
             var userId = GetCurrentUserId();
@@ -56,11 +59,18 @@ namespace SaaSPlatform.API.Controllers
             dto.TenantId = tenantId.Value;
             dto.OwnerId = userId.Value;
 
-            var project = await _projectService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
+            try
+            {
+                var project = await _projectService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Update(Guid id, UpdateProjectDto dto)
         {
@@ -69,13 +79,24 @@ namespace SaaSPlatform.API.Controllers
 
             var existing = await _projectService.GetByIdAsync(id);
             if (existing == null || existing.TenantId != tenantId.Value)
-                return NotFound();
+                return NotFound(new { success = false, message = "Project not found." });
 
-            await _projectService.UpdateAsync(id, dto);
-            return NoContent();
+            try
+            {
+                await _projectService.UpdateAsync(id, dto);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:guid}")]
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -84,10 +105,17 @@ namespace SaaSPlatform.API.Controllers
 
             var existing = await _projectService.GetByIdAsync(id);
             if (existing == null || existing.TenantId != tenantId.Value)
-                return NotFound();
+                return NotFound(new { success = false, message = "Project not found." });
 
-            await _projectService.DeleteAsync(id);
-            return NoContent();
+            try
+            {
+                await _projectService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
         }
 
         private Guid? GetTenantId()

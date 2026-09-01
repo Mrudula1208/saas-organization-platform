@@ -181,4 +181,83 @@
       </div>
     </div>
   }
+
+  <!-- Popup Modal: Manage Project Members -->
+  @if (membersProject) {
+    <div class="modal-backdrop">
+      <div class="modal-container" style="max-width: 640px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Project Members — {{ membersProject.name }}</h3>
+          <button class="modal-close" (click)="closeMembersModal()">&times;</button>
+        </div>
+
+        <!-- Add member (managers only) -->
+        @if (canManageMembers) {
+          <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label class="form-label" for="member-user">Add User</label>
+              <select id="member-user" class="form-select" [(ngModel)]="selectedMemberUserId" name="memberUserId">
+                @for (user of eligibleUsers; track user.id) {
+                  <option [value]="user.id">{{ user.fullName }} ({{ user.email }})</option>
+                } @empty {
+                  <option value="">No available users in your tenant</option>
+                }
+              </select>
+            </div>
+            <button class="btn btn-primary" [disabled]="!selectedMemberUserId || addMemberLoading" (click)="addMember()">
+              <span class="material-symbols-outlined" style="font-size: 1rem;">person_add</span>
+              {{ addMemberLoading ? 'Adding...' : 'Add Member' }}
+            </button>
+          </div>
+        }
+
+        <!-- Error state -->
+        @if (membersError) {
+          <div class="members-state members-error">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ membersError }}</span>
+            <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="loadProjectMembers(membersProject.id)">
+              Retry
+            </button>
+          </div>
+        }
+
+        <!-- Loading state -->
+        @if (membersLoading) {
+          <div class="members-state">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Loading members...</span>
+          </div>
+        }
+
+        <!-- Loaded state -->
+        @if (membersLoaded && !membersLoading) {
+          @if (members.length === 0) {
+            <div class="members-state">
+              <span class="material-symbols-outlined" style="font-size: 2.25rem; color: var(--text-muted);">group</span>
+              <span>No members assigned to this project yet.</span>
+            </div>
+          } @else {
+            <div class="members-list">
+              @for (member of members; track member.id) {
+                <div class="member-row">
+                  <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted);">account_circle</span>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600;">{{ member.userFullName }}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.85rem;">{{ member.userEmail }}</div>
+                  </div>
+                  <span class="badge badge-purple">{{ member.userRole }}</span>
+                  @if (canManageMembers) {
+                    <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="removeMember(member.id, member.userFullName)">
+                      <span class="material-symbols-outlined" style="font-size: 1rem;">person_remove</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
 </div>
