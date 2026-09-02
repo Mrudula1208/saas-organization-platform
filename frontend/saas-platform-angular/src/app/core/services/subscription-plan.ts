@@ -16,7 +16,7 @@ export interface Plan {
   providedIn: 'root',
 })
 export class SubscriptionPlanService {
-  private readonly apiUrl = 'https://localhost:7134/api/SubscriptionPlan';
+  private readonly apiUrl = 'http://localhost:5258/api/SubscriptionPlan';
 
   constructor(private http: HttpClient) {}
 

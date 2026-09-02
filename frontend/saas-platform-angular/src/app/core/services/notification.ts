@@ -14,7 +14,7 @@ export interface AppNotification {
   providedIn: 'root',
 })
 export class NotificationService {
-  private readonly apiUrl = 'https://localhost:7134/api/Notification';
+  private readonly apiUrl = 'http://localhost:5258/api/Notification';
 
   public unreadCount = signal(0);
   public notifications = signal<AppNotification[]>([]);

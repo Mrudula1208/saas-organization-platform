@@ -26,6 +26,7 @@ import { Settings as AdminSettings } from './pages/super-admin/settings/settings
 import { Dashboard as TenantDashboard } from './pages/tenant/dashboard/dashboard';
 import { Users as TenantUsers } from './pages/tenant/users/users';
 import { Projects } from './pages/tenant/projects/projects';
+import { ProjectDetails } from './pages/tenant/projects/project-details/project-details';
 import { Tasks } from './pages/tenant/tasks/tasks';
 import { Reports as TenantReports } from './pages/tenant/reports/reports';
 import { Billing } from './pages/tenant/billing/billing';
@@ -71,6 +72,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: TenantDashboard },
       { path: 'users', component: TenantUsers },
       { path: 'projects', component: Projects },
+      { path: 'projects/:id', component: ProjectDetails },
       { path: 'tasks', component: Tasks },
       { path: 'reports', component: TenantReports },
       { path: 'billing', component: Billing },

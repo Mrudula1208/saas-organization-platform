@@ -42,7 +42,7 @@ export interface AdminReportData {
   providedIn: 'root',
 })
 export class ReportService {
-  private readonly apiUrl = 'https://localhost:7134/api/Reports';
+  private readonly apiUrl = 'http://localhost:5258/api/Reports';
 
   constructor(private http: HttpClient) {}
 

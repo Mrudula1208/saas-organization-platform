@@ -14,7 +14,7 @@ export interface UserClaims {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly apiUrl = 'https://localhost:7134/api/Auth';
+  private readonly apiUrl = 'http://localhost:5258/api/Auth';
   
   // Signal for active user state
   public currentUser = signal<UserClaims | null>(null);

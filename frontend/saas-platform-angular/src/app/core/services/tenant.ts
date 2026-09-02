@@ -21,7 +21,7 @@ export interface Tenant {
   providedIn: 'root',
 })
 export class TenantService {
-  private readonly apiUrl = 'https://localhost:7134/api/Tenant';
+  private readonly apiUrl = 'http://localhost:5258/api/Tenant';
 
   // Local state cache for mock database operations
   private mockTenants: Tenant[] = [

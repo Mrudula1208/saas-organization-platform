@@ -41,9 +41,15 @@ namespace SaaSPlatform.API.Controllers
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var project = await _projectService.GetByIdAsync(id);
-            if (project == null || project.TenantId != tenantId.Value)
+            var project = await _projectService.GetByIdAsync(id, tenantId.Value);
+            if (project == null)
+            {
+                // The project exists but belongs to a different tenant.
+                if (await _projectService.ExistsAsync(id))
+                    return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "You do not have access to this project." });
+
                 return NotFound(new { success = false, message = "Project not found." });
+            }
 
             return Ok(project);
         }
@@ -77,18 +83,18 @@ namespace SaaSPlatform.API.Controllers
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var existing = await _projectService.GetByIdAsync(id);
-            if (existing == null || existing.TenantId != tenantId.Value)
-                return NotFound(new { success = false, message = "Project not found." });
-
             try
             {
-                await _projectService.UpdateAsync(id, dto);
+                await _projectService.UpdateAsync(id, tenantId.Value, dto);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = ex.Message });
             }
             catch (ArgumentException ex)
             {
@@ -103,18 +109,18 @@ namespace SaaSPlatform.API.Controllers
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var existing = await _projectService.GetByIdAsync(id);
-            if (existing == null || existing.TenantId != tenantId.Value)
-                return NotFound(new { success = false, message = "Project not found." });
-
             try
             {
-                await _projectService.DeleteAsync(id);
+                await _projectService.DeleteAsync(id, tenantId.Value);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = ex.Message });
             }
         }
 

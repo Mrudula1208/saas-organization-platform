@@ -15,6 +15,20 @@ export interface Project {
   ownerName: string;
   tenantId: string;
   progress: number;
+  isActive: boolean;
+  createdAt: string;
+  taskCount: number;
+  completedTaskCount: number;
+}
+
+export interface UpdateProjectPayload {
+  name: string;
+  description: string;
+  status: string;
+  priority: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
 }
 
 export interface TaskItem {
@@ -46,9 +60,9 @@ export interface ProjectMember {
   providedIn: 'root',
 })
 export class ProjectService {
-  private readonly projectApiUrl = 'https://localhost:7134/api/Project';
-  private readonly tasksApiUrl = 'https://localhost:7134/api/Tasks';
-  private readonly projectMembersApiUrl = 'https://localhost:7134/api/ProjectMembers';
+  private readonly projectApiUrl = 'http://localhost:5258/api/Project';
+  private readonly tasksApiUrl = 'http://localhost:5258/api/Tasks';
+  private readonly projectMembersApiUrl = 'http://localhost:5258/api/ProjectMembers';
 
   constructor(private http: HttpClient) {}
 
@@ -64,8 +78,8 @@ export class ProjectService {
 
   // Maps the API project shape into the shape the UI pages expect
   private mapProject(serverProject: any): Project {
-    const tasks: any[] = serverProject.tasks || [];
-    const completed = tasks.filter((t) => t.status === 'Completed' || t.isCompleted).length;
+    const taskCount = serverProject.taskCount ?? 0;
+    const completedTaskCount = serverProject.completedTaskCount ?? 0;
 
     return {
       id: serverProject.id,
@@ -76,9 +90,13 @@ export class ProjectService {
       priority: serverProject.priority || 'Medium',
       status: serverProject.status || 'Pending',
       ownerId: serverProject.ownerId,
-      ownerName: serverProject.owner?.fullName || '',
+      ownerName: serverProject.ownerName || serverProject.owner?.fullName || '',
       tenantId: serverProject.tenantId,
-      progress: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0
+      progress: serverProject.progress ?? (taskCount > 0 ? Math.round((completedTaskCount / taskCount) * 100) : 0),
+      isActive: serverProject.isActive !== undefined ? serverProject.isActive : true,
+      createdAt: serverProject.createdAt || '',
+      taskCount,
+      completedTaskCount
     };
   }
 
@@ -105,6 +123,12 @@ export class ProjectService {
     );
   }
 
+  getProject(id: string): Observable<Project> {
+    return this.http.get<any>(`${this.projectApiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      map((res) => this.mapProject(res))
+    );
+  }
+
   createProject(project: any): Observable<Project> {
     const payload = {
       name: project.name,
@@ -117,6 +141,22 @@ export class ProjectService {
 
     return this.http.post<any>(this.projectApiUrl, payload, { headers: this.getHeaders() }).pipe(
       map((res) => this.mapProject(res))
+    );
+  }
+
+  updateProject(id: string, project: UpdateProjectPayload): Observable<boolean> {
+    const payload = {
+      name: project.name,
+      description: project.description || '',
+      status: project.status,
+      priority: project.priority,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      isActive: project.isActive
+    };
+
+    return this.http.put(`${this.projectApiUrl}/${id}`, payload, { headers: this.getHeaders() }).pipe(
+      map(() => true)
     );
   }
 

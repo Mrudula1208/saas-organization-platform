@@ -51,11 +51,20 @@ namespace SaaSPlatform.Application.Services
             return query.Select(MapToDto).ToList();
         }
 
-        public async Task<ProjectViewDto?> GetByIdAsync(Guid Id)
+        public async Task<ProjectViewDto?> GetByIdAsync(Guid Id, Guid tenantId)
         {
             var project = await _projectRepository.GetByIdAsync(Id);
             if (project == null || project.IsDeleted) return null;
+
+            // Never expose another tenant's project, regardless of what the caller sends.
+            if (project.TenantId != tenantId) return null;
+
             return MapToDto(project);
+        }
+
+        public async Task<bool> ExistsAsync(Guid Id)
+        {
+            return await _projectRepository.ExistsAsync(Id);
         }
 
         public async Task<ProjectViewDto> CreateAsync(CreateProjectDto dto)
@@ -65,10 +74,21 @@ namespace SaaSPlatform.Application.Services
                 throw new ArgumentException("Project name is required.");
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.Status) &&
+                !AllowedStatuses.Contains(dto.Status, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException($"Invalid project status '{dto.Status}'.");
+            }
+
+            if (dto.StartDate != default && dto.EndDate != default && dto.EndDate < dto.StartDate)
+            {
+                throw new ArgumentException("End date cannot be before the start date.");
+            }
+
             var project = new Project
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name,
+                Name = dto.Name.Trim(),
                 Description = dto.Description ?? string.Empty,
                 TenantId = dto.TenantId,
                 OwnerId = dto.OwnerId,
@@ -86,12 +106,19 @@ namespace SaaSPlatform.Application.Services
             return MapToDto(createdProject);
         }
 
-        public async Task UpdateAsync(Guid Id, UpdateProjectDto dto)
+        public async Task UpdateAsync(Guid Id, Guid tenantId, UpdateProjectDto dto)
         {
             var project = await _projectRepository.GetByIdAsync(Id);
             if (project == null || project.IsDeleted)
             {
                 throw new KeyNotFoundException("Project not found.");
+            }
+
+            // Tenant isolation: the tenant always comes from the caller's token,
+            // never from the request body.
+            if (project.TenantId != tenantId)
+            {
+                throw new UnauthorizedAccessException("You do not have access to this project.");
             }
 
             if (string.IsNullOrWhiteSpace(dto.Name))
@@ -120,7 +147,7 @@ namespace SaaSPlatform.Application.Services
                 throw new ArgumentException("End date cannot be before the start date.");
             }
 
-            project.Name = dto.Name;
+            project.Name = dto.Name.Trim();
             project.Description = dto.Description ?? string.Empty;
             project.Status = string.IsNullOrWhiteSpace(dto.Status) ? project.Status : dto.Status;
             project.Priority = string.IsNullOrWhiteSpace(dto.Priority) ? project.Priority : dto.Priority;
@@ -132,12 +159,18 @@ namespace SaaSPlatform.Application.Services
             await _systemLogs.LogAsync("PROJECT_UPDATED", $"Project {project.Name} updated.", project.OwnerId, project.TenantId);
         }
 
-        public async Task DeleteAsync(Guid Id)
+        public async Task DeleteAsync(Guid Id, Guid tenantId)
         {
             var project = await _projectRepository.GetByIdAsync(Id);
             if (project == null || project.IsDeleted)
             {
                 throw new KeyNotFoundException("Project not found.");
+            }
+
+            // Tenant isolation: only the owning tenant may delete the project.
+            if (project.TenantId != tenantId)
+            {
+                throw new UnauthorizedAccessException("You do not have access to this project.");
             }
 
             project.IsDeleted = true;

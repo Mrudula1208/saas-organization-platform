@@ -35,7 +35,7 @@ export interface BillingSummary {
   providedIn: 'root',
 })
 export class BillingService {
-  private readonly apiUrl = 'https://localhost:7134/api/Billing';
+  private readonly apiUrl = 'http://localhost:5258/api/Billing';
 
   constructor(private http: HttpClient) {}
 

@@ -21,7 +21,7 @@ export interface User {
   providedIn: 'root',
 })
 export class UserService {
-  private readonly apiUrl = 'https://localhost:7134/api/User';
+  private readonly apiUrl = 'http://localhost:5258/api/User';
 
   private mockUsers: User[] = [
     {

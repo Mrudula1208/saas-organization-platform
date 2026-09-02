@@ -1,0 +1,225 @@
+<div class="animate-fade">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-main">
+      <button class="btn btn-outline back-btn" (click)="goBack()">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
+        Back to Projects
+      </button>
+      <div>
+        <h1 class="page-title">{{ project?.name || 'Project Details' }}</h1>
+        <p class="page-subtitle">Project overview, timeline and status information</p>
+      </div>
+    </div>
+
+    @if (project && canManageProject) {
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="openEditModal()">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
+          Edit Project
+        </button>
+        <button class="btn btn-danger" (click)="deleteProject()">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+          Delete
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Success feedback -->
+  @if (saveSuccess) {
+    <div class="alert alert-success">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>Project updated successfully.</span>
+      <button class="alert-close" (click)="dismissSuccess()">&times;</button>
+    </div>
+  }
+
+  <!-- Loading state -->
+  @if (loading) {
+    <div class="state-box">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Loading project...</span>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (!loading && loadError) {
+    <div class="state-box state-error">
+      <span class="material-symbols-outlined" style="font-size: 2.5rem;">error</span>
+      <span>{{ loadError }}</span>
+      <div class="state-actions">
+        <button class="btn btn-outline" (click)="loadProject()">Retry</button>
+        <button class="btn btn-primary" (click)="goBack()">Back to Projects</button>
+      </div>
+    </div>
+  }
+
+  <!-- Loaded state -->
+  @if (!loading && !loadError && project) {
+    <div class="glass-card glow-primary" style="margin-bottom: 1.5rem;">
+      <div class="meta-header">
+        <div class="badges">
+          <span class="badge" [class.badge-success]="project.status === 'Completed'" [class.badge-purple]="project.status === 'In Progress'" [class.badge-warning]="project.status === 'Pending'" [class.badge-danger]="project.status === 'Cancelled'">
+            {{ project.status }}
+          </span>
+          <span class="badge" [class.badge-danger]="project.priority === 'High'" [class.badge-warning]="project.priority === 'Medium'" [class.badge-info]="project.priority === 'Low'">
+            {{ project.priority }} Priority
+          </span>
+          <span class="badge" [class.badge-success]="project.isActive" [class.badge-info]="!project.isActive">
+            {{ project.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Owner</span>
+          <span class="info-value">{{ project.ownerName || 'Unassigned' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Start Date</span>
+          <span class="info-value">{{ project.startDate ? (project.startDate | date:'mediumDate') : 'Not set' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">End Date</span>
+          <span class="info-value">{{ project.endDate ? (project.endDate | date:'mediumDate') : 'Not set' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Created</span>
+          <span class="info-value">{{ project.createdAt ? (project.createdAt | date:'mediumDate') : 'Not set' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tasks</span>
+          <span class="info-value">{{ project.completedTaskCount }} / {{ project.taskCount }} completed</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Progress</span>
+          <span class="info-value">{{ project.progress }}%</span>
+        </div>
+      </div>
+
+      <div class="progress-track" style="margin-top: 1.25rem;">
+        <div class="progress-bar" [style.width.%]="project.progress"></div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <h3 class="section-title">Description</h3>
+      <p class="description-text">{{ project.description || 'No description provided for this project.' }}</p>
+    </div>
+  }
+
+  <!-- Edit modal -->
+  @if (isEditModalOpen) {
+    <div class="modal-backdrop">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Project</h3>
+          <button class="modal-close" [disabled]="saving" (click)="closeEditModal()">&times;</button>
+        </div>
+
+        @if (saveError) {
+          <div class="alert alert-error">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ saveError }}</span>
+          </div>
+        }
+
+        <form (submit)="saveProject()">
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Project Name *</label>
+            <input
+              type="text"
+              id="edit-name"
+              class="form-input"
+              [class.input-invalid]="fieldErrors['name']"
+              placeholder="e.g. Website Overhaul"
+              [(ngModel)]="editForm.name"
+              name="name"
+            />
+            @if (fieldErrors['name']) {
+              <span class="field-error">{{ fieldErrors['name'] }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-desc">Project Description</label>
+            <textarea
+              id="edit-desc"
+              class="form-input"
+              rows="3"
+              placeholder="Brief summary of project parameters and deliverables..."
+              [(ngModel)]="editForm.description"
+              name="description"
+              style="resize: none;"
+            ></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="edit-start">Start Date</label>
+              <input
+                type="date"
+                id="edit-start"
+                class="form-input"
+                [(ngModel)]="editForm.startDate"
+                name="startDate"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit-end">End Date</label>
+              <input
+                type="date"
+                id="edit-end"
+                class="form-input"
+                [class.input-invalid]="fieldErrors['endDate']"
+                [(ngModel)]="editForm.endDate"
+                name="endDate"
+              />
+              @if (fieldErrors['endDate']) {
+                <span class="field-error">{{ fieldErrors['endDate'] }}</span>
+              }
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="edit-status">Status</label>
+              <select id="edit-status" class="form-select" [(ngModel)]="editForm.status" name="status">
+                @for (status of statuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+              @if (fieldErrors['status']) {
+                <span class="field-error">{{ fieldErrors['status'] }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit-priority">Priority</label>
+              <select id="edit-priority" class="form-select" [(ngModel)]="editForm.priority" name="priority">
+                @for (priority of priorities; track priority) {
+                  <option [value]="priority">{{ priority }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <label class="checkbox-group" for="edit-active">
+            <input type="checkbox" id="edit-active" class="checkbox-input" [(ngModel)]="editForm.isActive" name="isActive" />
+            <span>Project is active</span>
+          </label>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline" [disabled]="saving" (click)="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

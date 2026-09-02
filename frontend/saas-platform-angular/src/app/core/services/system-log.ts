@@ -15,7 +15,7 @@ export interface SystemLog {
   providedIn: 'root',
 })
 export class SystemLogService {
-  private readonly apiUrl = 'https://localhost:7134/api/SystemLog';
+  private readonly apiUrl = 'http://localhost:5258/api/SystemLog';
 
   constructor(private http: HttpClient) {}
 

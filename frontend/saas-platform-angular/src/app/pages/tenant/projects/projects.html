@@ -37,6 +37,18 @@
 
   <!-- Projects Table Card -->
   <div class="glass-card glow-primary" style="padding: 0; overflow: hidden;">
+    @if (isLoading) {
+      <div class="members-state" style="border: none; border-radius: 0;">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Loading projects...</span>
+      </div>
+    } @else if (loadError) {
+      <div class="members-state members-error" style="border: none; border-radius: 0;">
+        <span class="material-symbols-outlined">error</span>
+        <span>{{ loadError }}</span>
+        <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="loadProjects()">Retry</button>
+      </div>
+    } @else {
     <div class="table-container" style="border: none; margin-top: 0;">
       <table class="custom-table">
         <thead>
@@ -82,10 +94,13 @@
                 </span>
               </td>
               <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openMembersModal(project)">
+                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="View details" (click)="viewProject(project.id)">
+                  <span class="material-symbols-outlined" style="font-size: 1rem;">visibility</span>
+                </button>
+                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Manage members" (click)="openMembersModal(project)">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">group</span>
                 </button>
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteProject(project.id)">
+                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Delete project" (click)="deleteProject(project.id)">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                 </button>
               </td>
@@ -101,6 +116,7 @@
         </tbody>
       </table>
     </div>
+    }
   </div>
 
   <!-- Popup Modal: Create Project -->

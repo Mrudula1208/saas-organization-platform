@@ -36,6 +36,12 @@ namespace SaaSPlatform.Infrastructure.Repositories
                     .FirstOrDefaultAsync(p => p.Id == Id);
             }
 
+            public async Task<bool> ExistsAsync(Guid Id)
+            {
+                return await _context.Projects
+                    .AnyAsync(p => p.Id == Id && !p.IsDeleted);
+            }
+
             public async Task<Project> AddAsync(Project project)
             {
                 await _context.Projects.AddAsync(project);

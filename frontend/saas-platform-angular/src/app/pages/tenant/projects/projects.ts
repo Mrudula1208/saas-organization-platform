@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProjectService, Project, ProjectMember } from '../../../core/services/project';
 import { UserService, User } from '../../../core/services/user';
 import { Auth } from '../../../core/services/auth';
@@ -15,6 +16,9 @@ import { Auth } from '../../../core/services/auth';
 export class Projects implements OnInit {
   projects: Project[] = [];
   filteredProjects: Project[] = [];
+
+  isLoading = false;
+  loadError = '';
 
   searchQuery = '';
   statusFilter = '';
@@ -36,7 +40,8 @@ export class Projects implements OnInit {
   constructor(
     private projectService: ProjectService,
     private userService: UserService,
-    private auth: Auth
+    private auth: Auth,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -47,11 +52,23 @@ export class Projects implements OnInit {
     return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
   }
 
+  viewProject(id: string) {
+    this.router.navigate(['/tenant/projects', id]);
+  }
+
   loadProjects() {
+    this.isLoading = true;
+    this.loadError = '';
+
     this.projectService.getProjects().subscribe({
       next: (data: Project[]) => {
         this.projects = data;
+        this.isLoading = false;
         this.applyFilters();
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.loadError = this.extractErrorMessage(err, 'Failed to load projects. Please try again.');
       }
     });
   }

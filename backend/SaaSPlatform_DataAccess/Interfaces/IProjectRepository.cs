@@ -14,6 +14,9 @@ namespace SaaSPlatform.Application.Interfaces
         // Get single project by ID
         Task<Project?> GetByIdAsync(Guid Id);
 
+        // Check whether a project exists (used to distinguish 403 vs 404)
+        Task<bool> ExistsAsync(Guid Id);
+
         // Add new project
         Task<Project> AddAsync(Project project);
 
