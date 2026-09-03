@@ -10,6 +10,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SaaSPlatform.API.Middleware;
 using FluentValidation;
+using SaaSPlatform.API.Configurations;
+using Microsoft.Extensions.Options;
+using System.IO;
 
 namespace SaaSPlatform.API
 {
@@ -22,6 +25,7 @@ namespace SaaSPlatform.API
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("StorageSettings"));
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
 
@@ -128,6 +132,19 @@ namespace SaaSPlatform.API
             
             var app = builder.Build();
 
+            // Create the uploads folder on startup so it works in local and production environments.
+            try
+            {
+                var storageSettings = app.Services.GetRequiredService<IOptions<StorageSettings>>().Value;
+                var uploadsPath = Path.Combine(app.Environment.ContentRootPath, storageSettings.UploadsPath);
+                Directory.CreateDirectory(uploadsPath);
+            }
+            catch
+            {
+                // Startup must not fail if the uploads folder cannot be created up-front.
+                // The upload endpoint creates it again on demand.
+            }
+
             // Automatically apply EF Core migrations on startup
             using (var scope = app.Services.CreateScope())
             {
@@ -151,6 +168,7 @@ namespace SaaSPlatform.API
             }
             app.UseMiddleware<SaaSPlatform.API.Middleware.TenantMiddleware>();
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.UseCors("AllowAngular");
             app.UseAuthentication();
             app.UseAuthorization();

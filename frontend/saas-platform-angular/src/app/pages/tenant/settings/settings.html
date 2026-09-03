@@ -21,6 +21,65 @@
   <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
     
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Workspace Logo Card -->
+      <div class="glass-card glow-primary">
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">image</span>
+          Workspace Logo
+        </h3>
+
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.25rem;">
+          Upload your organization logo. It will be stored securely on the server and shown for {{ tenantName || 'your workspace' }}.
+        </p>
+
+        <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem;">
+          @if (logoPreviewUrl) {
+            <div style="text-align: center;">
+              <img [src]="logoPreviewUrl" alt="New logo preview" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 2px dashed var(--accent-color); object-fit: contain; background: rgba(255,255,255,0.05); padding: 0.25rem;" />
+              <div style="font-size: 0.7rem; color: var(--accent-color); margin-top: 0.25rem;">Preview</div>
+            </div>
+          } @else if (tenantLogoUrl) {
+            <img [src]="tenantLogoUrl" alt="{{ tenantName }}-logo" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); object-fit: contain; background: rgba(255,255,255,0.05); padding: 0.25rem;" />
+          } @else {
+            <div style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: rgba(15,23,42,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; color: var(--text-muted);">
+              <span class="material-symbols-outlined" style="font-size: 2rem;">image</span>
+              <span style="font-size: 0.7rem;">No logo</span>
+            </div>
+          }
+
+          <div style="flex: 1;">
+            <label class="form-label" for="workspace-logo">Choose an image</label>
+            <input
+              #logoInput
+              type="file"
+              id="workspace-logo"
+              class="form-input"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              style="padding: 0.5rem;"
+              (change)="onLogoSelected($event)"
+            />
+            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.35rem;">PNG, JPG, JPEG, WEBP or GIF &middot; Maximum 2 MB</p>
+          </div>
+        </div>
+
+        @if (logoUploadError) {
+          <div class="animate-fade" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.65rem 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.15rem;">error</span>
+            <span>{{ logoUploadError }}</span>
+          </div>
+        }
+
+        <button class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="uploadLogo()" [disabled]="isUploadingLogo || !selectedLogoFile">
+          @if (isUploadingLogo) {
+            <span class="material-symbols-outlined" style="font-size: 1.15rem; animation: spin 1s linear infinite;">autorenew</span>
+            Uploading...
+          } @else {
+            <span class="material-symbols-outlined" style="font-size: 1.15rem;">upload</span>
+            Upload Logo
+          }
+        </button>
+      </div>
+
       <!-- Profile Card -->
       <div class="glass-card glow-primary">
         <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">

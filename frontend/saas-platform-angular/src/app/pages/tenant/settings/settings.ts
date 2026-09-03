@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Auth, UserClaims } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
+import { TenantService } from '../../../core/services/tenant';
 
 @Component({
   selector: 'app-settings',
@@ -27,11 +28,24 @@ export class Settings implements OnInit {
   successMessage = '';
   errorMessage = '';
 
-  constructor(private auth: Auth, private userService: UserService) {}
+  // Workspace logo state
+  tenantName = '';
+  tenantLogoUrl = '';
+  logoPreviewUrl = '';
+  selectedLogoFile: File | null = null;
+  isUploadingLogo = false;
+  logoUploadError = '';
+
+  constructor(
+    private auth: Auth,
+    private userService: UserService,
+    private tenantService: TenantService
+  ) {}
 
   ngOnInit() {
     this.currentUser = this.auth.currentUser();
     this.restoreSettings();
+    this.loadWorkspace();
   }
 
   restoreSettings() {
@@ -149,6 +163,88 @@ export class Settings implements OnInit {
     
     this.successMessage = 'Notification preferences updated!';
     setTimeout(() => this.successMessage = '', 3000);
+  }
+
+  private loadWorkspace() {
+    const tenantId = this.auth.getTenantId();
+    if (!tenantId) return;
+
+    this.tenantService.getById(tenantId).subscribe({
+      next: (tenant) => {
+        if (tenant) {
+          this.tenantName = tenant.name;
+          this.tenantLogoUrl = tenant.logoImageUrl || '';
+        }
+      }
+    });
+  }
+
+  onLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.logoUploadError = '';
+
+    if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.logoUploadError = 'Please choose a PNG, JPG, JPEG, WEBP or GIF image.';
+      this.clearLogoSelection(input);
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      this.logoUploadError = 'Logo image must be 2 MB or smaller.';
+      this.clearLogoSelection(input);
+      return;
+    }
+
+    this.selectedLogoFile = file;
+    if (typeof window !== 'undefined') {
+      if (this.logoPreviewUrl) {
+        URL.revokeObjectURL(this.logoPreviewUrl);
+      }
+      this.logoPreviewUrl = URL.createObjectURL(file);
+    }
+  }
+
+  private clearLogoSelection(input: HTMLInputElement) {
+    input.value = '';
+    this.selectedLogoFile = null;
+    this.logoPreviewUrl = '';
+  }
+
+  uploadLogo() {
+    this.logoUploadError = '';
+    this.errorMessage = '';
+
+    if (!this.selectedLogoFile) {
+      this.logoUploadError = 'Please choose a logo image first.';
+      return;
+    }
+
+    const tenantId = this.auth.getTenantId();
+    if (!tenantId) {
+      this.logoUploadError = 'Unable to determine your workspace. Please sign in again.';
+      return;
+    }
+
+    this.isUploadingLogo = true;
+
+    this.tenantService.uploadLogo(tenantId, this.selectedLogoFile).subscribe({
+      next: (logoUrl) => {
+        this.isUploadingLogo = false;
+        this.tenantLogoUrl = logoUrl;
+        this.logoPreviewUrl = '';
+        this.selectedLogoFile = null;
+        this.successMessage = 'Workspace logo updated successfully!';
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        this.isUploadingLogo = false;
+        this.logoUploadError = err?.message || 'Failed to upload logo. Please try again.';
+      }
+    });
   }
 }
 

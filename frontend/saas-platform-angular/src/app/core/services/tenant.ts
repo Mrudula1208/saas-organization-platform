@@ -15,6 +15,7 @@ export interface Tenant {
   projectsCount: number;
   monthlyRevenue: number;
   lastUsed: string;
+  logoImageUrl?: string;
 }
 
 @Injectable({
@@ -22,6 +23,14 @@ export interface Tenant {
 })
 export class TenantService {
   private readonly apiUrl = 'http://localhost:5258/api/Tenant';
+  private readonly apiOrigin = 'http://localhost:5258';
+
+  // Converts a backend relative logo path into an absolute URL the browser can load.
+  private toAbsoluteLogoUrl(url?: string): string {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${this.apiOrigin}${url.startsWith('/') ? url : `/${url}`}`;
+  }
 
   // Local state cache for mock database operations
   private mockTenants: Tenant[] = [
@@ -111,7 +120,8 @@ export class TenantService {
       usersCount: t.usersCount || (t.users ? t.users.length : 0) || 0,
       projectsCount: t.projectsCount || (t.projects ? t.projects.length : 0) || 0,
       monthlyRevenue: t.monthlyRevenue || 0,
-      lastUsed: t.lastUsed || 'Recently'
+      lastUsed: t.lastUsed || 'Recently',
+      logoImageUrl: this.toAbsoluteLogoUrl(t.logoImageUrl)
     };
   }
 
@@ -203,6 +213,20 @@ export class TenantService {
         const initialLength = this.mockTenants.length;
         this.mockTenants = this.mockTenants.filter(t => t.id !== id);
         return of(this.mockTenants.length < initialLength);
+      })
+    );
+  }
+
+  // Uploads a logo image for a tenant. Returns the absolute logo URL served by the backend.
+  uploadLogo(tenantId: string, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http.post<any>(`${this.apiUrl}/${tenantId}/upload-logo`, formData).pipe(
+      map((res) => this.toAbsoluteLogoUrl(res?.logoUrl || '')),
+      catchError((err) => {
+        const message = err?.error?.message || err?.message || 'Failed to upload logo. Please try again.';
+        return throwError(() => new Error(message));
       })
     );
   }
