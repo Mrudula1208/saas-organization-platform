@@ -89,10 +89,16 @@
         
         <form (submit)="saveProfile()">
           <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <img [src]="profileForm.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'" style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px solid var(--primary-color); object-fit: cover;" />
+            @if (profileForm.profileImageUrl) {
+              <img [src]="profileForm.profileImageUrl" alt="Profile avatar" style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px solid var(--primary-color); object-fit: cover;" />
+            } @else {
+              <div style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px dashed var(--primary-color); display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,0.4); color: var(--text-muted);">
+                <span class="material-symbols-outlined" style="font-size: 2rem;">account_circle</span>
+              </div>
+            }
             <div class="form-group" style="flex: 1; margin-bottom: 0;">
               <label class="form-label" for="profile-avatar">Profile Avatar URL</label>
-              <input type="text" id="profile-avatar" class="form-input" [(ngModel)]="profileForm.profileImageUrl" name="profileImageUrl" />
+              <input type="text" id="profile-avatar" class="form-input" [(ngModel)]="profileForm.profileImageUrl" name="profileImageUrl" placeholder="https://..." />
             </div>
           </div>
 
@@ -107,8 +113,8 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
-            Save Profile Details
+          <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;" [disabled]="isSavingProfile || isLoadingProfile">
+            {{ isSavingProfile ? 'Saving...' : 'Save Profile Details' }}
           </button>
         </form>
       </div>
@@ -123,22 +129,23 @@
         <form (submit)="changePassword()">
           <div class="form-group">
             <label class="form-label" for="pass-current">Current Password</label>
-            <input type="password" id="pass-current" class="form-input" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" placeholder="••••••••••••" required />
+            <input type="password" id="pass-current" class="form-input" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" placeholder="••••••••••••" autocomplete="current-password" required />
           </div>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
             <div class="form-group">
               <label class="form-label" for="pass-new">New Password</label>
-              <input type="password" id="pass-new" class="form-input" [(ngModel)]="passwordForm.newPassword" name="newPassword" placeholder="••••••••••••" required />
+              <input type="password" id="pass-new" class="form-input" [(ngModel)]="passwordForm.newPassword" name="newPassword" placeholder="••••••••••••" minlength="6" autocomplete="new-password" required />
+              <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.15rem;">Minimum 6 characters</p>
             </div>
             <div class="form-group">
               <label class="form-label" for="pass-confirm">Confirm New Password</label>
-              <input type="password" id="pass-confirm" class="form-input" [(ngModel)]="passwordForm.confirmPassword" name="confirmPassword" placeholder="••••••••••••" required />
+              <input type="password" id="pass-confirm" class="form-input" [(ngModel)]="passwordForm.confirmPassword" name="confirmPassword" placeholder="••••••••••••" minlength="6" autocomplete="new-password" required />
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">
-            Update Password
+          <button type="submit" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;" [disabled]="isChangingPassword">
+            {{ isChangingPassword ? 'Updating Password...' : 'Update Password' }}
           </button>
         </form>
       </div>

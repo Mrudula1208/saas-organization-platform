@@ -17,9 +17,12 @@ export class Settings implements OnInit {
   
   // Profile form
   profileForm = { fullName: '', email: '', profileImageUrl: '' };
+  isLoadingProfile = false;
+  isSavingProfile = false;
   
   // Password form
   passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+  isChangingPassword = false;
   
   // Preferences form
   preferencesForm = { emailNotifications: true, inAppNotifications: true };
@@ -44,27 +47,37 @@ export class Settings implements OnInit {
 
   ngOnInit() {
     this.currentUser = this.auth.currentUser();
+    this.loadProfile();
     this.restoreSettings();
     this.loadWorkspace();
   }
 
-  restoreSettings() {
-    // Restore profile
+  loadProfile() {
+    // Seed the form from JWT claims while the real profile loads
     if (this.currentUser) {
-      this.profileForm.fullName = this.currentUser.fullName || 'User';
+      this.profileForm.fullName = this.currentUser.fullName || '';
       this.profileForm.email = this.currentUser.email || '';
-      
-      // Attempt to load full user details for profile image
-      this.userService.getUsers().subscribe({
-        next: (users: any[]) => {
-          const matched = users.find((u: any) => u.email.toLowerCase() === this.profileForm.email.toLowerCase());
-          if (matched) {
-            this.profileForm.profileImageUrl = matched.profileImageUrl || '';
-          }
-        }
-      });
     }
 
+    this.isLoadingProfile = true;
+    this.userService.getProfile().subscribe({
+      next: (profile) => {
+        this.isLoadingProfile = false;
+        if (profile) {
+          this.profileForm.fullName = profile.fullName || '';
+          this.profileForm.email = profile.email || '';
+          this.profileForm.profileImageUrl = profile.profileImageUrl || '';
+        }
+      },
+      error: (err) => {
+        this.isLoadingProfile = false;
+        this.errorMessage = err?.error?.message || 'Failed to load your profile. Please try again.';
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
+  }
+
+  restoreSettings() {
     // Restore theme preference
     if (typeof window !== 'undefined') {
       const storedTheme = localStorage.getItem('theme_preference');
@@ -99,26 +112,31 @@ export class Settings implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
 
-    if (!this.profileForm.fullName) {
-      this.errorMessage = 'Profile name cannot be empty.';
+    const fullName = this.profileForm.fullName.trim();
+    if (!fullName) {
+      this.errorMessage = 'Full name cannot be empty.';
       return;
     }
 
-    this.userService.updateProfile(this.profileForm.fullName, this.profileForm.profileImageUrl).subscribe({
-      next: (success) => {
-        if (success) {
-          this.successMessage = 'Profile information saved successfully!';
-          if (this.currentUser) {
-            this.currentUser.fullName = this.profileForm.fullName;
-          }
+    this.isSavingProfile = true;
+    this.userService.updateProfile(fullName, this.profileForm.profileImageUrl.trim()).subscribe({
+      next: (res) => {
+        this.isSavingProfile = false;
+        if (res.success) {
+          this.successMessage = res.message || 'Profile saved successfully!';
+          this.profileForm.fullName = fullName;
+          // Keep session claims in sync so the navbar shows the new name
+          this.auth.updateCurrentUser({ fullName });
+          this.currentUser = this.auth.currentUser();
         } else {
-          this.errorMessage = 'Failed to save profile. Please try again.';
+          this.errorMessage = res.message || 'Failed to save profile. Please try again.';
         }
-        setTimeout(() => { this.successMessage = ''; this.errorMessage = ''; }, 3000);
+        this.clearMessages();
       },
-      error: () => {
-        this.errorMessage = 'Failed to save profile. Please try again.';
-        setTimeout(() => this.errorMessage = '', 3000);
+      error: (err) => {
+        this.isSavingProfile = false;
+        this.errorMessage = err?.error?.message || 'Failed to save profile. Please try again.';
+        this.clearMessages();
       }
     });
   }
@@ -127,31 +145,45 @@ export class Settings implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
 
-    if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
+    const { currentPassword, newPassword, confirmPassword } = this.passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
       this.errorMessage = 'Please fill in all password fields.';
       return;
     }
 
-    if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+    if (newPassword.length < 6) {
+      this.errorMessage = 'New password must be at least 6 characters.';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
       this.errorMessage = 'New password and confirmation do not match.';
       return;
     }
 
-    this.userService.changePassword(this.passwordForm.currentPassword, this.passwordForm.newPassword).subscribe({
-      next: (success) => {
-        if (success) {
-          this.successMessage = 'Password changed successfully!';
+    this.isChangingPassword = true;
+    this.userService.changePassword(currentPassword, newPassword, confirmPassword).subscribe({
+      next: (res) => {
+        this.isChangingPassword = false;
+        if (res.success) {
+          this.successMessage = res.message || 'Password changed successfully!';
           this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
         } else {
-          this.errorMessage = 'Current password is incorrect. Please try again.';
+          this.errorMessage = res.message || 'Failed to change password. Please try again.';
         }
-        setTimeout(() => { this.successMessage = ''; this.errorMessage = ''; }, 3000);
+        this.clearMessages();
       },
-      error: () => {
-        this.errorMessage = 'Failed to change password. Please try again.';
-        setTimeout(() => this.errorMessage = '', 3000);
+      error: (err) => {
+        this.isChangingPassword = false;
+        this.errorMessage = err?.error?.message || 'Failed to change password. Please try again.';
+        this.clearMessages();
       }
     });
+  }
+
+  private clearMessages(delayMs = 5000) {
+    setTimeout(() => { this.successMessage = ''; this.errorMessage = ''; }, delayMs);
   }
 
   savePreferences() {

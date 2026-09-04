@@ -199,4 +199,12 @@ export class Auth {
   getTenantId(): string | undefined {
     return this.currentUser()?.tenantId;
   }
+
+  // Refresh cached claims after a profile update (e.g. new full name)
+  updateCurrentUser(changes: Partial<UserClaims>) {
+    const user = this.currentUser();
+    if (user) {
+      this.currentUser.set({ ...user, ...changes });
+    }
+  }
 }
