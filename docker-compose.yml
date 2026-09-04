@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Microsoft SQL Server Database
+  # ----------------------------------------------------------------------------
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: saas_mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - saas_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ----------------------------------------------------------------------------
+  # 2. .NET 8 Backend Web API
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas_backend
+    restart: on-failure
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=SaaSAppDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;
+      - Jwt__Key=ba96f767b6144340a9ac50b72046b0431e59eeb80241434ca312b34644e68c50
+      - Jwt__Issuer=SaaSApp
+      - Jwt__Audience=SaaSUsers
+      - Cors__AllowedOrigins=http://localhost,http://localhost:4200,http://localhost:80
+      - Seed__AdminPassword=admin123
+      - Seed__TenantAdminPassword=tenant123
+      - Seed__MemberPassword=member123
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
+    networks:
+      - saas_network
+
+  # ----------------------------------------------------------------------------
+  # 3. Angular Frontend (Nginx)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend/saas-platform-angular
+      dockerfile: Dockerfile
+    container_name: saas_frontend
+    restart: on-failure
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - saas_network
+
+volumes:
+  mssql_data:
+  uploads_data:
+
+networks:
+  saas_network:
+    driver: bridge

@@ -151,6 +151,9 @@ namespace SaaSPlatform.API
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             
+            // 🩺 Health Checks for container orchestrators (Docker, Kubernetes)
+            builder.Services.AddHealthChecks();
+            
             var app = builder.Build();
 
             // Create the uploads folder on startup so it works in local and production environments.
@@ -198,6 +201,7 @@ namespace SaaSPlatform.API
             app.UseAuthorization();
 
             app.MapControllers();
+            app.MapHealthChecks("/health");
 
             app.Run();
         }
