@@ -25,7 +25,7 @@ SaaSOrganizationPlatform/
 
 ---
 
-## 💡 How Multi-Tenancy Works (Fresher-Friendly Explanation)
+## 💡 Multi-Tenancy Architecture & Data Isolation
 
 ### 1. Data Isolation Strategy
 - Every organization is assigned a unique `TenantId` (GUID).
@@ -41,7 +41,7 @@ SaaSOrganizationPlatform/
 
 ## ✨ Key Features & Technical Highlights
 
-| Feature | Technologies Used | How It Works |
+| Feature | Technologies Used | Implementation Details |
 | :--- | :--- | :--- |
 | **Authentication & RBAC** | JWT Bearer, BCrypt.Net, Refresh Tokens | Role-based authorization (`SuperAdmin`, `TenantAdmin`, `Member`) with account lockout protection. |
 | **Project Management** | EF Core, Unit of Work Pattern | CRUD operations, deadline tracking, team member allocation per project. |
@@ -129,21 +129,3 @@ dotnet test backend/SaaSPlatform.Tests/SaaSPlatform.Tests.csproj
 cd frontend/saas-platform-angular
 npm test -- --watch=false
 ```
-
----
-
-## 🎓 Interview Talking Points (Fresher Guide)
-
-When presenting this project to interviewers or seniors:
-
-1. **"Why did you choose Clean Architecture?"**
-   > *"Clean Architecture isolates business rules from infrastructure concerns. If we switch databases from SQL Server to PostgreSQL, or change external services, our core application entities and logic remain completely untouched."*
-
-2. **"How did you prevent cross-tenant data leakage?"**
-   > *"We combined EF Core Global Query Filters with JWT claim extraction. The `TenantId` is read exclusively from the authenticated user's JWT claims, never from client requests, ensuring data separation at both the API and database levels."*
-
-3. **"How are file exports generated efficiently?"**
-   > *"We avoided heavy headless browsers for PDFs. We use QuestPDF for vector layout generation and EPPlus for high-speed OpenXML spreadsheet creation, streaming binary content directly via HTTP response streams."*
-
-4. **"How does the frontend maintain state without heavy state libraries?"**
-   > *"We leveraged Angular Standalone Components combined with reactive RxJS services and modern Signals, keeping the bundle size small and rendering performant."*

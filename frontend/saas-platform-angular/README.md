@@ -1,59 +1,63 @@
-# SaasPlatformAngular
+# SaaS Organization Platform - Web Client
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
+The enterprise web client for the Multi-Tenant SaaS Organization Platform, built with modern standalone **Angular 19/20**, **TypeScript**, and a custom **Burgundy + Warm Beige + Charcoal** corporate design system.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🏛️ Architecture & Key Concepts
 
-```bash
-ng serve
+- **Standalone Components**: Eliminates legacy NgModules for faster compilation, tree-shaking, and lazy loading.
+- **Reactive State Management**: Driven by Angular Signals and RxJS observables for granular change detection.
+- **Role-Based Routing**: Multi-tenant route guards (`auth.guard.ts`) dynamically restrict access based on authenticated user claims (`SuperAdmin`, `TenantAdmin`, `Member`).
+- **HTTP Interceptors**: Automatically injects JWT Bearer tokens and handles refresh token rotations and 401/403 responses.
+- **Design System**: Fully bespoke CSS variables design system with zero external UI framework bloat (custom tables, modals, cards, badges, Kanban board).
+
+---
+
+## 📂 Directory Structure
+
+```
+src/
+├── app/
+│   ├── core/
+│   │   ├── guards/          # Route authorization guards (AuthGuard)
+│   │   ├── interceptors/    # JWT token injection & error interceptors
+│   │   └── services/        # HTTP API services (Auth, Tenant, Project, Task, Report, Billing)
+│   ├── models/              # TypeScript interfaces and DTO models
+│   ├── pages/
+│   │   ├── auth/            # Login, Register, Forgot Password, Reset Password
+│   │   ├── landing/         # Marketing & product landing page
+│   │   ├── super-admin/     # Platform Admin dashboards, tenants, revenue, settings
+│   │   └── tenant/          # Workspace dashboards, projects, tasks Kanban, members, reports
+│   └── shared/
+│       └── components/      # Reusable UI (Navbar, Sidebar, Modal, Table, Notification bell)
+├── environments/            # API endpoint configuration
+└── styles.css               # Global Burgundy + Charcoal CSS design tokens
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🛠️ Development & Build Commands
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Install Dependencies
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### Run Local Development Server
 ```bash
-ng generate --help
+npm start
 ```
+Navigates to `http://localhost:4200/`. Proxies API calls to backend running on `http://localhost:5258`.
 
-## Building
-
-To build the project run:
-
+### Run Unit Tests
 ```bash
-ng build
+npm test -- --watch=false
 ```
+Executes comprehensive Vitest test suites across guards, services, and components.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
+### Production Build
 ```bash
-ng test
+npm run build
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Generates optimized, production-ready bundles in the `dist/` directory.
