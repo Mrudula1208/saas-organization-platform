@@ -29,6 +29,7 @@ export class Tasks implements OnInit {
   activeView: 'board' | 'table' = 'board';
   selectedProjectId = '';
   searchQuery = '';
+  errorMessage = '';
 
   // Modals state
   isCreateModalOpen = false;
@@ -48,6 +49,7 @@ export class Tasks implements OnInit {
   }
 
   loadData() {
+    this.errorMessage = '';
     this.projectService.getProjects().subscribe({
       next: (projData: Project[]) => {
         this.projects = projData;
@@ -60,8 +62,15 @@ export class Tasks implements OnInit {
           next: (userData: User[]) => {
             this.users = userData;
             this.loadTasks();
+          },
+          error: (err) => {
+            this.errorMessage = getErrorMessage(err, 'Could not load team members.');
+            this.loadTasks();
           }
         });
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load projects. Please try again later.');
       }
     });
   }
@@ -71,6 +80,9 @@ export class Tasks implements OnInit {
       next: (taskData: TaskItem[]) => {
         this.allTasks = taskData;
         this.applyFilters();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load tasks. Please try again later.');
       }
     });
   }
@@ -123,16 +135,14 @@ export class Tasks implements OnInit {
   saveTask() {
     if (!this.newTask.name || !this.newTask.projectId) return;
 
-    const assigned = this.users.find(u => u.id === this.newTask.assignedUserId);
-    const payload = {
-      ...this.newTask,
-      assignedUserName: assigned ? assigned.fullName : 'Jann Sanner'
-    };
-
-    this.projectService.createTask(payload).subscribe({
+    // The backend resolves the assignee from assignedUserId; no fake fallback name is sent.
+    this.projectService.createTask(this.newTask).subscribe({
       next: () => {
         this.loadTasks();
         this.closeCreateModal();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not create the task.');
       }
     });
   }
@@ -145,6 +155,9 @@ export class Tasks implements OnInit {
           task.status = newStatus;
           this.applyFilters();
         }
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not change the task status.');
       }
     });
   }
@@ -191,6 +204,9 @@ export class Tasks implements OnInit {
           if (success) {
             this.loadTasks();
           }
+        },
+        error: (err) => {
+          this.errorMessage = getErrorMessage(err, 'Could not delete the task.');
         }
       });
     }
