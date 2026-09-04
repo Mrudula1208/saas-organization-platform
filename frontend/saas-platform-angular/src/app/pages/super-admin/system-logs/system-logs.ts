@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SystemLogService, SystemLog } from '../../../core/services/system-log';
+import { SystemLogService } from '../../../core/services/system-log';
+import { SystemLog } from '../../../models/system-log.model';
 
 @Component({
   selector: 'app-system-logs',
@@ -65,7 +66,7 @@ export class SystemLogs implements OnInit {
     this.loadLogs();
   }
 
-  shortId(id?: string): string {
+  shortId(id?: string | null): string {
     return id ? id.slice(0, 8) : '';
   }
 

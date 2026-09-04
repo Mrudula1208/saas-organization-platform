@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ProjectService, Project, ProjectMember } from '../../../core/services/project';
-import { UserService, User } from '../../../core/services/user';
+import { ProjectService } from '../../../core/services/project';
+import { UserService } from '../../../core/services/user';
 import { Auth } from '../../../core/services/auth';
+import { Project, ProjectMember } from '../../../models/project.model';
+import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-projects',

@@ -2,21 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-
-export interface Tenant {
-  id: string;
-  name: string;
-  domain: string;
-  emailAddress: string;
-  plan: string;
-  status: string;
-  createdAt: string;
-  usersCount: number;
-  projectsCount: number;
-  monthlyRevenue: number;
-  lastUsed: string;
-  logoImageUrl?: string;
-}
+import { Tenant } from '../../models/tenant.model';
 
 @Injectable({
   providedIn: 'root',
@@ -26,8 +12,8 @@ export class TenantService {
   private readonly apiOrigin = 'http://localhost:5258';
 
   // Converts a backend relative logo path into an absolute URL the browser can load.
-  private toAbsoluteLogoUrl(url?: string): string {
-    if (!url) return '';
+  private toAbsoluteLogoUrl(url?: string): string | null {
+    if (!url) return null;
     if (/^https?:\/\//i.test(url)) return url;
     return `${this.apiOrigin}${url.startsWith('/') ? url : `/${url}`}`;
   }
@@ -38,53 +24,69 @@ export class TenantService {
       id: '11112222-3333-4444-5555-666677778888',
       name: 'Acme Corp',
       domain: 'acme.saasapp.com',
-      emailAddress: 'admin@acme.com',
+      contactEmail: 'admin@acme.com',
+      contactPhone: '+1 (555) 010-1234',
+      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
+      isActive: true,
+      logoImageUrl: null,
+      isDeleted: false,
+      createdAt: '2025-10-15T08:30:00Z',
       plan: 'Pro',
       status: 'Upgraded',
-      createdAt: '2025-10-15T08:30:00Z',
       usersCount: 54,
       projectsCount: 112,
-      monthlyRevenue: 180,
-      lastUsed: '7 months ago'
+      monthlyRevenue: 180
     },
     {
       id: '99998888-7777-6666-5555-444433332222',
       name: 'Globex Corporation',
       domain: 'globex.saasapp.com',
-      emailAddress: 'homer@globex.com',
+      contactEmail: 'homer@globex.com',
+      contactPhone: '+1 (555) 020-5678',
+      subscriptionPlanId: 'eeee1111-2222-3333-4444-555566667777',
+      isActive: true,
+      logoImageUrl: null,
+      isDeleted: false,
+      createdAt: '2025-11-20T10:00:00Z',
       plan: 'Enterprise',
       status: 'Upgraded',
-      createdAt: '2025-11-20T10:00:00Z',
       usersCount: 120,
       projectsCount: 230,
-      monthlyRevenue: 500,
-      lastUsed: '1 month ago'
+      monthlyRevenue: 500
     },
     {
       id: '12345678-1234-1234-1234-123456789012',
       name: 'Initech Inc',
       domain: 'initech.saasapp.com',
-      emailAddress: 'peter@initech.com',
+      contactEmail: 'peter@initech.com',
+      contactPhone: '+1 (555) 030-9012',
+      subscriptionPlanId: 'bbbb1111-2222-3333-4444-555566667777',
+      isActive: true,
+      logoImageUrl: null,
+      isDeleted: false,
+      createdAt: '2026-01-05T14:45:00Z',
       plan: 'Basic',
       status: 'Unintentended nomplete', // matches PDF spelling screenshot
-      createdAt: '2026-01-05T14:45:00Z',
       usersCount: 12,
       projectsCount: 15,
-      monthlyRevenue: 15,
-      lastUsed: '2 months ago'
+      monthlyRevenue: 15
     },
     {
       id: '87654321-4321-4321-4321-210987654321',
       name: 'Umbrella Corp',
       domain: 'umbrella.saasapp.com',
-      emailAddress: 'albert@umbrella.com',
+      contactEmail: 'albert@umbrella.com',
+      contactPhone: '+1 (555) 040-3456',
+      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
+      isActive: true,
+      logoImageUrl: null,
+      isDeleted: false,
+      createdAt: '2025-08-12T09:15:00Z',
       plan: 'Pro',
       status: 'Red upgraded', // matches PDF spelling screenshot
-      createdAt: '2025-08-12T09:15:00Z',
       usersCount: 88,
       projectsCount: 140,
-      monthlyRevenue: 180,
-      lastUsed: '10 days ago'
+      monthlyRevenue: 180
     }
   ];
 
@@ -113,14 +115,17 @@ export class TenantService {
       id: t.id,
       name: t.name,
       domain: t.domain,
-      emailAddress: t.contactEmail || t.emailAddress || '',
+      contactEmail: t.contactEmail || t.emailAddress || '',
+      contactPhone: t.contactPhone || '',
+      subscriptionPlanId: t.subscriptionPlanId || '',
+      isActive: t.isActive === true,
+      isDeleted: t.isDeleted === true,
+      createdAt: t.createdAt,
       plan: t.plan || this.mapPlanIdToName(t.subscriptionPlanId),
       status: t.isActive ? 'Active' : 'Suspended',
-      createdAt: t.createdAt,
       usersCount: t.usersCount || (t.users ? t.users.length : 0) || 0,
       projectsCount: t.projectsCount || (t.projects ? t.projects.length : 0) || 0,
       monthlyRevenue: t.monthlyRevenue || 0,
-      lastUsed: t.lastUsed || 'Recently',
       logoImageUrl: this.toAbsoluteLogoUrl(t.logoImageUrl)
     };
   }
@@ -130,10 +135,10 @@ export class TenantService {
       id: t.id,
       name: t.name,
       domain: t.domain,
-      contactEmail: t.emailAddress || t.contactEmail || '',
+      contactEmail: t.contactEmail || t.emailAddress || '',
       contactPhone: t.contactPhone || '',
-      subscriptionPlanId: this.mapPlanNameToId(t.plan || 'Basic'),
-      isActive: t.status === 'Active' || t.isActive === true
+      subscriptionPlanId: t.subscriptionPlanId || this.mapPlanNameToId(t.plan || 'Basic'),
+      isActive: t.status ? (t.status === 'Active') : t.isActive === true
     };
   }
 
@@ -163,14 +168,18 @@ export class TenantService {
       id: tenant.id || crypto.randomUUID(),
       name: tenant.name,
       domain: tenant.domain || `${tenant.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.saasapp.com`,
-      emailAddress: tenant.emailAddress || tenant.adminEmail || '',
+      contactEmail: tenant.contactEmail || tenant.emailAddress || tenant.adminEmail || '',
+      contactPhone: tenant.contactPhone || '',
+      subscriptionPlanId: this.mapPlanNameToId(tenant.plan || 'Basic'),
+      isActive: true,
+      isDeleted: false,
+      logoImageUrl: null,
+      createdAt: tenant.createdAt || new Date().toISOString(),
       plan: tenant.plan || 'Basic',
       status: tenant.status || 'Active',
-      createdAt: tenant.createdAt || new Date().toISOString(),
       usersCount: tenant.usersCount || 1,
       projectsCount: tenant.projectsCount || 0,
-      monthlyRevenue: tenant.plan === 'Enterprise' ? 180 : tenant.plan === 'Pro' ? 45 : 15,
-      lastUsed: 'Just now'
+      monthlyRevenue: tenant.plan === 'Enterprise' ? 180 : tenant.plan === 'Pro' ? 45 : 15
     };
 
     const backendPayload = this.mapFrontendTenantToBackend(frontendTenant);
@@ -223,7 +232,7 @@ export class TenantService {
     formData.append('file', file, file.name);
 
     return this.http.post<any>(`${this.apiUrl}/${tenantId}/upload-logo`, formData).pipe(
-      map((res) => this.toAbsoluteLogoUrl(res?.logoUrl || '')),
+      map((res) => this.toAbsoluteLogoUrl(res?.logoUrl || '') || ''),
       catchError((err) => {
         const message = err?.error?.message || err?.message || 'Failed to upload logo. Please try again.';
         return throwError(() => new Error(message));

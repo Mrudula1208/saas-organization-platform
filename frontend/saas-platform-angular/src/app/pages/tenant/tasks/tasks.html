@@ -81,7 +81,7 @@
                     <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                   </button>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: #fff; font-weight: 600;">{{ task.title }}</h4>
+                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: #fff; font-weight: 600;">{{ task.name }}</h4>
                 <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                   {{ task.description }}
                 </p>
@@ -128,7 +128,7 @@
                     <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                   </button>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: #fff; font-weight: 600;">{{ task.title }}</h4>
+                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: #fff; font-weight: 600;">{{ task.name }}</h4>
                 <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                   {{ task.description }}
                 </p>
@@ -179,7 +179,7 @@
                     <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                   </button>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: var(--text-muted); font-weight: 600; text-decoration: line-through;">{{ task.title }}</h4>
+                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: var(--text-muted); font-weight: 600; text-decoration: line-through;">{{ task.name }}</h4>
                 <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                   {{ task.description }}
                 </p>
@@ -227,7 +227,7 @@
               @if (!selectedProjectId || task.projectId === selectedProjectId) {
                 <tr>
                   <td style="font-weight: 600;" [style.text-decoration]="task.status === 'Completed' ? 'line-through' : ''" [style.color]="task.status === 'Completed' ? 'var(--text-muted)' : ''">
-                    {{ task.title }}
+                    {{ task.name }}
                   </td>
                   <td>{{ task.projectName }}</td>
                   <td>
@@ -286,8 +286,8 @@
               id="task-title" 
               class="form-input" 
               placeholder="e.g. Design Settings Grid" 
-              [(ngModel)]="newTask.title" 
-              name="title" 
+              [(ngModel)]="newTask.name" 
+              name="name" 
               required 
             />
           </div>

@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BillingService } from '../../../core/services/billing';
 import {
-  BillingService,
   CurrentPlan,
   PaymentRecord,
   BillingSummary,
-} from '../../../core/services/billing';
+} from '../../../models/payment.model';
 
 @Component({
   selector: 'app-billing',

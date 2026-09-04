@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProjectService, Project, TaskItem } from '../../../core/services/project';
-import { UserService, User } from '../../../core/services/user';
+import { ProjectService } from '../../../core/services/project';
+import { UserService } from '../../../core/services/user';
+import { Project } from '../../../models/project.model';
+import { TaskItem } from '../../../models/task.model';
+import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-tasks',
@@ -28,7 +31,7 @@ export class Tasks implements OnInit {
 
   // Modals state
   isCreateModalOpen = false;
-  newTask = { title: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '' };
+  newTask = { name: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '' };
 
   // Drag & Drop State
   // Holds the reference to the task item that is currently being dragged by the user
@@ -75,7 +78,7 @@ export class Tasks implements OnInit {
     // Filter tasks by selected project and search query
     const filtered = this.allTasks.filter((t: TaskItem) => {
       const matchesProject = !this.selectedProjectId || t.projectId === this.selectedProjectId;
-      const matchesSearch = !this.searchQuery || t.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      const matchesSearch = !this.searchQuery || t.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
                             (t.description && t.description.toLowerCase().includes(this.searchQuery.toLowerCase()));
       return matchesProject && matchesSearch;
     });
@@ -102,7 +105,7 @@ export class Tasks implements OnInit {
   openCreateModal() {
     const today = new Date().toISOString().split('T')[0];
     this.newTask = {
-      title: '',
+      name: '',
       description: '',
       projectId: this.selectedProjectId || (this.projects.length > 0 ? this.projects[0].id : ''),
       assignedUserId: this.users.length > 0 ? this.users[0].id : '',
@@ -117,7 +120,7 @@ export class Tasks implements OnInit {
   }
 
   saveTask() {
-    if (!this.newTask.title || !this.newTask.projectId) return;
+    if (!this.newTask.name || !this.newTask.projectId) return;
 
     const assigned = this.users.find(u => u.id === this.newTask.assignedUserId);
     const payload = {

@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SubscriptionPlanService, Plan } from '../../../core/services/subscription-plan';
+import { SubscriptionPlanService } from '../../../core/services/subscription-plan';
+import { SubscriptionPlan } from '../../../models/subscription.model';
 
 @Component({
   selector: 'app-subscription-plans',
@@ -11,7 +12,7 @@ import { SubscriptionPlanService, Plan } from '../../../core/services/subscripti
   styleUrl: './subscription-plans.css',
 })
 export class SubscriptionPlans implements OnInit {
-  plans: Plan[] = [];
+  plans: SubscriptionPlan[] = [];
 
   loading = false;
   saving = false;
@@ -56,7 +57,15 @@ export class SubscriptionPlans implements OnInit {
     if (!this.newPlan.name || this.newPlan.price < 0) return;
 
     this.saving = true;
-    this.planService.createPlan(this.newPlan).subscribe({
+    this.planService
+      .createPlan({
+        name: this.newPlan.name,
+        price: this.newPlan.price,
+        maxUsers: this.newPlan.maxUsers,
+        maxProjects: this.newPlan.maxProjects,
+        storageLimitMB: this.newPlan.storageLimit * 1024,
+      })
+      .subscribe({
       next: () => {
         this.saving = false;
         this.loadPlans();
@@ -69,14 +78,14 @@ export class SubscriptionPlans implements OnInit {
     });
   }
 
-  togglePlanStatus(plan: Plan) {
+  togglePlanStatus(plan: SubscriptionPlan) {
     this.planService
       .updatePlan(plan.id, {
         name: plan.name,
         price: plan.price,
         maxUsers: plan.maxUsers,
         maxProjects: plan.maxProjects,
-        storageLimit: plan.storageLimit,
+        storageLimitMB: plan.storageLimitMB,
         isActive: !plan.isActive,
       })
       .subscribe({

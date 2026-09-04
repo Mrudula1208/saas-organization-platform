@@ -2,13 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-
-export interface AppNotification {
-  id: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-}
+import { AppNotification } from '../../models/notification.model';
 
 @Injectable({
   providedIn: 'root',

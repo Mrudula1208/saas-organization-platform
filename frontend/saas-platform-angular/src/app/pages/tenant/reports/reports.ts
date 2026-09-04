@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReportService, TenantReportData, MonthlyStat } from '../../../core/services/report';
+import { ReportService } from '../../../core/services/report';
+import { TenantReportData, MonthlyStat } from '../../../models/report.model';
 
 interface ReportStat {
   month: string;

@@ -55,15 +55,15 @@
             <tr>
               <td style="font-weight: 600;">{{ tenant.name }}</td>
               <td style="color: var(--accent-color); font-family: monospace;">{{ tenant.domain }}</td>
-              <td>{{ tenant.emailAddress }}</td>
+              <td>{{ tenant.contactEmail }}</td>
               <td>
                 <span class="badge" [class.badge-success]="tenant.plan === 'Enterprise'" [class.badge-purple]="tenant.plan === 'Pro'" [class.badge-info]="tenant.plan === 'Basic'">
                   {{ tenant.plan }}
                 </span>
               </td>
-              <td style="font-weight: 700;">${{ tenant.monthlyRevenue }}</td>
+              <td style="font-weight: 700;">${{ tenant.monthlyRevenue || 0 }}</td>
               <td>
-                <span class="badge" [class.badge-success]="tenant.status === 'Active' || tenant.status.includes('Upgrad')" [class.badge-danger]="tenant.status === 'Suspended' || tenant.status.includes('Deactiv')">
+                <span class="badge" [class.badge-success]="tenant.status?.includes('Upgrad') || tenant.status === 'Active'" [class.badge-danger]="tenant.status?.includes('Deactiv') || tenant.status === 'Suspended'">
                   {{ tenant.status }}
                 </span>
               </td>
@@ -135,7 +135,7 @@
               id="new-email" 
               class="form-input" 
               placeholder="admin@example.com" 
-              [(ngModel)]="newTenant.emailAddress" 
+              [(ngModel)]="newTenant.contactEmail" 
               name="email" 
               required 
             />
@@ -194,7 +194,7 @@
               type="email" 
               id="edit-email" 
               class="form-input" 
-              [(ngModel)]="editTenantForm.emailAddress" 
+              [(ngModel)]="editTenantForm.contactEmail" 
               name="email" 
               required 
             />
@@ -252,7 +252,7 @@
               <div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary);">Status</div>
                 <div>
-                  <span class="badge" [class.badge-success]="selectedTenant.status === 'Active' || selectedTenant.status.includes('Upgrad')" [class.badge-danger]="selectedTenant.status === 'Suspended'">
+                  <span class="badge" [class.badge-success]="selectedTenant.status?.includes('Upgrad') || selectedTenant.status === 'Active'" [class.badge-danger]="selectedTenant.status === 'Suspended'">
                     {{ selectedTenant.status }}
                   </span>
                 </div>
@@ -264,7 +264,7 @@
             <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Admin Account Details</div>
             <div style="margin-top: 0.5rem;">
               <div style="font-size: 0.85rem; color: var(--text-secondary);">Admin Contact Email</div>
-              <div style="font-size: 0.95rem; font-weight: 600;">{{ selectedTenant.emailAddress }}</div>
+              <div style="font-size: 0.95rem; font-weight: 600;">{{ selectedTenant.contactEmail }}</div>
             </div>
           </div>
 

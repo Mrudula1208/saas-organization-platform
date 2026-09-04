@@ -1,35 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface CurrentPlan {
-  subscriptionPlanId: string;
-  planName: string;
-  price: number;
-  maxUsers: number;
-  maxProjects: number;
-  storageLimitMB: number;
-  billingFrequency: string;
-  nextBillingDate: string | null;
-}
-
-export interface PaymentRecord {
-  id: string;
-  paymentDate: string;
-  amount: number;
-  paymentMethod: string;
-  paymentStatus: string;
-  transactionId: string;
-}
-
-export interface BillingSummary {
-  totalPaid: number;
-  totalPayments: number;
-  successfulPayments: number;
-  failedPayments: number;
-  lastPaymentDate: string | null;
-  currentPlan: CurrentPlan | null;
-}
+import { CurrentPlan, PaymentRecord, BillingSummary, Payment } from '../../models/payment.model';
 
 @Injectable({
   providedIn: 'root',
@@ -61,8 +33,8 @@ export class BillingService {
     });
   }
 
-  getPayment(id: string): Observable<PaymentRecord> {
-    return this.http.get<PaymentRecord>(`${this.apiUrl}/payments/${id}`, {
+  getPayment(id: string): Observable<Payment> {
+    return this.http.get<Payment>(`${this.apiUrl}/payments/${id}`, {
       headers: this.getHeaders(),
     });
   }

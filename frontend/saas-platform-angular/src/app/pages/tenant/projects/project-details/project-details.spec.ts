@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ProjectDetails } from './project-details';
-import { Project, ProjectService } from '../../../../core/services/project';
+import { ProjectService } from '../../../../core/services/project';
+import { Project } from '../../../../models/project.model';
 
 describe('ProjectDetails', () => {
   let component: ProjectDetails;

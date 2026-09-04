@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ProjectService, Project, TaskItem } from '../../../core/services/project';
+import { ProjectService } from '../../../core/services/project';
+import { Project } from '../../../models/project.model';
+import { TaskItem } from '../../../models/task.model';
 import { UserService } from '../../../core/services/user';
 
 interface Activity {

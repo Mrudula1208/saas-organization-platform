@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TenantService, Tenant } from '../../../core/services/tenant';
+import { TenantService } from '../../../core/services/tenant';
+import { Tenant } from '../../../models/tenant.model';
 
 @Component({
   selector: 'app-tenants',
@@ -24,9 +25,9 @@ export class Tenants implements OnInit {
   isViewModalOpen = false;
 
   // Form states
-  newTenant = { name: '', plan: 'Basic', emailAddress: '', domain: '' };
+  newTenant = { name: '', plan: 'Basic', contactEmail: '', domain: '' };
   selectedTenant: Tenant | null = null;
-  editTenantForm = { id: '', name: '', plan: '', emailAddress: '', domain: '', status: '' };
+  editTenantForm = { id: '', name: '', plan: '', contactEmail: '', domain: '', status: '' };
 
   constructor(private tenantService: TenantService) {}
 
@@ -47,7 +48,7 @@ export class Tenants implements OnInit {
     this.filteredTenants = this.tenants.filter((t: Tenant) => {
       const matchesSearch = t.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
                             t.domain.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            t.emailAddress.toLowerCase().includes(this.searchQuery.toLowerCase());
+                            t.contactEmail.toLowerCase().includes(this.searchQuery.toLowerCase());
       
       const matchesPlan = this.planFilter === '' || t.plan === this.planFilter;
 
@@ -65,7 +66,7 @@ export class Tenants implements OnInit {
 
   // CREATE
   openCreateModal() {
-    this.newTenant = { name: '', plan: 'Basic', emailAddress: '', domain: '' };
+    this.newTenant = { name: '', plan: 'Basic', contactEmail: '', domain: '' };
     this.isCreateModalOpen = true;
   }
 
@@ -82,7 +83,7 @@ export class Tenants implements OnInit {
   }
 
   saveNewTenant() {
-    if (!this.newTenant.name || !this.newTenant.emailAddress) return;
+    if (!this.newTenant.name || !this.newTenant.contactEmail) return;
 
     this.tenantService.create(this.newTenant).subscribe({
       next: () => {
@@ -108,10 +109,10 @@ export class Tenants implements OnInit {
     this.editTenantForm = {
       id: tenant.id,
       name: tenant.name,
-      plan: tenant.plan,
-      emailAddress: tenant.emailAddress,
+      plan: tenant.plan || 'Basic',
+      contactEmail: tenant.contactEmail,
       domain: tenant.domain,
-      status: tenant.status
+      status: tenant.status || 'Active'
     };
     this.isEditModalOpen = true;
   }
@@ -135,7 +136,7 @@ export class Tenants implements OnInit {
 
   // TOGGLE STATUS (Deactivate / Reactivate)
   toggleStatus(tenant: Tenant) {
-    const updatedStatus = tenant.status === 'Suspended' || tenant.status.includes('Deactiv') ? 'Active' : 'Suspended';
+    const updatedStatus = tenant.status === 'Suspended' || tenant.status?.includes('Deactiv') ? 'Active' : 'Suspended';
     const payload = { ...tenant, status: updatedStatus };
     
     this.tenantService.update(tenant.id, payload).subscribe({

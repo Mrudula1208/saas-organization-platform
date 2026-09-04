@@ -2,59 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  priority: string;
-  status: string;
-  ownerId: string;
-  ownerName: string;
-  tenantId: string;
-  progress: number;
-  isActive: boolean;
-  createdAt: string;
-  taskCount: number;
-  completedTaskCount: number;
-}
-
-export interface UpdateProjectPayload {
-  name: string;
-  description: string;
-  status: string;
-  priority: string;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-}
-
-export interface TaskItem {
-  id: string;
-  title: string;
-  description?: string;
-  projectName: string;
-  projectId: string;
-  assignedUserId?: string;
-  assignedUserName?: string;
-  assignedUserImage?: string;
-  priority: string;
-  dueDate: string;
-  status: string; // 'To Do', 'In Progress', 'Completed'
-}
-
-export interface ProjectMember {
-  id: string;
-  projectId: string;
-  projectName: string;
-  userId: string;
-  userFullName: string;
-  userEmail: string;
-  userRole: string;
-  userProfileImageUrl?: string;
-}
+import { Project, UpdateProjectPayload, ProjectMember } from '../../models/project.model';
+import { TaskItem } from '../../models/task.model';
 
 @Injectable({
   providedIn: 'root',
@@ -104,15 +53,18 @@ export class ProjectService {
   private mapTask(serverTask: any): TaskItem {
     return {
       id: serverTask.id,
-      title: serverTask.name || serverTask.title,
+      name: serverTask.name || serverTask.title,
       description: serverTask.description || '',
-      projectName: serverTask.project?.name || '',
-      projectId: serverTask.projectId,
-      assignedUserId: serverTask.assignedUserId,
-      assignedUserName: serverTask.assignedUser?.fullName || '',
+      status: serverTask.status,
       priority: serverTask.priority || 'Medium',
       dueDate: serverTask.dueDate || '',
-      status: serverTask.status
+      isCompleted: serverTask.isCompleted ?? false,
+      completedAt: serverTask.completedAt || null,
+      projectId: serverTask.projectId,
+      assignedUserId: serverTask.assignedUserId,
+      createdAt: serverTask.createdAt || '',
+      projectName: serverTask.project?.name || '',
+      assignedUserName: serverTask.assignedUser?.fullName || ''
     };
   }
 
@@ -179,7 +131,7 @@ export class ProjectService {
 
   createTask(task: any): Observable<TaskItem> {
     const payload = {
-      name: task.title,
+      name: task.name || task.title,
       description: task.description || '',
       projectId: task.projectId,
       assignedUserId: task.assignedUserId,
@@ -201,7 +153,7 @@ export class ProjectService {
 
   updateTask(taskId: string, task: any): Observable<boolean> {
     const payload = {
-      name: task.title || task.name,
+      name: task.name || task.title,
       description: task.description || '',
       assignedUserId: task.assignedUserId,
       status: task.status,

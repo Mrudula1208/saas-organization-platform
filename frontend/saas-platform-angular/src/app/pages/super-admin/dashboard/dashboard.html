@@ -147,9 +147,9 @@
                       {{ tenant.plan }}
                     </span>
                   </td>
-                  <td>${{ tenant.monthlyRevenue }}</td>
+                  <td>${{ tenant.monthlyRevenue || 0 }}</td>
                   <td>
-                    <span class="badge" [class.badge-success]="tenant.status.includes('Upgrade') || tenant.status === 'Active'" [class.badge-warning]="!tenant.status.includes('Upgrade')">
+                    <span class="badge" [class.badge-success]="tenant.status?.includes('Upgrade') || tenant.status === 'Active'" [class.badge-warning]="!tenant.status?.includes('Upgrade')">
                       {{ tenant.status }}
                     </span>
                   </td>

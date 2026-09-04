@@ -2,7 +2,8 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
-import { NotificationService, AppNotification } from '../../../core/services/notification';
+import { NotificationService } from '../../../core/services/notification';
+import { AppNotification } from '../../../models/notification.model';
 
 @Component({
   selector: 'app-navbar',

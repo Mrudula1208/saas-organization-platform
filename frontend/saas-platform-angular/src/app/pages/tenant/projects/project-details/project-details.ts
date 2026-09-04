@@ -2,11 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  ProjectService,
-  Project,
-  UpdateProjectPayload,
-} from '../../../../core/services/project';
+import { ProjectService } from '../../../../core/services/project';
+import { Project, UpdateProjectPayload } from '../../../../models/project.model';
 import { Auth } from '../../../../core/services/auth';
 
 @Component({

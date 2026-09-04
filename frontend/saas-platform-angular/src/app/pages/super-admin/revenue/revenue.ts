@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TenantService, Tenant } from '../../../core/services/tenant';
+import { TenantService } from '../../../core/services/tenant';
+import { Tenant } from '../../../models/tenant.model';
 
 interface Transaction {
   id: string;

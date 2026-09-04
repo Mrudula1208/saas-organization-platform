@@ -1,15 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface SystemLog {
-  id: string;
-  action: string;
-  description: string;
-  userId?: string;
-  tenantId?: string;
-  createdAt: string;
-}
+import { SystemLog } from '../../models/system-log.model';
 
 @Injectable({
   providedIn: 'root',

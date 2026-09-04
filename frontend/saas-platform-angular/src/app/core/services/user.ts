@@ -3,19 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Auth } from './auth';
-
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  tenantId: string;
-  isActive: boolean;
-  createdAt: string;
-  lastLogin: string;
-  profileImageUrl?: string;
-  tenantName?: string;
-}
+import { User } from '../../models/user.model';
 
 @Injectable({
   providedIn: 'root',
