@@ -24,9 +24,16 @@ export class Settings implements OnInit {
   passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
   isChangingPassword = false;
   
-  // Preferences form
+  // Preferences form (persisted tenant settings, loaded from/saved via the backend)
   preferencesForm = { emailNotifications: true, inAppNotifications: true };
-  
+
+  // Workspace (tenant) settings form
+  workspaceForm = { name: '', domain: '', contactEmail: '', contactPhone: '' };
+  isLoadingWorkspace = false;
+  isSavingWorkspace = false;
+  isSavingPreferences = false;
+  isTenantAdmin = false;
+
   isDarkTheme = true;
   successMessage = '';
   errorMessage = '';
@@ -47,6 +54,7 @@ export class Settings implements OnInit {
 
   ngOnInit() {
     this.currentUser = this.auth.currentUser();
+    this.isTenantAdmin = this.auth.hasRole(['TenantAdmin']);
     this.loadProfile();
     this.restoreSettings();
     this.loadWorkspace();
@@ -78,7 +86,8 @@ export class Settings implements OnInit {
   }
 
   restoreSettings() {
-    // Restore theme preference
+    // Restore theme preference (device-level, stored locally on purpose).
+    // Notification preferences are tenant settings and are loaded from the backend in loadWorkspace().
     if (typeof window !== 'undefined') {
       const storedTheme = localStorage.getItem('theme_preference');
       this.isDarkTheme = storedTheme !== 'light';
@@ -86,11 +95,6 @@ export class Settings implements OnInit {
         document.body.classList.add('light-theme');
       } else {
         document.body.classList.remove('light-theme');
-      }
-
-      const storedPrefs = localStorage.getItem('tenant_prefs');
-      if (storedPrefs) {
-        this.preferencesForm = JSON.parse(storedPrefs);
       }
     }
   }
@@ -188,25 +192,107 @@ export class Settings implements OnInit {
 
   savePreferences() {
     this.successMessage = '';
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tenant_prefs', JSON.stringify(this.preferencesForm));
+    this.errorMessage = '';
+
+    if (!this.workspaceForm.name.trim()) {
+      this.errorMessage = 'Workspace settings are not loaded yet. Please try again in a moment.';
+      return;
     }
-    
-    this.successMessage = 'Notification preferences updated!';
-    setTimeout(() => this.successMessage = '', 3000);
+
+    this.isSavingPreferences = true;
+    this.tenantService.updateSettings(this.settingsPayload()).subscribe({
+      next: (res) => {
+        this.isSavingPreferences = false;
+        if (res.success) {
+          this.successMessage = res.message || 'Notification preferences saved!';
+        } else {
+          this.errorMessage = res.message || 'Failed to save notification preferences. Please try again.';
+        }
+        this.clearMessages();
+      },
+      error: (err) => {
+        this.isSavingPreferences = false;
+        this.errorMessage = err?.error?.message || err?.error?.title || 'Failed to save notification preferences. Please try again.';
+        this.clearMessages();
+      }
+    });
+  }
+
+  saveWorkspace() {
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    const name = this.workspaceForm.name.trim();
+    const contactEmail = this.workspaceForm.contactEmail.trim();
+
+    if (!name) {
+      this.errorMessage = 'Workspace name cannot be empty.';
+      return;
+    }
+    if (!contactEmail) {
+      this.errorMessage = 'Contact email cannot be empty.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      this.errorMessage = 'Please enter a valid contact email address.';
+      return;
+    }
+
+    this.isSavingWorkspace = true;
+    this.tenantService.updateSettings(this.settingsPayload()).subscribe({
+      next: (res) => {
+        this.isSavingWorkspace = false;
+        if (res.success) {
+          this.successMessage = res.message || 'Workspace settings saved!';
+          this.tenantName = name;
+        } else {
+          this.errorMessage = res.message || 'Failed to save workspace settings. Please try again.';
+        }
+        this.clearMessages();
+      },
+      error: (err) => {
+        this.isSavingWorkspace = false;
+        this.errorMessage = err?.error?.message || err?.error?.title || 'Failed to save workspace settings. Please try again.';
+        this.clearMessages();
+      }
+    });
+  }
+
+  // Both save actions send the complete settings state (workspace info + notification
+  // preferences) so one section can never reset the other.
+  private settingsPayload() {
+    return {
+      name: this.workspaceForm.name.trim(),
+      contactEmail: this.workspaceForm.contactEmail.trim(),
+      contactPhone: this.workspaceForm.contactPhone.trim(),
+      emailNotifications: this.preferencesForm.emailNotifications,
+      inAppNotifications: this.preferencesForm.inAppNotifications
+    };
   }
 
   private loadWorkspace() {
-    const tenantId = this.auth.getTenantId();
-    if (!tenantId) return;
-
-    this.tenantService.getById(tenantId).subscribe({
-      next: (tenant) => {
-        if (tenant) {
-          this.tenantName = tenant.name;
-          this.tenantLogoUrl = tenant.logoImageUrl || '';
-        }
+    this.isLoadingWorkspace = true;
+    this.tenantService.getSettings().subscribe({
+      next: (settings) => {
+        this.isLoadingWorkspace = false;
+        if (!settings || !settings.id) return;
+        this.tenantName = settings.name;
+        this.tenantLogoUrl = settings.logoImageUrl || '';
+        this.workspaceForm = {
+          name: settings.name,
+          domain: settings.domain,
+          contactEmail: settings.contactEmail,
+          contactPhone: settings.contactPhone
+        };
+        this.preferencesForm = {
+          emailNotifications: settings.emailNotifications,
+          inAppNotifications: settings.inAppNotifications
+        };
+      },
+      error: (err) => {
+        this.isLoadingWorkspace = false;
+        this.errorMessage = err?.error?.message || 'Failed to load workspace settings. Please try again.';
+        this.clearMessages();
       }
     });
   }

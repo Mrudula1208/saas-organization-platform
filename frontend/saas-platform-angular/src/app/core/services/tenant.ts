@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { Tenant } from '../../models/tenant.model';
+import { Tenant, TenantSettings } from '../../models/tenant.model';
 
 @Injectable({
   providedIn: 'root',
@@ -237,6 +237,41 @@ export class TenantService {
         const message = err?.error?.message || err?.message || 'Failed to upload logo. Please try again.';
         return throwError(() => new Error(message));
       })
+    );
+  }
+
+  // Tenant settings. The backend derives the tenant id from the JWT, so no id is sent here.
+  // These methods have no mock fallback: settings must come from / be saved to the real API.
+  getSettings(): Observable<TenantSettings> {
+    return this.http.get<any>(`${this.apiUrl}/settings`).pipe(
+      map((res) => {
+        const t = res?.data ?? res;
+        return {
+          id: t.id || '',
+          name: t.name || '',
+          domain: t.domain || '',
+          contactEmail: t.contactEmail || '',
+          contactPhone: t.contactPhone || '',
+          logoImageUrl: this.toAbsoluteLogoUrl(t.logoImageUrl) || '',
+          emailNotifications: t.emailNotifications !== false,
+          inAppNotifications: t.inAppNotifications !== false
+        } as TenantSettings;
+      })
+    );
+  }
+
+  updateSettings(payload: {
+    name: string;
+    contactEmail: string;
+    contactPhone: string;
+    emailNotifications: boolean;
+    inAppNotifications: boolean;
+  }): Observable<{ success: boolean; message: string }> {
+    return this.http.put<any>(`${this.apiUrl}/settings`, payload).pipe(
+      map((res) => ({
+        success: res?.success !== false,
+        message: res?.message || 'Workspace settings saved.'
+      }))
     );
   }
 }

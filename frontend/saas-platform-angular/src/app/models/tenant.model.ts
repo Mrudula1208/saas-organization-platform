@@ -15,3 +15,14 @@ export interface Tenant {
   projectsCount?: number;
   monthlyRevenue?: number;
 }
+
+export interface TenantSettings {
+  id: string;
+  name: string;
+  domain: string;
+  contactEmail: string;
+  contactPhone: string;
+  logoImageUrl: string;
+  emailNotifications: boolean;
+  inAppNotifications: boolean;
+}
