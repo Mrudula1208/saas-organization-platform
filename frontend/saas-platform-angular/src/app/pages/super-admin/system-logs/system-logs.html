@@ -23,9 +23,29 @@
         <select class="form-select" [(ngModel)]="actionFilter" (change)="onFilterChange()">
           <option value="">All Actions</option>
           <option value="LOGIN_SUCCESS">Login activity</option>
+          <option value="LOGIN_FAILED">Failed logins</option>
+          <option value="LOGOUT">Logouts</option>
           <option value="ACCOUNT_LOCKOUT">Account lockouts</option>
           <option value="TENANT_CREATED">Tenant creation</option>
+          <option value="TENANT_UPDATED">Tenant updates</option>
+          <option value="TENANT_SETTINGS_UPDATED">Tenant settings updates</option>
+          <option value="USER_CREATED">User creation</option>
+          <option value="USER_UPDATED">User updates</option>
+          <option value="USER_DELETED">User deletion</option>
+          <option value="PASSWORD_CHANGED">Password changes</option>
+          <option value="PROFILE_UPDATED">Profile updates</option>
           <option value="PROJECT_CREATED">Project creation</option>
+          <option value="PROJECT_UPDATED">Project updates</option>
+          <option value="PROJECT_DELETED">Project deletion</option>
+          <option value="TASK_CREATED">Task creation</option>
+          <option value="TASK_UPDATED">Task updates</option>
+          <option value="TASK_DELETED">Task deletion</option>
+          <option value="TASK_STATUS_UPDATED">Task status changes</option>
+          <option value="PAYMENT_RECEIVED">Payments received</option>
+          <option value="PAYMENT_DELETED">Payments deleted</option>
+          <option value="SUBSCRIPTION_PLAN_CREATED">Plan creation</option>
+          <option value="SUBSCRIPTION_PLAN_UPDATED">Plan updates</option>
+          <option value="SUBSCRIPTION_PLAN_DELETED">Plan deletion</option>
           <option value="SYSTEM_ERROR">Errors</option>
         </select>
       </div>

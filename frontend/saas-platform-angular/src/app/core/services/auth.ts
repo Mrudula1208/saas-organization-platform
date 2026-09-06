@@ -180,6 +180,13 @@ export class Auth {
   }
 
   logout() {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('saas_token') : null;
+    if (token) {
+      // Best-effort server-side logout so the session end is audited; failures are ignored.
+      this.http
+        .post(`${this.apiUrl}/logout`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .subscribe({ error: () => {} });
+    }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('saas_token');
     }

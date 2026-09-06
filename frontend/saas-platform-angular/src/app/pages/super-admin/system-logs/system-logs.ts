@@ -71,13 +71,13 @@ export class SystemLogs implements OnInit {
   }
 
   badgeClass(action: string): string {
-    if (action === 'SYSTEM_ERROR') {
+    if (action === 'SYSTEM_ERROR' || action === 'LOGIN_FAILED') {
       return 'badge-danger';
     }
     if (action === 'LOGIN_SUCCESS') {
       return 'badge-success';
     }
-    if (action === 'ACCOUNT_LOCKOUT') {
+    if (action === 'ACCOUNT_LOCKOUT' || action.endsWith('_DELETED')) {
       return 'badge-warning';
     }
     return 'badge-info';
