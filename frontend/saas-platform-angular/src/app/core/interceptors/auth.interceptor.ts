@@ -1,8 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   let token: string | null = null;
-  
+
   if (typeof window !== 'undefined') {
     token = localStorage.getItem('saas_token');
   }
@@ -28,5 +29,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const authReq = req.clone({ headers });
-  return next(authReq);
+
+  return next(authReq).pipe(
+    catchError((err) => {
+      // A 401 from a protected API means the session is no longer valid.
+      // Clear the token and send the user back to the login page.
+      // Login/register/logout endpoints handle their own 401 responses.
+      if (err?.status === 401 && !req.url.includes('/Auth/') && typeof window !== 'undefined') {
+        localStorage.removeItem('saas_token');
+        window.location.assign('/login');
+      }
+      return throwError(() => err);
+    })
+  );
 };

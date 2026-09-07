@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Auth } from './auth';
 import { User } from '../../models/user.model';
 
@@ -51,26 +51,16 @@ export class UserService {
     );
   }
 
-  // ---------- User management (real API only - no mock data) ----------
-  // Failures degrade to empty/false results (never fake records), so pages
-  // that do not handle HTTP errors keep behaving gracefully.
+  // ---------- User management (real API only) ----------
+  // Errors are passed on to the calling page so real API failures are shown to the user.
 
   getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl, { headers: this.getHeaders() }).pipe(
-      catchError(() => {
-        console.warn('User API getUsers failed.');
-        return of([] as User[]);
-      })
-    );
+    return this.http.get<User[]>(this.apiUrl, { headers: this.getHeaders() });
   }
 
-  getUserById(id: string): Observable<User | null> {
+  getUserById(id: string): Observable<User> {
     return this.http.get<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
-      map(res => res.data || res),
-      catchError(() => {
-        console.warn(`User API getUserById failed for ${id}.`);
-        return of(null);
-      })
+      map(res => res.data || res)
     );
   }
 
@@ -86,31 +76,19 @@ export class UserService {
     };
 
     return this.http.post<any>(this.apiUrl, userPayload, { headers: this.getHeaders() }).pipe(
-      map(res => res.data || res),
-      catchError(() => {
-        console.warn('User API createUser failed.');
-        return of(null as unknown as User);
-      })
+      map(res => res.data || res)
     );
   }
 
   updateUser(id: string, user: any): Observable<boolean> {
     return this.http.put(`${this.apiUrl}/${id}`, user, { headers: this.getHeaders() }).pipe(
-      map(() => true),
-      catchError(() => {
-        console.warn(`User API updateUser failed for ${id}.`);
-        return of(false);
-      })
+      map(() => true)
     );
   }
 
   deleteUser(id: string): Observable<boolean> {
     return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
-      map(() => true),
-      catchError(() => {
-        console.warn(`User API deleteUser failed for ${id}.`);
-        return of(false);
-      })
+      map(() => true)
     );
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 export interface UserClaims {
   email: string;
@@ -15,7 +15,7 @@ export interface UserClaims {
 })
 export class Auth {
   private readonly apiUrl = 'http://localhost:5258/api/Auth';
-  
+
   // Signal for active user state
   public currentUser = signal<UserClaims | null>(null);
 
@@ -29,7 +29,7 @@ export class Auth {
       const parts = token.split('.');
       if (parts.length !== 3) return null;
       const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      
+
       // Map standard JWT claims or custom claims
       return {
         email: payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || payload.Email || '',
@@ -59,116 +59,35 @@ export class Auth {
   login(dto: any): Observable<{ token: string }> {
     return this.http.post<any>(`${this.apiUrl}/login`, dto).pipe(
       map((res) => {
-        if (res && res.success && res.data && res.data.accessToken) {
-          return { token: res.data.accessToken };
+        const token = res?.data?.accessToken || res?.token;
+        if (!token) {
+          throw new Error(res?.message || 'Login failed. Please check your credentials and try again.');
         }
-        if (res && res.token) {
-          return { token: res.token };
-        }
-        throw new Error('Invalid login response');
+        return { token };
       }),
-      tap((res) => {
-        if (res && res.token) {
-          this.saveToken(res.token);
-        }
-      }),
-      catchError((error) => {
-        console.warn('Backend API login failed. Falling back to local mock authentication...');
-        return this.mockLogin(dto);
-      })
+      tap((res) => this.saveToken(res.token))
     );
   }
 
-  registerTenant(dto: any): Observable<any> {
+  registerTenant(dto: any): Observable<{ token: string }> {
     return this.http.post<any>(`${this.apiUrl}/register-tenant`, dto).pipe(
-      map((res) => {
-        if (res && res.success && res.data && res.data.accessToken) {
-          return { token: res.data.accessToken };
-        }
-        if (res && res.token) {
-          return res;
-        }
-        throw new Error('Registration failed');
-      }),
+      map((res) => ({
+        token: res?.data?.accessToken || res?.token || ''
+      })),
       tap((res) => {
-        if (res && res.token) {
+        if (res.token) {
           this.saveToken(res.token);
         }
-      }),
-      catchError((error) => {
-        console.warn('Backend API registration failed. Falling back to local mock...');
-        const mockClaims: UserClaims = {
-          email: dto.adminEmail,
-          role: 'TenantAdmin',
-          tenantId: '11112222-3333-4444-5555-666677778888',
-          fullName: dto.adminName
-        };
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify(mockClaims));
-        const mockToken = `${header}.${payload}.mocksignature`;
-        this.saveToken(mockToken);
-        return of({ token: mockToken });
       })
     );
   }
 
   forgotPassword(email: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email }).pipe(
-      catchError((error) => {
-        console.warn('ForgotPassword API failed. Falling back to mock behavior.');
-        return of({ success: true, message: 'Mock link sent' });
-      })
-    );
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email });
   }
 
   resetPassword(dto: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/reset-password`, dto).pipe(
-      catchError((error) => {
-        console.warn('ResetPassword API failed. Falling back to mock behavior.');
-        return of({ success: true, message: 'Password reset' });
-      })
-    );
-  }
-
-  private mockLogin(dto: any): Observable<{ token: string }> {
-    const email = dto.email.toLowerCase().trim();
-    const password = dto.password;
-
-    let mockClaims: UserClaims | null = null;
-
-    if (email === 'admin@saas.com' && password === 'admin123') {
-      mockClaims = {
-        email: 'admin@saas.com',
-        role: 'SuperAdmin',
-        fullName: 'JD Dewifrav'
-      };
-    } else if (email === 'tenant@acme.com' && password === 'tenant123') {
-      mockClaims = {
-        email: 'tenant@acme.com',
-        role: 'TenantAdmin',
-        tenantId: '11112222-3333-4444-5555-666677778888',
-        fullName: 'Acme Administrator'
-      };
-    } else if (email === 'member@acme.com' && password === 'member123') {
-      mockClaims = {
-        email: 'member@acme.com',
-        role: 'Member',
-        tenantId: '11112222-3333-4444-5555-666677778888',
-        fullName: 'Jann Sanner'
-      };
-    }
-
-    if (mockClaims) {
-      // Generate a mock JWT-like string: header.payload.signature
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify(mockClaims));
-      const mockToken = `${header}.${payload}.mocksignature`;
-      
-      this.saveToken(mockToken);
-      return of({ token: mockToken });
-    } else {
-      return throwError(() => new Error('Invalid Email or Password (Mock credentials: admin@saas.com/admin123, tenant@acme.com/tenant123, member@acme.com/member123)'));
-    }
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, dto);
   }
 
   private saveToken(token: string) {

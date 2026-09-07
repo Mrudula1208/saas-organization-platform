@@ -1,7 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { Tenant, TenantSettings } from '../../models/tenant.model';
 
 @Injectable({
@@ -17,78 +17,6 @@ export class TenantService {
     if (/^https?:\/\//i.test(url)) return url;
     return `${this.apiOrigin}${url.startsWith('/') ? url : `/${url}`}`;
   }
-
-  // Local state cache for mock database operations
-  private mockTenants: Tenant[] = [
-    {
-      id: '11112222-3333-4444-5555-666677778888',
-      name: 'Acme Corp',
-      domain: 'acme.saasapp.com',
-      contactEmail: 'admin@acme.com',
-      contactPhone: '+1 (555) 010-1234',
-      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
-      isActive: true,
-      logoImageUrl: null,
-      isDeleted: false,
-      createdAt: '2025-10-15T08:30:00Z',
-      plan: 'Pro',
-      status: 'Upgraded',
-      usersCount: 54,
-      projectsCount: 112,
-      monthlyRevenue: 180
-    },
-    {
-      id: '99998888-7777-6666-5555-444433332222',
-      name: 'Globex Corporation',
-      domain: 'globex.saasapp.com',
-      contactEmail: 'homer@globex.com',
-      contactPhone: '+1 (555) 020-5678',
-      subscriptionPlanId: 'eeee1111-2222-3333-4444-555566667777',
-      isActive: true,
-      logoImageUrl: null,
-      isDeleted: false,
-      createdAt: '2025-11-20T10:00:00Z',
-      plan: 'Enterprise',
-      status: 'Upgraded',
-      usersCount: 120,
-      projectsCount: 230,
-      monthlyRevenue: 500
-    },
-    {
-      id: '12345678-1234-1234-1234-123456789012',
-      name: 'Initech Inc',
-      domain: 'initech.saasapp.com',
-      contactEmail: 'peter@initech.com',
-      contactPhone: '+1 (555) 030-9012',
-      subscriptionPlanId: 'bbbb1111-2222-3333-4444-555566667777',
-      isActive: true,
-      logoImageUrl: null,
-      isDeleted: false,
-      createdAt: '2026-01-05T14:45:00Z',
-      plan: 'Basic',
-      status: 'Unintentended nomplete', // matches PDF spelling screenshot
-      usersCount: 12,
-      projectsCount: 15,
-      monthlyRevenue: 15
-    },
-    {
-      id: '87654321-4321-4321-4321-210987654321',
-      name: 'Umbrella Corp',
-      domain: 'umbrella.saasapp.com',
-      contactEmail: 'albert@umbrella.com',
-      contactPhone: '+1 (555) 040-3456',
-      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
-      isActive: true,
-      logoImageUrl: null,
-      isDeleted: false,
-      createdAt: '2025-08-12T09:15:00Z',
-      plan: 'Pro',
-      status: 'Red upgraded', // matches PDF spelling screenshot
-      usersCount: 88,
-      projectsCount: 140,
-      monthlyRevenue: 180
-    }
-  ];
 
   constructor(private http: HttpClient) {}
 
@@ -144,56 +72,28 @@ export class TenantService {
 
   getAll(): Observable<Tenant[]> {
     return this.http.get<any[]>(this.apiUrl).pipe(
-      map(tenants => tenants.map(t => this.mapBackendTenantToFrontend(t))),
-      catchError(() => {
-        console.warn('Tenant API offline. Using mock tenants list.');
-        return of([...this.mockTenants]);
-      })
+      map(tenants => tenants.map(t => this.mapBackendTenantToFrontend(t)))
     );
   }
 
-  getById(id: string): Observable<Tenant | null> {
+  getById(id: string): Observable<Tenant> {
     return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
-      map(tenant => this.mapBackendTenantToFrontend(tenant)),
-      catchError(() => {
-        console.warn(`Tenant API offline. Searching mock tenants for ID: ${id}`);
-        const found = this.mockTenants.find(t => t.id === id) || null;
-        return of(found);
-      })
+      map(tenant => this.mapBackendTenantToFrontend(tenant))
     );
   }
 
   create(tenant: any): Observable<Tenant> {
-    const frontendTenant: Tenant = {
-      id: tenant.id || crypto.randomUUID(),
+    const backendPayload = {
       name: tenant.name,
       domain: tenant.domain || `${tenant.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.saasapp.com`,
-      contactEmail: tenant.contactEmail || tenant.emailAddress || tenant.adminEmail || '',
+      contactEmail: tenant.contactEmail || tenant.emailAddress || '',
       contactPhone: tenant.contactPhone || '',
       subscriptionPlanId: this.mapPlanNameToId(tenant.plan || 'Basic'),
-      isActive: true,
-      isDeleted: false,
-      logoImageUrl: null,
-      createdAt: tenant.createdAt || new Date().toISOString(),
-      plan: tenant.plan || 'Basic',
-      status: tenant.status || 'Active',
-      usersCount: tenant.usersCount || 1,
-      projectsCount: tenant.projectsCount || 0,
-      monthlyRevenue: tenant.plan === 'Enterprise' ? 180 : tenant.plan === 'Pro' ? 45 : 15
+      isActive: true
     };
 
-    const backendPayload = this.mapFrontendTenantToBackend(frontendTenant);
-
     return this.http.post<any>(this.apiUrl, backendPayload).pipe(
-      map(res => this.mapBackendTenantToFrontend(res)),
-      tap((res) => {
-        this.mockTenants.push(res);
-      }),
-      catchError(() => {
-        console.warn('Tenant API post failed. Saving tenant to local mock cache.');
-        this.mockTenants.push(frontendTenant);
-        return of(frontendTenant);
-      })
+      map(res => this.mapBackendTenantToFrontend(res?.data || res))
     );
   }
 
@@ -201,28 +101,13 @@ export class TenantService {
     const backendPayload = this.mapFrontendTenantToBackend({ ...tenant, id });
 
     return this.http.put(`${this.apiUrl}/${id}`, backendPayload).pipe(
-      map(() => true),
-      catchError(() => {
-        console.warn(`Tenant API update failed. Updating mock tenant cache for ID: ${id}`);
-        const idx = this.mockTenants.findIndex(t => t.id === id);
-        if (idx !== -1) {
-          this.mockTenants[idx] = { ...this.mockTenants[idx], ...tenant };
-          return of(true);
-        }
-        return of(false);
-      })
+      map(() => true)
     );
   }
 
   delete(id: string): Observable<boolean> {
     return this.http.delete(`${this.apiUrl}/${id}`).pipe(
-      map(() => true),
-      catchError(() => {
-        console.warn(`Tenant API delete failed. Removing from mock tenant cache for ID: ${id}`);
-        const initialLength = this.mockTenants.length;
-        this.mockTenants = this.mockTenants.filter(t => t.id !== id);
-        return of(this.mockTenants.length < initialLength);
-      })
+      map(() => true)
     );
   }
 
