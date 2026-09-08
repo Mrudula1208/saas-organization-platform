@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TenantService } from '../../../core/services/tenant';
 import { Tenant } from '../../../models/tenant.model';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-tenants',
@@ -18,6 +19,7 @@ export class Tenants implements OnInit {
   // Search & Filter
   searchQuery = '';
   planFilter = '';
+  errorMessage = '';
 
   // Modals state
   isCreateModalOpen = false;
@@ -36,10 +38,14 @@ export class Tenants implements OnInit {
   }
 
   loadTenants() {
+    this.errorMessage = '';
     this.tenantService.getAll().subscribe({
       next: (data: Tenant[]) => {
         this.tenants = data;
         this.applyFilters();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load tenants. Please try again later.');
       }
     });
   }
@@ -89,6 +95,9 @@ export class Tenants implements OnInit {
       next: () => {
         this.loadTenants();
         this.closeCreateModal();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not create the tenant.');
       }
     });
   }
@@ -130,6 +139,9 @@ export class Tenants implements OnInit {
           this.loadTenants();
           this.closeEditModal();
         }
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not update the tenant.');
       }
     });
   }
@@ -144,6 +156,9 @@ export class Tenants implements OnInit {
         if (success) {
           this.loadTenants();
         }
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not change the tenant status.');
       }
     });
   }
@@ -156,6 +171,9 @@ export class Tenants implements OnInit {
           if (success) {
             this.loadTenants();
           }
+        },
+        error: (err) => {
+          this.errorMessage = getErrorMessage(err, 'Could not delete the tenant.');
         }
       });
     }

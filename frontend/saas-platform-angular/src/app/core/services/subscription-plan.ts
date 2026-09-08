@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { SubscriptionPlan } from '../../models/subscription.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SubscriptionPlanService {
-  private readonly apiUrl = 'http://localhost:5258/api/SubscriptionPlan';
+  private readonly apiUrl = environment.apiUrl + '/SubscriptionPlan';
 
   constructor(private http: HttpClient) {}
 

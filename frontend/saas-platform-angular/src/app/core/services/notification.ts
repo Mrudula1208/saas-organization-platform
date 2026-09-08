@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AppNotification } from '../../models/notification.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
-  private readonly apiUrl = 'http://localhost:5258/api/Notification';
+  private readonly apiUrl = environment.apiUrl + '/Notification';
 
   public unreadCount = signal(0);
   public notifications = signal<AppNotification[]>([]);

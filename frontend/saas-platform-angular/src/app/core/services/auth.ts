@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface UserClaims {
   email: string;
@@ -14,7 +15,7 @@ export interface UserClaims {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly apiUrl = 'http://localhost:5258/api/Auth';
+  private readonly apiUrl = environment.apiUrl + '/Auth';
 
   // Signal for active user state
   public currentUser = signal<UserClaims | null>(null);

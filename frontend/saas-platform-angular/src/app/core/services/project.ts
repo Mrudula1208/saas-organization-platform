@@ -4,14 +4,15 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Project, UpdateProjectPayload, ProjectMember } from '../../models/project.model';
 import { TaskItem } from '../../models/task.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectService {
-  private readonly projectApiUrl = 'http://localhost:5258/api/Project';
-  private readonly tasksApiUrl = 'http://localhost:5258/api/Tasks';
-  private readonly projectMembersApiUrl = 'http://localhost:5258/api/ProjectMembers';
+  private readonly projectApiUrl = environment.apiUrl + '/Project';
+  private readonly tasksApiUrl = environment.apiUrl + '/Tasks';
+  private readonly projectMembersApiUrl = environment.apiUrl + '/ProjectMembers';
 
   constructor(private http: HttpClient) {}
 

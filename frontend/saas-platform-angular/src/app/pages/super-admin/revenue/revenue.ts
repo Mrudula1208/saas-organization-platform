@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TenantService } from '../../../core/services/tenant';
 import { Tenant } from '../../../models/tenant.model';
+import { getErrorMessage } from '../../../core/helpers';
 
 interface Transaction {
   id: string;
@@ -50,6 +51,8 @@ export class Revenue implements OnInit {
     { month: 'MAY', amount: 510, heightPercent: 100 }
   ];
 
+  errorMessage = '';
+
   constructor(private tenantService: TenantService) {}
 
   ngOnInit() {
@@ -57,6 +60,7 @@ export class Revenue implements OnInit {
   }
 
   calculateRevenueStats() {
+    this.errorMessage = '';
     this.tenantService.getAll().subscribe({
       next: (tenants: Tenant[]) => {
         this.activeSubscribers = tenants.length;
@@ -79,6 +83,9 @@ export class Revenue implements OnInit {
             });
           }
         }
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load revenue statistics. Please try again later.');
       }
     });
   }

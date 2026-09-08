@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user';
 import { User } from '../../../models/user.model';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-users',
@@ -17,6 +18,7 @@ export class Users implements OnInit {
 
   searchQuery = '';
   roleFilter = '';
+  errorMessage = '';
 
   constructor(private userService: UserService) {}
 
@@ -25,20 +27,25 @@ export class Users implements OnInit {
   }
 
   loadUsers() {
+    this.errorMessage = '';
     this.userService.getUsers().subscribe({
       next: (data: User[]) => {
         this.users = data;
         this.applyFilters();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load users. Please try again later.');
       }
     });
   }
 
   applyFilters() {
     this.filteredUsers = this.users.filter((u: User) => {
+      const tenantName = u.tenant?.name || u.tenantName || '';
       const matchesSearch = u.fullName.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
                             u.email.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            (u.tenantName && u.tenantName.toLowerCase().includes(this.searchQuery.toLowerCase()));
-      
+                            tenantName.toLowerCase().includes(this.searchQuery.toLowerCase());
+
       const matchesRole = this.roleFilter === '' || u.role === this.roleFilter;
 
       return matchesSearch && matchesRole;
@@ -54,26 +61,24 @@ export class Users implements OnInit {
   }
 
   toggleUserStatus(user: User) {
-    const updatedStatus = { isActive: !user.isActive };
-    this.userService.updateUser(user.id, updatedStatus).subscribe({
-      next: (success: boolean) => {
-        if (success) {
-          this.loadUsers();
-        }
+    this.errorMessage = '';
+    this.userService.toggleStatus(user.id, !user.isActive).subscribe({
+      next: () => this.loadUsers(),
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not update the user status.');
       }
     });
   }
 
   deleteUser(id: string) {
     if (confirm('Are you sure you want to delete this user?')) {
+      this.errorMessage = '';
       this.userService.deleteUser(id).subscribe({
-        next: (success: boolean) => {
-          if (success) {
-            this.loadUsers();
-          }
+        next: () => this.loadUsers(),
+        error: (err) => {
+          this.errorMessage = getErrorMessage(err, 'Could not delete the user.');
         }
       });
     }
   }
 }
-

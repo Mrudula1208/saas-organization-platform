@@ -4,6 +4,12 @@
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor platform SaaS billing streams, Average Revenue per Account (ARPU), and transaction audits</p>
   </div>
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ errorMessage }}
+    </div>
+  }
+
   <!-- KPI stats grid -->
   <div class="dashboard-grid">
     <!-- MRR KPI -->

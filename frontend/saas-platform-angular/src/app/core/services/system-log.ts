@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SystemLog } from '../../models/system-log.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SystemLogService {
-  private readonly apiUrl = 'http://localhost:5258/api/SystemLog';
+  private readonly apiUrl = environment.apiUrl + '/SystemLog';
 
   constructor(private http: HttpClient) {}
 

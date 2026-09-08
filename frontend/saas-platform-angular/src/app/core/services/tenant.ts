@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Tenant, TenantSettings } from '../../models/tenant.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TenantService {
-  private readonly apiUrl = 'http://localhost:5258/api/Tenant';
-  private readonly apiOrigin = 'http://localhost:5258';
+  private readonly apiUrl = environment.apiUrl + '/Tenant';
+  private readonly apiOrigin = environment.apiOrigin;
 
   // Converts a backend relative logo path into an absolute URL the browser can load.
   private toAbsoluteLogoUrl(url?: string): string | null {

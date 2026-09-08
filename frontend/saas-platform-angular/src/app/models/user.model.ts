@@ -9,4 +9,6 @@ export interface User {
   createdAt: string;
   lastLogin: string;
   tenantName?: string;
+  // Joined from the API so the super admin tables can show the real organization name.
+  tenant?: { id?: string; name?: string };
 }

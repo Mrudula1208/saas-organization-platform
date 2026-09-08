@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Auth } from './auth';
 import { User } from '../../models/user.model';
+import { environment } from '../../../environments/environment';
 
 export interface ApiResult {
   success: boolean;
@@ -14,7 +15,7 @@ export interface ApiResult {
   providedIn: 'root',
 })
 export class UserService {
-  private readonly apiUrl = 'http://localhost:5258/api/User';
+  private readonly apiUrl = environment.apiUrl + '/User';
 
   constructor(private http: HttpClient, private auth: Auth) {}
 
@@ -72,6 +73,7 @@ export class UserService {
       name: dto.fullName || dto.name,
       email: dto.email,
       password: dto.password,
+      role: dto.role,
       tenantId: tenantId
     };
 
@@ -82,6 +84,12 @@ export class UserService {
 
   updateUser(id: string, user: any): Observable<boolean> {
     return this.http.put(`${this.apiUrl}/${id}`, user, { headers: this.getHeaders() }).pipe(
+      map(() => true)
+    );
+  }
+
+  toggleStatus(id: string, isActive: boolean): Observable<boolean> {
+    return this.http.post(`${this.apiUrl}/${id}/toggle-status`, { isActive }, { headers: this.getHeaders() }).pipe(
       map(() => true)
     );
   }

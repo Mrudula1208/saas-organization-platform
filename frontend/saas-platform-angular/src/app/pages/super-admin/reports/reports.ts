@@ -29,6 +29,9 @@ export class Reports implements OnInit {
   isLoading = true;
   errorMessage = '';
 
+  exportingFormat: 'PDF' | 'Excel' | null = null;
+  exportError = '';
+
   private monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
   constructor(private reportService: ReportService) {}
@@ -84,6 +87,58 @@ export class Reports implements OnInit {
   }
 
   exportData(format: 'PDF' | 'Excel') {
-    alert(`System Reports Export sequence initialized! Your file is being compiled into ${format} format and will download shortly.`);
+    if (this.exportingFormat) {
+      return;
+    }
+    this.exportError = '';
+    this.exportingFormat = format;
+
+    const request =
+      format === 'PDF'
+        ? this.reportService.exportTenantReportPdf()
+        : this.reportService.exportTenantReportExcel();
+
+    request.subscribe({
+      next: ({ blob, fileName }) => {
+        this.exportingFormat = null;
+        this.downloadBlob(blob, fileName);
+      },
+      error: async (err) => {
+        this.exportingFormat = null;
+        this.exportError = await this.readExportError(err, format);
+      },
+    });
+  }
+
+  private async readExportError(err: any, format: string): Promise<string> {
+    const fallback = `Could not generate the ${format} report. Please try again.`;
+    try {
+      if (err?.error instanceof Blob) {
+        const parsed = JSON.parse(await err.error.text());
+        if (parsed?.message) {
+          return parsed.message;
+        }
+      }
+      if (err?.error?.message) {
+        return err.error.message;
+      }
+    } catch {
+      // Response was not JSON — use the generic message.
+    }
+    return fallback;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string) {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 }

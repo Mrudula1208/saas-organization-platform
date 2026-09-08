@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user';
 import { User } from '../../../models/user.model';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-users',
@@ -17,6 +18,7 @@ export class Users implements OnInit {
 
   searchQuery = '';
   roleFilter = '';
+  errorMessage = '';
 
   isAddModalOpen = false;
   isEditModalOpen = false;
@@ -31,10 +33,14 @@ export class Users implements OnInit {
   }
 
   loadUsers() {
+    this.errorMessage = '';
     this.userService.getUsers().subscribe({
       next: (data: User[]) => {
         this.users = data;
         this.applyFilters();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not load team members. Please try again later.');
       }
     });
   }
@@ -69,10 +75,14 @@ export class Users implements OnInit {
   saveNewUser() {
     if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password) return;
 
+    this.errorMessage = '';
     this.userService.createUser(this.newUser).subscribe({
       next: () => {
         this.loadUsers();
         this.closeAddModal();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not create the user.');
       }
     });
   }
@@ -96,12 +106,16 @@ export class Users implements OnInit {
   saveEditUser() {
     if (!this.editUserForm.fullName || !this.editUserForm.id) return;
 
+    this.errorMessage = '';
     this.userService.updateUser(this.editUserForm.id, this.editUserForm).subscribe({
       next: (success: boolean) => {
         if (success) {
           this.loadUsers();
           this.closeEditModal();
         }
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not update the user.');
       }
     });
   }
@@ -109,14 +123,17 @@ export class Users implements OnInit {
   // DELETE USER
   deleteUser(id: string) {
     if (confirm('Are you sure you want to remove this user from your team?')) {
+      this.errorMessage = '';
       this.userService.deleteUser(id).subscribe({
         next: (success: boolean) => {
           if (success) {
             this.loadUsers();
           }
+        },
+        error: (err) => {
+          this.errorMessage = getErrorMessage(err, 'Could not delete the user.');
         }
       });
     }
   }
 }
-

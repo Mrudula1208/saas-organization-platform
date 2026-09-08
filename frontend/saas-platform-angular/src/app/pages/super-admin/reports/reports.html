@@ -6,16 +6,26 @@
     </div>
     
     <div style="display: flex; gap: 0.75rem;">
-      <button class="btn btn-outline" (click)="exportData('Excel')">
-        <span class="material-symbols-outlined">download</span>
-        Export Excel
+      <button class="btn btn-outline" (click)="exportData('Excel')" [disabled]="exportingFormat !== null">
+        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'Excel'">
+          {{ exportingFormat === 'Excel' ? 'autorenew' : 'download' }}
+        </span>
+        {{ exportingFormat === 'Excel' ? 'Generating...' : 'Export Excel' }}
       </button>
-      <button class="btn btn-primary" (click)="exportData('PDF')">
-        <span class="material-symbols-outlined">picture_as_pdf</span>
-        Export PDF
+      <button class="btn btn-primary" (click)="exportData('PDF')" [disabled]="exportingFormat !== null">
+        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'PDF'">
+          {{ exportingFormat === 'PDF' ? 'autorenew' : 'picture_as_pdf' }}
+        </span>
+        {{ exportingFormat === 'PDF' ? 'Generating...' : 'Export PDF' }}
       </button>
     </div>
   </div>
+
+  @if (exportError) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ exportError }}
+    </div>
+  }
 
   @if (errorMessage) {
     <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">

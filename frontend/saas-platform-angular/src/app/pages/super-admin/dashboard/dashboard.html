@@ -195,9 +195,9 @@
                     <span>{{ user.fullName }}</span>
                   </td>
                   <td>{{ user.email }}</td>
-                  <td>{{ user.tenantName || 'Acme Corp' }}</td>
+                  <td>{{ user.tenant?.name || '—' }}</td>
                   <td>
-                    <span class="badge" [class.badge-success]="user.role === 'Admin' || user.role === 'TenantAdmin'" [class.badge-info]="user.role === 'Manager'" [class.badge-purple]="user.role === 'Member'">
+                    <span class="badge" [class.badge-success]="user.role === 'SuperAdmin' || user.role === 'TenantAdmin'" [class.badge-purple]="user.role === 'Member'">
                       {{ user.role }}
                     </span>
                   </td>

@@ -4,6 +4,12 @@
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor member access, role configuration, tenant alignment, and diagnostic audit statuses</p>
   </div>
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+      {{ errorMessage }}
+    </div>
+  }
+
   <!-- Search and filter controls bar -->
   <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
@@ -20,9 +26,8 @@
       <div class="form-group" style="width: 200px; margin-bottom: 0;">
         <select class="form-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
           <option value="">All Platform Roles</option>
-          <option value="Admin">Super Admin</option>
+          <option value="SuperAdmin">Super Admin</option>
           <option value="TenantAdmin">Tenant Admin</option>
-          <option value="Manager">Manager</option>
           <option value="Member">Member</option>
         </select>
       </div>
@@ -58,10 +63,10 @@
               </td>
               <td>{{ user.email }}</td>
               <td style="font-weight: 600; color: var(--accent-color);">
-                {{ user.tenantName || 'Acme Corp' }}
+                {{ user.tenant?.name || '—' }}
               </td>
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'Admin' || user.role === 'TenantAdmin'" [class.badge-info]="user.role === 'Manager'" [class.badge-purple]="user.role === 'Member'">
+                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin' || user.role === 'TenantAdmin'" [class.badge-purple]="user.role === 'Member'">
                   {{ user.role }}
                 </span>
               </td>
