@@ -1,3 +1,4 @@
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
@@ -18,41 +19,54 @@ namespace SaaSPlatform.Application.Services
 
         private readonly IProjectRepository _projectRepository;
         private readonly ISystemLogRepository _systemLogs;
+        private readonly ITenantRepository? _tenantRepository;
+        private readonly ISubscriptionPlanRepository? _planRepository;
 
-        public ProjectService(IProjectRepository projectRepository, ISystemLogRepository systemLogs)
+        public ProjectService(
+            IProjectRepository projectRepository,
+            ISystemLogRepository systemLogs,
+            ITenantRepository? tenantRepository = null,
+            ISubscriptionPlanRepository? planRepository = null)
         {
             _projectRepository = projectRepository;
             _systemLogs = systemLogs;
+            _tenantRepository = tenantRepository;
+            _planRepository = planRepository;
         }
 
-        public async Task<IEnumerable<ProjectViewDto>> GetAllAsync(Guid tenantId, string? search = null, string? status = null, string? priority = null)
+        // One page of the tenant project list; the database does the filtering and paging.
+        public async Task<PagedResult<ProjectViewDto>> GetProjectsPage(Guid tenantId, string? search = null, string? status = null, string? priority = null, int page = 1, int pageSize = 20)
         {
-            var projects = await _projectRepository.GetAllAsync(tenantId);
-            var query = projects.Where(p => !p.IsDeleted).ToList();
-
-            if (!string.IsNullOrEmpty(search))
+            // The projection is the normal path: it selects only API fields and
+            // computes task totals in SQL. The entity fallback keeps existing
+            // repository implementations and older callers compatible.
+            var projected = await _projectRepository.GetProjectViewsPage(tenantId, search, status, priority, page, pageSize);
+            if (projected != null)
             {
-                var lowerSearch = search.ToLower();
-                query = query.Where(p =>
-                    (p.Name ?? string.Empty).ToLower().Contains(lowerSearch) ||
-                    (p.Description ?? string.Empty).ToLower().Contains(lowerSearch)).ToList();
+                return projected;
             }
 
-            if (!string.IsNullOrEmpty(status))
+            var result = await _projectRepository.GetProjectsPage(tenantId, search, status, priority, page, pageSize);
+            return new PagedResult<ProjectViewDto>
             {
-                query = query.Where(p => (p.Status ?? string.Empty).Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-
-            if (!string.IsNullOrEmpty(priority))
-            {
-                query = query.Where(p => (p.Priority ?? string.Empty).Equals(priority, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-
-            return query.Select(MapToDto).ToList();
+                Data = result.Data.Select(MapToDto).ToList(),
+                TotalCount = result.TotalCount,
+                Page = result.Page,
+                PageSize = result.PageSize
+            };
         }
 
         public async Task<ProjectViewDto?> GetByIdAsync(Guid Id, Guid tenantId)
         {
+            var projected = await _projectRepository.GetProjectViewByIdAsync(Id, tenantId);
+            if (projected != null)
+            {
+                return projected;
+            }
+
+            // Compatibility path for older repository implementations. The
+            // normal repository path above never loads the owner/task graph for
+            // a read request.
             var project = await _projectRepository.GetByIdAsync(Id);
             if (project == null || project.IsDeleted) return null;
 
@@ -69,6 +83,8 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<ProjectViewDto> CreateAsync(CreateProjectDto dto)
         {
+            await CheckProjectLimitAsync(dto.TenantId);
+
             if (string.IsNullOrWhiteSpace(dto.Name))
             {
                 throw new ArgumentException("Project name is required.");
@@ -206,6 +222,32 @@ namespace SaaSPlatform.Application.Services
                 CompletedTaskCount = completed,
                 Progress = taskList.Count > 0 ? (int)Math.Round((double)completed / taskList.Count * 100) : 0
             };
+        }
+
+        private async Task CheckProjectLimitAsync(Guid tenantId)
+        {
+            if (_tenantRepository == null || _planRepository == null || tenantId == Guid.Empty)
+            {
+                return;
+            }
+
+            var tenant = await _tenantRepository.GetByIdAsync(tenantId);
+            if (tenant == null || tenant.SubscriptionPlanId == Guid.Empty)
+            {
+                return;
+            }
+
+            var plan = await _planRepository.GetByIdAsync(tenant.SubscriptionPlanId);
+            if (plan == null || plan.MaxProjects <= 0)
+            {
+                return;
+            }
+
+            var currentProjects = await _projectRepository.CountActiveProjectsByTenantAsync(tenantId);
+            if (currentProjects >= plan.MaxProjects)
+            {
+                throw new InvalidOperationException($"This organization has reached the limit of {plan.MaxProjects} project(s) allowed on the {plan.Name} plan. Please upgrade your subscription to create more projects.");
+            }
         }
     }
 }

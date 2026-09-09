@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
 using System;
@@ -23,15 +24,20 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProjectViewDto>>> GetProjects(
+        public async Task<ActionResult<PagedResult<ProjectViewDto>>> GetProjects(
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
-            [FromQuery] string? priority = null)
+            [FromQuery] string? priority = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var projects = await _projectService.GetAllAsync(tenantId.Value, search, status, priority);
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 200);
+
+            var projects = await _projectService.GetProjectsPage(tenantId.Value, search, status, priority, page, pageSize);
             return Ok(projects);
         }
 
@@ -71,6 +77,10 @@ namespace SaaSPlatform.API.Controllers
                 return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
             }
             catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
             }
