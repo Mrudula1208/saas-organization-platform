@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SettingsService } from '../../../core/services/settings';
+import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
   selector: 'app-settings',
@@ -16,15 +18,21 @@ export class Settings implements OnInit {
   allowRegistrations = true;
   mfaRequired = false;
   sessionTimeout = 30; // in minutes
-  
+
   isDarkTheme = true;
+  isLoading = false;
+  isSaving = false;
   successMessage = '';
+  errorMessage = '';
+
+  constructor(private settingsService: SettingsService) {}
 
   ngOnInit() {
-    this.restoreSettings();
+    this.restoreTheme();
+    this.loadSettings();
   }
 
-  restoreSettings() {
+  restoreTheme() {
     if (typeof window !== 'undefined') {
       const storedTheme = localStorage.getItem('theme_preference');
       this.isDarkTheme = storedTheme !== 'light';
@@ -33,18 +41,30 @@ export class Settings implements OnInit {
       } else {
         document.body.classList.remove('light-theme');
       }
-
-      const storedConfig = localStorage.getItem('saas_config');
-      if (storedConfig) {
-        const config = JSON.parse(storedConfig);
-        this.platformName = config.platformName || this.platformName;
-        this.supportEmail = config.supportEmail || this.supportEmail;
-        this.maintenanceMode = config.maintenanceMode ?? this.maintenanceMode;
-        this.allowRegistrations = config.allowRegistrations ?? this.allowRegistrations;
-        this.mfaRequired = config.mfaRequired ?? this.mfaRequired;
-        this.sessionTimeout = config.sessionTimeout ?? this.sessionTimeout;
-      }
     }
+  }
+
+  loadSettings() {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.settingsService.getSettings().subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.platformName = res.data.platformName;
+          this.supportEmail = res.data.supportEmail;
+          this.maintenanceMode = res.data.maintenanceMode;
+          this.allowRegistrations = res.data.allowRegistrations;
+          this.mfaRequired = res.data.mfaRequired;
+          this.sessionTimeout = res.data.sessionTimeout;
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Failed to load system settings from server.');
+        this.isLoading = false;
+      }
+    });
   }
 
   toggleTheme() {
@@ -62,23 +82,30 @@ export class Settings implements OnInit {
 
   saveSettings() {
     this.successMessage = '';
-    const config = {
+    this.errorMessage = '';
+    this.isSaving = true;
+
+    const payload = {
       platformName: this.platformName,
       supportEmail: this.supportEmail,
       maintenanceMode: this.maintenanceMode,
       allowRegistrations: this.allowRegistrations,
       mfaRequired: this.mfaRequired,
-      sessionTimeout: this.sessionTimeout
+      sessionTimeout: Number(this.sessionTimeout)
     };
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('saas_config', JSON.stringify(config));
-    }
-
-    this.successMessage = 'System configuration updated successfully!';
-    setTimeout(() => {
-      this.successMessage = '';
-    }, 3000);
+    this.settingsService.updateSettings(payload).subscribe({
+      next: (res) => {
+        this.successMessage = res.message || 'System configuration updated successfully!';
+        this.isSaving = false;
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 4000);
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Failed to save settings.');
+        this.isSaving = false;
+      }
+    });
   }
 }
-

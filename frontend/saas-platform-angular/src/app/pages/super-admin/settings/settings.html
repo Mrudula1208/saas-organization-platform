@@ -11,6 +11,13 @@
     </div>
   }
 
+  @if (errorMessage) {
+    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
   <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
     <div class="glass-card glow-primary" style="display: flex; flex-direction: column; gap: 1.5rem;">
       <h3 style="font-family: var(--font-heading); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">

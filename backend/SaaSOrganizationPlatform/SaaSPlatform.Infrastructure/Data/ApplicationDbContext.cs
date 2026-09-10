@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SaaSPlatform.Domain.Entities;
 using SaaSPlatform_Model;
 using SaaSPlatform_Model.Entities;
@@ -29,6 +29,7 @@ namespace SaaSPlatform.Infrastructure.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
+        public DbSet<PlatformSetting> PlatformSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,6 +57,8 @@ namespace SaaSPlatform.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // 🔥 PROJECT MEMBER → PROJECT + USER (unique per project/user)
+            // EF's foreign-key convention supplies the UserId lookup. The
+            // composite index also serves project lookups and prevents duplicate memberships.
             modelBuilder.Entity<ProjectMember>()
                 .HasIndex(pm => new { pm.ProjectId, pm.UserId })
                 .IsUnique();
@@ -74,12 +77,55 @@ namespace SaaSPlatform.Infrastructure.Data
                 .HasForeignKey(t => t.AssignedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Tenant, project, user and email are the common predicates in the
+            // list, authentication and ownership queries. These composites
+            // target the actual tenant-scoped list patterns; EF removes only
+            // redundant single-column prefixes when the composite is sufficient.
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email);
+
+            modelBuilder.Entity<Project>()
+                .HasIndex(p => new { p.TenantId, p.IsDeleted, p.CreatedAt });
+
+            modelBuilder.Entity<TaskItem>()
+                .HasIndex(t => new { t.TenantId, t.Status, t.CreatedAt });
+
+            modelBuilder.Entity<TaskItem>()
+                .HasIndex(t => new { t.ProjectId, t.Status, t.CreatedAt });
+
+            // Notification is tenant-wide in the current domain (there is no
+            // Notification.UserId column); this index covers tenant/unread/date
+            // lookups without inventing a recipient model.
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.TenantId, n.IsRead, n.CreatedAt });
+
+            // System log pages filter by tenant and a date range.
+            modelBuilder.Entity<SystemLog>()
+                .HasIndex(l => new { l.TenantId, l.CreatedAt });
+
+            // Billing history and revenue windows are tenant/date lookups.
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => new { p.TenantId, p.PaymentDate });
+
+            // ProjectMember currently has no TenantId column: tenant scope is
+            // derived through Project. Its existing unique (ProjectId, UserId)
+            // index is retained and already covers the project lookup.
+
             // 🔥 TENANT → SUBSCRIPTION PLAN
             modelBuilder.Entity<Tenant>()
                 .HasOne<SubscriptionPlan>()
                 .WithMany()
                 .HasForeignKey(t => t.SubscriptionPlanId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔥 TENANT SETTINGS → notification preferences default to enabled
+            modelBuilder.Entity<Tenant>()
+                .Property(t => t.EmailNotificationsEnabled)
+                .HasDefaultValue(true);
+
+            modelBuilder.Entity<Tenant>()
+                .Property(t => t.InAppNotificationsEnabled)
+                .HasDefaultValue(true);
 
             // 🔥 PAYMENT → TENANT
             modelBuilder.Entity<Payment>()

@@ -59,28 +59,48 @@ namespace SaaSPlatform.API
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
 
+            builder.Services.AddScoped<IPlatformSettingsRepository, PlatformSettingsRepository>();
+            builder.Services.AddScoped<IPlatformSettingsService, PlatformSettingsService>();
+
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // 🔄 AutoMapper & FluentValidation
             builder.Services.AddAutoMapper(typeof(Program).Assembly);
             builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
-            // 🌐 Enable CORS for Angular Frontend
+            // 🌐 Enable CORS for the Angular frontend.
+            // The allowed origins come from configuration: appsettings.Development.json
+            // for local work, the Cors__AllowedOrigins environment variable in production.
+            var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (allowedOrigins.Length == 0)
+            {
+                throw new InvalidOperationException("Cors:AllowedOrigins must be configured as a comma separated list of frontend origins (set the Cors__AllowedOrigins environment variable), e.g. https://app.example.com.");
+            }
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200")
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
                 });
             });
 
+            // Secrets and connection strings are never committed: they come from
+            // environment variables in production and from local user secrets in development.
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
             {
-                throw new InvalidOperationException("Jwt:Key must be configured in appsettings.Development.json or environment variables and must be at least 32 characters.");
+                throw new InvalidOperationException("Jwt:Key must be configured (set the Jwt__Key environment variable or user secret) and must be at least 32 characters.");
+            }
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured (set the ConnectionStrings__DefaultConnection environment variable or user secret).");
             }
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -90,6 +110,7 @@ namespace SaaSPlatform.API
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
+                        ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
                         ValidAudience = builder.Configuration["Jwt:Audience"],
@@ -152,7 +173,7 @@ namespace SaaSPlatform.API
                 try
                 {
                     dbContext.Database.Migrate();
-                    SaaSPlatform.Infrastructure.SeedData.Initialize(dbContext).GetAwaiter().GetResult();
+                    SaaSPlatform.Infrastructure.SeedData.Initialize(dbContext, builder.Configuration).GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
@@ -161,18 +182,20 @@ namespace SaaSPlatform.API
             }
 
             // Configure the HTTP request pipeline.
+            // The exception middleware runs first so that every later failure
+            // (static files, CORS, authentication, endpoints) returns a clean JSON error.
+            app.UseMiddleware<ExceptionMiddleware>();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseMiddleware<SaaSPlatform.API.Middleware.TenantMiddleware>();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCors("AllowAngular");
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseMiddleware<ExceptionMiddleware>();
 
             app.MapControllers();
 
