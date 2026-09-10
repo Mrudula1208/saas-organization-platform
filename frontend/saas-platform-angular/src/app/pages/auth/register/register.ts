@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { SettingsService } from '../../../core/services/settings';
 import { getErrorMessage, isValidEmail } from '../../../core/helpers';
 
 @Component({
@@ -12,7 +13,7 @@ import { getErrorMessage, isValidEmail } from '../../../core/helpers';
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
-export class Register {
+export class Register implements OnInit {
   name = '';
   domain = '';
   adminName = '';
@@ -24,7 +25,39 @@ export class Register {
   successMessage = '';
   submitting = false;
 
-  constructor(private auth: Auth, private router: Router) {}
+  // Platform configuration state
+  platformName = 'SaaS Platform';
+  maintenanceMode = false;
+  allowRegistrations = true;
+  loadingConfig = false;
+
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    private settingsService: SettingsService
+  ) {}
+
+  ngOnInit() {
+    this.loadPlatformConfig();
+  }
+
+  loadPlatformConfig() {
+    this.loadingConfig = true;
+    this.settingsService.getPublicConfig().subscribe({
+      next: (config) => {
+        this.loadingConfig = false;
+        if (config) {
+          this.platformName = config.platformName || 'SaaS Platform';
+          this.maintenanceMode = !!config.maintenanceMode;
+          this.allowRegistrations = config.allowRegistrations !== false;
+        }
+      },
+      error: () => {
+        // Fallback gracefully if public config endpoint is unreachable
+        this.loadingConfig = false;
+      }
+    });
+  }
 
   onNameChange() {
     // Automatically generate a slug domain name on typing the organization name
@@ -39,6 +72,16 @@ export class Register {
     event.preventDefault();
     this.errorMessage = '';
     this.successMessage = '';
+
+    if (this.maintenanceMode) {
+      this.errorMessage = 'Registrations are temporarily paused while the platform is undergoing maintenance.';
+      return;
+    }
+
+    if (!this.allowRegistrations) {
+      this.errorMessage = 'Public organization registration is currently disabled.';
+      return;
+    }
 
     if (!this.name || !this.domain || !this.adminName || !this.adminEmail || !this.password || !this.confirmPassword) {
       this.errorMessage = 'Please fill in all required fields.';

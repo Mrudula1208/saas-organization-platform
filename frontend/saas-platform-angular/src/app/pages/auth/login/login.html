@@ -4,7 +4,7 @@
     <div class="login-left">
       <div class="brand-wrapper">
         <div class="brand-icon">S</div>
-        <span class="logo-text" style="font-size: 1.5rem; font-weight: 800;">SaaS Platform</span>
+        <span class="logo-text" style="font-size: 1.5rem; font-weight: 800;">{{ platformName }}</span>
       </div>
       <div class="left-content">
         <h1>All-in-One <br><span>Organization</span> <br>Management Platform</h1>
@@ -28,6 +28,13 @@
       <div class="glass-card login-card glow-primary">
         <h2>Login</h2>
         <p>Login to access your organization dashboard</p>
+
+        @if (maintenanceMode) {
+          <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;" class="animate-fade">
+            <span class="material-symbols-outlined" style="font-size: 1.25rem;">build</span>
+            <span>Platform is in maintenance mode. Only Super Administrators can log in.</span>
+          </div>
+        }
 
         @if (errorMessage) {
           <div class="api-error-alert animate-fade">

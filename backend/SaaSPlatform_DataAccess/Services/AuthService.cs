@@ -33,6 +33,8 @@ namespace SaaSPlatform.Application.Services
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
             if (user == null)
             {
+                // Audit the failed attempt. The submitted password is never logged.
+                await _unitOfWork.SystemLogs.LogAsync("LOGIN_FAILED", $"Failed login attempt for unknown email: {dto.Email}", null, null);
                 return null;
             }
 
@@ -52,7 +54,20 @@ namespace SaaSPlatform.Application.Services
                     await _unitOfWork.SystemLogs.LogAsync("ACCOUNT_LOCKOUT", $"User account locked out due to multiple failed login attempts: {user.Email}", user.Id, user.TenantId);
                 }
                 await _unitOfWork.Users.UpdateUser(user.Id, user);
+                // Audit the failed attempt. The submitted password is never logged.
+                await _unitOfWork.SystemLogs.LogAsync("LOGIN_FAILED", $"Failed login attempt for user: {user.Email}", user.Id, user.TenantId);
                 return null;
+            }
+
+            // Check maintenance mode (SuperAdmin users can still log in during maintenance)
+            if (_unitOfWork.Settings != null)
+            {
+                var settings = await _unitOfWork.Settings.GetSettingsAsync();
+                if (settings != null && settings.MaintenanceMode && !string.Equals(user.Role, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _unitOfWork.SystemLogs.LogAsync("LOGIN_BLOCKED", $"Login blocked during maintenance mode for user: {user.Email}", user.Id, user.TenantId);
+                    throw new InvalidOperationException("The platform is currently undergoing maintenance. Only Super Administrators can log in at this time. Please try again later.");
+                }
             }
 
             // Reset Lockout upon success
@@ -70,6 +85,24 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<TokenResponseDto?> RegisterTenantAsync(RegisterTenantDto dto)
         {
+            // Check platform settings for maintenance mode and registration allowance
+            if (_unitOfWork.Settings != null)
+            {
+                var settings = await _unitOfWork.Settings.GetSettingsAsync();
+                if (settings != null)
+                {
+                    if (settings.MaintenanceMode)
+                    {
+                        throw new InvalidOperationException("New organization registrations are temporarily unavailable while the platform is in maintenance mode.");
+                    }
+
+                    if (!settings.AllowRegistrations)
+                    {
+                        throw new InvalidOperationException("Public organization registrations are currently disabled by system administrators.");
+                    }
+                }
+            }
+
             // Check if tenant email / domain / user email already exists
             var existingUser = await _unitOfWork.Users.GetByEmailAsync(dto.AdminEmail);
             if (existingUser != null)
@@ -77,12 +110,18 @@ namespace SaaSPlatform.Application.Services
                 throw new Exception("Email address is already in use.");
             }
 
-            // Fetch Subscription Plan from DB
-            var plans = await _unitOfWork.SubscriptionPlans.GetAllAsync();
-            var matchedPlan = System.Linq.Enumerable.FirstOrDefault(plans, p => p.Name.Equals(dto.Plan, StringComparison.OrdinalIgnoreCase));
+            // Resolve the plan in SQL instead of loading every plan and
+            // filtering the collection in memory.
+            var matchedPlan = await _unitOfWork.SubscriptionPlans.GetByNameAsync(dto.Plan);
             if (matchedPlan == null)
             {
-                // Fallback to basic plan or create one if none exist
+                // Compatibility path for older repository implementations.
+                var plans = await _unitOfWork.SubscriptionPlans.GetAllAsync();
+                matchedPlan = System.Linq.Enumerable.FirstOrDefault(plans, p => p.Name.Equals(dto.Plan, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (matchedPlan == null)
+            {
                 throw new Exception($"Selected subscription plan '{dto.Plan}' was not found in the database. Ensure seed data has run.");
             }
 
@@ -223,6 +262,22 @@ namespace SaaSPlatform.Application.Services
             await _unitOfWork.Users.UpdateUser(user.Id, user);
             await _unitOfWork.SystemLogs.LogAsync("PASSWORD_RESET", $"Password reset completed for user: {user.Email}", user.Id, user.TenantId);
             return true;
+        }
+
+        public async Task LogoutAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetUserById(userId);
+            if (user == null)
+            {
+                return;
+            }
+
+            // Revoke the refresh token so the session cannot be resumed.
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            await _unitOfWork.Users.UpdateUser(user.Id, user);
+
+            await _unitOfWork.SystemLogs.LogAsync("LOGOUT", $"User {user.Email} logged out", user.Id, user.TenantId);
         }
 
         private TokenResponseDto GenerateTokensForUser(User user)

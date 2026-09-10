@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
+import { SettingsService } from '../../../core/services/settings';
 import { getErrorMessage } from '../../../core/helpers';
 
 @Component({
@@ -12,14 +13,36 @@ import { getErrorMessage } from '../../../core/helpers';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class Login {
+export class Login implements OnInit {
   email = '';
   password = '';
   rememberMe = false;
   errorMessage = '';
   submitting = false;
 
-  constructor(private auth: Auth, private router: Router) {}
+  // Platform configuration state
+  platformName = 'SaaS Platform';
+  maintenanceMode = false;
+
+  constructor(
+    private auth: Auth,
+    private router: Router,
+    private settingsService: SettingsService
+  ) {}
+
+  ngOnInit() {
+    this.settingsService.getPublicConfig().subscribe({
+      next: (config) => {
+        if (config) {
+          this.platformName = config.platformName || 'SaaS Platform';
+          this.maintenanceMode = !!config.maintenanceMode;
+        }
+      },
+      error: () => {
+        // Continue silently if public config cannot be retrieved
+      }
+    });
+  }
 
   onSubmit(event: Event) {
     event.preventDefault();
