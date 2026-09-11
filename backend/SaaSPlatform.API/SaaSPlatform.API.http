@@ -1,0 +1,6 @@
+@SaaSPlatform.API_HostAddress = http://localhost:5258
+
+GET {{SaaSPlatform.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

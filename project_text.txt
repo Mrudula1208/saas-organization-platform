@@ -1,0 +1,336 @@
+PAGE 1 — LANDING PAGE (INDEX PAGE) Sections:
+Landing Page (Index): /
+src/pages/public/LandingPage.tsx
+Hero section
+Platform description
+Features section
+Pricing plans
+Testimonials
+Contact section
+Buttons: Login/Register
+
+-- 1 of 19 --
+
+2) LOGIN PAGE – Features
+Login Page: /login
+• Location:
+src/pages/public/Login.tsx
+Login page should have:
+• Platform logo
+• Welcome text
+• Email field
+• Password field
+• Login button
+• Remember me checkbox
+• Forgot password link
+• Register link
+Register Tenant (Org Creation): /register-tenant
+• Location: src/pages/public/RegisterTenant.tsx3) REGISTER PAGE –
+Features
+For SaaS, registration means creating an
+organization (tenant).
+UI Layout
+Fields:
+Organization Name
+Domain Name
+Admin Name
+Admin Email
+Password
+Confirm Password
+Subscription Plan
+Buttons:
+Create Organization
+Cancel
+
+-- 2 of 19 --
+
+4) SUPER ADMIN DASHBOARD
+Located under the /admin prefix. Requires "Super Admin" role.
+Global Dashboard: /admin/dashboard
+Location: src/pages/admin/MainDashboard.tsx
+
+-- 3 of 19 --
+
+5. Tenant Management (List & Table View)
+Path: src/pages/admin/tenants/TenantList.tsx
+Tenant List Page
+Table columns:
+Tenant Name
+Domain
+Plan
+Created Date
+Status
+Actions
+Actions:
+View
+Edit
+Deactivate
+Delete
+Controls:
+Search tenant
+Filter by plan
+Create tenant button
+Tenant Details Page shows:
+Tenant info
+Admin info
+Users count
+Projects count
+Subscription plan
+
+-- 4 of 19 --
+
+6) Users Table (Main Section)
+Display users in a table.
+Columns:
+User ID
+User Name
+Email
+Tenant Organization
+Role
+Status
+Created Date
+Last Login
+
+-- 5 of 19 --
+
+7)SUBSCRIPTION PLAN MANAGEMENT
+Path: src/pages/admin/SubscriptionPlans.tsx
+Super Admin can create plans.
+Plan fields:
+Plan Name
+Price
+Max Users
+Max
+Projects
+Storage
+Limit
+Example
+plans:
+Basic
+Pro
+Enterprise
+8) Revenue Analytics
+Path: src/pages/admin/RevenueReports.tsx
+
+-- 6 of 19 --
+
+9) SYSTEM LOGS (EXTREME FEATURE)
+Super Admin can view logs.
+Logs include:
+User login activity
+Tenant creation
+Project creation
+Errors
+Filters:
+Date range
+Action type
+
+-- 7 of 19 --
+
+10) 2. Reports Page (Global Analytics Dashboard)
+Path: src/pages/admin/Reports.tsx
+11) Settings Page
+Path: src/pages/shared/Settings.tsx.
+This page serves as the configuration hub for the Super Admin, adapting its view based on
+the role.
+
+-- 8 of 19 --
+
+Phase 2: Tenant Admin Role Pages
+1.Tenant Admin Dashboard (Main Overview)
+Path =src/pages/app/Tenant/TenantDashboard.tsx
+src/app/pages/tenant/dashboard/
+User login
+Tenant created
+Project created
+TENANT ADMIN DASHBOARD
+Tenant Admin manages their organization.
+Sidebar menu:
+Dashboard
+Users
+Projects
+Tasks
+Project Members
+Reports
+Notifications
+Settings
+Logout
+TENANT DASHBOARD PAGE
+Top cards:
+Total Users
+Total Projects
+Active Tasks
+Completed Tasks
+
+-- 9 of 19 --
+
+Charts:
+Projects progress chart.
+Tasks completion pie chart.
+Recent activity list:
+User joined project
+Task completed
+Project created
+
+-- 10 of 19 --
+
+2. User Management (List Page)
+Path: src/pages/app/users/Tenant/UserList.tsx
+USER MANAGEMENT PAGE
+Table columns:
+User Name
+Email
+Role
+Status
+Created Date
+Actions
+Actions:
+View
+Edit
+Delete
+Top controls:
+Search user.
+Filter by role.
+Button:Add User. Table columns:
+User Name
+Email
+Role
+Status
+Created Date
+Actions
+Actions:
+View
+Edit
+Delete
+Top controls:
+
+-- 11 of 19 --
+
+Search user.
+Filter by role.
+Button:
+Add User.
+CREATE USER PAGE
+Form fields:
+Full Name
+Email
+Password
+Role
+Roles include:
+Admin
+Manager
+Member
+Upload profile image option.
+Buttons :Create User, Cancel
+
+-- 12 of 19 --
+
+3) Project Management (List Page)
+Path: src/pages/app/Tenant/projects/ProjectList.tsx
+Table columns:
+Project Name
+Owner
+Start Date
+End Date
+Status
+Actions
+Actions:
+View
+Edit
+Delete
+Add Members
+Filters:
+Search project
+Status filter
+Button:
+Create Project.
+
+-- 13 of 19 --
+
+CREATE PROJECT PAGE
+Form fields:
+Project
+Name
+Description
+Start Date
+End Date
+Priority
+Priority
+options:
+Low
+Medium
+High
+Buttons:
+Create
+Project
+Cancel
+4. Kanban Task Board (Extreme Feature)
+Path: src/pages/app/Tenant/tasks/KanbanBoard.tsx
+Two views:
+Table view
+Kanban board view.
+Task table columns:
+Task Name
+Project
+Assigned User
+Priority
+Due Date
+Status
+Actions:
+
+-- 14 of 19 --
+
+Edit
+Delete
+Mark complete
+Kanban board columns:
+To Do
+In Progress
+Completed
+Tasks can be dragged between columns.
+
+-- 15 of 19 --
+
+5) REPORTS PAGE
+Path: src/pages/app/Tenant/Reports.tsx
+Charts include:
+Projects created per month
+Tasks completed per month
+User productivity
+Buttons:
+Export report as PDF
+Export report as Excel
+6) SETTINGS PAGE
+src/app/pages/tenant/settings/
+Sections:
+Profile settings
+Change password
+Notification preferences
+Theme toggle:
+
+-- 16 of 19 --
+
+Light mode
+Dark mode
+8) NOTIFICATIONS PAGE
+Displays all notifications.
+Columns:
+Message
+Date
+Status
+Features:
+Mark as read
+Delete notification
+Notification bell shows unread count.
+
+-- 17 of 19 --
+
+7) Logout (Action Confirmation)
+Path: src/pages/shared/Logout.tsx
+
+-- 18 of 19 --
+
+
+
+-- 19 of 19 --
+

@@ -1,0 +1,22 @@
+# Visual Studio
+.vs/
+**/.vs/
+
+# .NET
+**/bin/
+**/obj/
+
+# Angular
+**/node_modules/
+**/dist/
+**/.angular/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Local appsettings overrides (may contain secrets)
+**/appsettings.Development.json
+**/appsettings.Local.json
