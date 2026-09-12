@@ -71,5 +71,11 @@ namespace SaaSPlatform.Application.Services
             await _notificationRepository.DeleteAsync(notification);
             return true;
         }
+
+        public async Task<bool> ClearAllAsync(Guid tenantId)
+        {
+            await _notificationRepository.ClearAllAsync(tenantId);
+            return true;
+        }
     }
 }

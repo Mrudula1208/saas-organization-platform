@@ -97,4 +97,18 @@ export class NotificationService {
       })
     );
   }
+
+  clearAll(): Observable<boolean> {
+    return this.http.delete<any>(`${this.apiUrl}/clear-all`).pipe(
+      map(res => res.success ?? true),
+      tap(() => {
+        this.notifications.set([]);
+        this.unreadCount.set(0);
+      }),
+      catchError((err) => {
+        console.error('Error clearing all notifications:', err);
+        return throwError(() => err);
+      })
+    );
+  }
 }

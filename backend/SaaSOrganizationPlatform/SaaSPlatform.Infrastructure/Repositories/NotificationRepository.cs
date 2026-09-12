@@ -21,8 +21,10 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public async Task<IEnumerable<Notification>> GetAllAsync(Guid tenantId)
         {
             return await _context.Notifications
+                .AsNoTracking()
                 .Where(n => n.TenantId == tenantId)
                 .OrderByDescending(n => n.CreatedAt)
+                .ThenByDescending(n => n.Id)
                 .ToListAsync();
         }
 
@@ -57,16 +59,19 @@ namespace SaaSPlatform.Infrastructure.Repositories
 
         public async Task MarkAllReadAsync(Guid tenantId)
         {
-            var unread = await _context.Notifications
+            // Set-based update: mark the matching rows in SQL instead of
+            // materialising every unread notification and saving them one by one.
+            await _context.Notifications
                 .Where(n => n.TenantId == tenantId && !n.IsRead)
-                .ToListAsync();
+                .ExecuteUpdateAsync(setters => setters.SetProperty(n => n.IsRead, true));
+        }
 
-            foreach (var notif in unread)
-            {
-                notif.IsRead = true;
-            }
-
-            await _context.SaveChangesAsync();
+        public async Task ClearAllAsync(Guid tenantId)
+        {
+            // Fast set-based deletion for tenant notifications
+            await _context.Notifications
+                .Where(n => n.TenantId == tenantId)
+                .ExecuteDeleteAsync();
         }
     }
 }

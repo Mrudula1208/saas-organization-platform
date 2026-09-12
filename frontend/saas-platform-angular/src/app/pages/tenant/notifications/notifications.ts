@@ -56,10 +56,7 @@ export class Notifications implements OnInit {
   }
 
   clearAll() {
-    const all = this.notifications();
-    for (const notif of all) {
-      this.notifService.deleteNotification(notif.id).subscribe();
-    }
+    this.notifService.clearAll().subscribe();
   }
 
   formatDate(dateStr: string): string {

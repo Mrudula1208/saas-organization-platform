@@ -88,6 +88,16 @@ namespace SaaSPlatform.API.Controllers
             return Ok(new ApiResponse<object> { Success = true });
         }
 
+        [HttpDelete("clear-all")]
+        public async Task<IActionResult> ClearAll()
+        {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            await _notificationService.ClearAllAsync(tenantId.Value);
+            return Ok(new ApiResponse<object> { Success = true });
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

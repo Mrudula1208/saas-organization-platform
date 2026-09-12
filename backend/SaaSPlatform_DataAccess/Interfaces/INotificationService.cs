@@ -14,5 +14,6 @@ namespace SaaSPlatform.Application.Interfaces
         Task<bool> MarkReadAsync(Guid id, Guid tenantId);
         Task<bool> MarkAllReadAsync(Guid tenantId);
         Task<bool> DeleteAsync(Guid id, Guid tenantId);
+        Task<bool> ClearAllAsync(Guid tenantId);
     }
 }

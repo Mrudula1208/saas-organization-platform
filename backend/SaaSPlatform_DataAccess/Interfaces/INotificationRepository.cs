@@ -14,5 +14,6 @@ namespace SaaSPlatform.Application.Interfaces
         Task UpdateAsync(Notification notification);
         Task DeleteAsync(Notification notification);
         Task MarkAllReadAsync(Guid tenantId);
+        Task ClearAllAsync(Guid tenantId);
     }
 }
