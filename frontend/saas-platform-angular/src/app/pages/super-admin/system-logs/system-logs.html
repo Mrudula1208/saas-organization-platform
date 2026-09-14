@@ -125,4 +125,19 @@
       </table>
     </div>
   </div>
+
+  <!-- Pagination controls -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+    <span style="color: var(--text-secondary); font-size: 0.875rem;">
+      @if (loading) {
+        Loading...
+      } @else {
+        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
+      }
+    </span>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+    </div>
+  </div>
 </div>

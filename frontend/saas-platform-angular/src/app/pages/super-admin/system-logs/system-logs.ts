@@ -12,7 +12,6 @@ import { SystemLog } from '../../../models/system-log.model';
   styleUrl: './system-logs.css',
 })
 export class SystemLogs implements OnInit {
-  logs: SystemLog[] = [];
   filteredLogs: SystemLog[] = [];
 
   searchQuery = '';
@@ -23,47 +22,73 @@ export class SystemLogs implements OnInit {
   loading = false;
   errorMessage = '';
 
+  // Server-side pagination: the API filters, sorts and counts in the database.
+  page = 1;
+  pageSize = 20;
+  totalCount = 0;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(private systemLogService: SystemLogService) {}
 
   ngOnInit() {
     this.loadLogs();
   }
 
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+  }
+
   loadLogs() {
     this.loading = true;
     this.errorMessage = '';
 
-    this.systemLogService.getLogs(this.actionFilter, this.startDate, this.endDate).subscribe({
-      next: (data: SystemLog[]) => {
-        this.logs = data;
+    this.systemLogService.getLogs(this.actionFilter, this.startDate, this.endDate, this.searchQuery, this.page, this.pageSize).subscribe({
+      next: (res) => {
+        // The current page disappeared: show the last page that still has rows.
+        if (res.data.length === 0 && this.page > 1) {
+          this.page = Math.max(1, Math.ceil(res.totalCount / this.pageSize));
+          this.loadLogs();
+          return;
+        }
+        this.filteredLogs = res.data;
+        this.totalCount = res.totalCount;
         this.loading = false;
-        this.applyFilters();
       },
       error: () => {
         this.loading = false;
         this.errorMessage = 'Could not load system logs. Please try again later.';
-        this.logs = [];
-        this.applyFilters();
+        this.filteredLogs = [];
+        this.totalCount = 0;
       }
     });
   }
 
-  applyFilters() {
-    const query = this.searchQuery.toLowerCase();
-    this.filteredLogs = this.logs.filter(log => {
-      const matchesSearch = !query ||
-                            log.description.toLowerCase().includes(query) ||
-                            log.action.toLowerCase().includes(query);
-      return matchesSearch;
-    });
-  }
-
   onSearch() {
-    this.applyFilters();
+    // Ask the server only after the user stops typing.
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.page = 1;
+      this.loadLogs();
+    }, 400);
   }
 
   onFilterChange() {
+    this.page = 1;
     this.loadLogs();
+  }
+
+  prevPage() {
+    if (this.page > 1) {
+      this.page--;
+      this.loadLogs();
+    }
+  }
+
+  nextPage() {
+    if (this.page < this.totalPages) {
+      this.page++;
+      this.loadLogs();
+    }
   }
 
   shortId(id?: string | null): string {

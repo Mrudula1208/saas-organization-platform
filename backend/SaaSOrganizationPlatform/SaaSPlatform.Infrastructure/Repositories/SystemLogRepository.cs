@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
 using SaaSPlatform.Infrastructure.Data;
@@ -26,7 +27,9 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 Action = action,
                 Description = message,
                 UserId = userId,
-                TenantId = tenantId ?? Guid.Empty,
+                // Keep a missing tenant as NULL for global/system events. It
+                // preserves the nullable tenant/date lookup semantics.
+                TenantId = tenantId,
                 CreatedAt = DateTime.UtcNow
             };
             await _context.SystemLogs.AddAsync(log);
@@ -34,9 +37,11 @@ namespace SaaSPlatform.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<SystemLog>> GetAllAsync(Guid? tenantId, string? actionType, DateTime? startDate, DateTime? endDate)
+        // Paged, filtered log list. tenantId = null means the super admin list (every tenant).
+        // Filtering and paging happen in the database.
+        public async Task<PagedResult<SystemLog>> GetLogsPage(Guid? tenantId, string? actionType, string? search, DateTime? startDate, DateTime? endDate, int page, int pageSize)
         {
-            var query = _context.SystemLogs.AsQueryable();
+            var query = _context.SystemLogs.AsNoTracking();
 
             if (tenantId.HasValue && tenantId.Value != Guid.Empty)
             {
@@ -46,6 +51,14 @@ namespace SaaSPlatform.Infrastructure.Repositories
             if (!string.IsNullOrEmpty(actionType))
             {
                 query = query.Where(l => l.Action == actionType);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                var lowerSearch = search.ToLower();
+                query = query.Where(l =>
+                    l.Action.ToLower().Contains(lowerSearch) ||
+                    l.Description.ToLower().Contains(lowerSearch));
             }
 
             if (startDate.HasValue)
@@ -60,7 +73,23 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 query = query.Where(l => l.CreatedAt < endDate.Value.AddDays(1));
             }
 
-            return await query.OrderByDescending(l => l.CreatedAt).Take(200).ToListAsync();
+            var totalCount = await query.CountAsync();
+
+            var logs = await query
+                // Newest first; Id breaks ties so pages never skip or repeat a row.
+                .OrderByDescending(l => l.CreatedAt)
+                .ThenBy(l => l.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<SystemLog>
+            {
+                Data = logs,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
 }

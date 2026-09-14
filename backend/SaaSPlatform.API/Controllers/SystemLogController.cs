@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.Interfaces;
 using System;
 using System.Security.Claims;
@@ -22,8 +23,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLogs(
             [FromQuery] string? actionType = null,
+            [FromQuery] string? search = null,
             [FromQuery] DateTime? startDate = null,
-            [FromQuery] DateTime? endDate = null)
+            [FromQuery] DateTime? endDate = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             // SuperAdmin sees global system logs (all tenants).
             // Everyone else only sees the logs of their own tenant.
@@ -37,7 +41,10 @@ namespace SaaSPlatform.API.Controllers
                 if (tenantId == null) return Unauthorized();
             }
 
-            var logs = await _systemLogRepository.GetAllAsync(tenantId, actionType, startDate, endDate);
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 200);
+
+            var logs = await _systemLogRepository.GetLogsPage(tenantId, actionType, search, startDate, endDate, page, pageSize);
             return Ok(logs);
         }
 
