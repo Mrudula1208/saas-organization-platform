@@ -39,10 +39,12 @@ export class Dashboard implements OnInit {
     this.isLoading = true;
     
     // Fetch both tenants and users
-    this.tenantService.getAll().subscribe({
-      next: (tenants: Tenant[]) => {
-        this.totalTenants = tenants.length;
-        this.recentTenants = tenants.sort((a: Tenant, b: Tenant) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+    // Aggregates read one wide page from the API (the API caps page size).
+    this.tenantService.getAll(1, 200).subscribe({
+      next: (res) => {
+        const tenants = res.data;
+        this.totalTenants = res.totalCount;
+        this.recentTenants = tenants.slice(0, 5);
         
         // Compute MRR and Plan distributions
         this.monthlyRevenue = tenants.reduce((sum: number, t: Tenant) => sum + (t.monthlyRevenue || 0), 0);
@@ -50,10 +52,11 @@ export class Dashboard implements OnInit {
         this.proPlanCount = tenants.filter((t: Tenant) => t.plan === 'Pro').length;
         this.enterprisePlanCount = tenants.filter((t: Tenant) => t.plan === 'Enterprise').length;
         
-        this.userService.getUsers().subscribe({
-          next: (users: User[]) => {
+        this.userService.getUsers(1, 200).subscribe({
+          next: (userRes) => {
+            const users = userRes.data;
             this.activeUsers = users.filter((u: User) => u.isActive).length;
-            this.recentUsers = users.sort((a: User, b: User) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+            this.recentUsers = users.slice(0, 5);
             this.isLoading = false;
           },
           error: () => {

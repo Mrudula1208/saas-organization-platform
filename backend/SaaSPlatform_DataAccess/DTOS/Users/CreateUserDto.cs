@@ -14,5 +14,8 @@ namespace SaaSPlatform.Application.DTOS.Users
         [Required(ErrorMessage = "Password is required")]
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string Password { get; set; } = string.Empty;
+
+        // Optional role. When it is not sent the user is created as a Member.
+        public string? Role { get; set; }
     }
 }

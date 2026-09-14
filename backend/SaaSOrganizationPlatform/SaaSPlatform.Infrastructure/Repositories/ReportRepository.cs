@@ -239,16 +239,21 @@ namespace SaaSPlatform.Infrastructure.Repositories
             var totalUsers = await _context.Users.CountAsync(u => !u.IsDeleted);
 
             // Avg tenant lifetime in months
-            var allTenants = await _context.Tenants.Where(t => !t.IsDeleted).ToListAsync();
+            // Only the creation date is needed for the lifetime calculation;
+            // avoid materializing complete Tenant entities.
+            var tenantCreationDates = await _context.Tenants
+                .AsNoTracking()
+                .Where(t => !t.IsDeleted)
+                .Select(t => t.CreatedAt)
+                .ToListAsync();
             double avgLifetimeMonths = 0;
-            if (allTenants.Count > 0)
+            if (tenantCreationDates.Count > 0)
             {
-                avgLifetimeMonths = Math.Round(allTenants.Average(t => (now - t.CreatedAt).TotalDays / 30.0), 1);
+                avgLifetimeMonths = Math.Round(tenantCreationDates.Average(createdAt => (now - createdAt).TotalDays / 30.0), 1);
             }
 
-            // Total revenue and payments count for CAC
+            // Total revenue for CAC
             var totalRevenue = await _context.Payments.SumAsync(p => p.Amount);
-            var totalPayments = await _context.Payments.CountAsync();
             double cac = totalTenants > 0 ? Math.Round((double)totalRevenue / totalTenants, 2) : 0;
 
             // Churn rate: inactive tenants / total tenants
@@ -265,6 +270,30 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 CustomerAcquisitionCost = cac,
                 ChurnRate = churnRate
             };
+        }
+
+        public async Task<string> GetTenantNameAsync(Guid tenantId)
+        {
+            var name = await _context.Tenants
+                .Where(t => t.Id == tenantId && !t.IsDeleted)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync();
+            return name ?? string.Empty;
+        }
+
+        public async Task<System.Collections.Generic.List<TenantProjectBreakdownDto>> GetTenantProjectBreakdownAsync(Guid tenantId)
+        {
+            return await _context.Projects
+                .Where(p => p.TenantId == tenantId && !p.IsDeleted)
+                .Select(p => new TenantProjectBreakdownDto
+                {
+                    Name = p.Name,
+                    Status = p.Status,
+                    TaskCount = _context.TaskItems.Count(t => t.ProjectId == p.Id && !t.IsDeleted),
+                    CompletedTaskCount = _context.TaskItems.Count(t => t.ProjectId == p.Id && !t.IsDeleted && (t.Status == "Completed" || t.Status == "Done"))
+                })
+                .OrderBy(p => p.Name)
+                .ToListAsync();
         }
     }
 }

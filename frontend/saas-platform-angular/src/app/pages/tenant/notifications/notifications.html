@@ -1,8 +1,8 @@
 <div class="notifications-container animate-fade">
   <div class="notifications-header">
     <div>
-      <h1>Notifications Dashboard</h1>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+      <h1 style="color: var(--text-heading);">Notifications Dashboard</h1>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
         Manage activity updates and task assignments.
       </p>
     </div>
@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <div class="glass-card" style="padding: 1.5rem;">
+  <div class="card" style="padding: 1.5rem;">
     <div class="filters-row">
       <div class="tabs-group">
         <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">
@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <div class="table-container">
+    <div class="table-container" style="border: none; margin-top: 0.5rem;">
       <table class="custom-table notif-table">
         <thead>
           <tr>
@@ -52,13 +52,13 @@
             </tr>
           } @else {
             @for (notif of filteredNotifications; track notif.id) {
-              <tr [style.background]="!notif.isRead ? 'rgba(255,255,255,0.01)' : 'transparent'">
+              <tr [style.background]="!notif.isRead ? 'var(--primary-light)' : 'transparent'">
                 <td>
                   <span class="notif-bullet" [class.unread]="!notif.isRead" [class.read]="notif.isRead"></span>
                 </td>
                 <td>
                   <div class="notif-message-cell">
-                    <span [style.font-weight]="!notif.isRead ? '600' : '400'">
+                    <span [style.font-weight]="!notif.isRead ? '600' : '400'" [style.color]="!notif.isRead ? 'var(--text-heading)' : 'var(--text-primary)'">
                       {{ notif.message }}
                     </span>
                   </div>

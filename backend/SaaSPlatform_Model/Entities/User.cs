@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform_Model
@@ -16,6 +17,7 @@ namespace SaaSPlatform_Model
 
         public string Email { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public string PasswordHash { get; set; } = string.Empty;
 
         public string Role { get; set; } = string.Empty;
@@ -31,14 +33,17 @@ namespace SaaSPlatform_Model
         public DateTime LastLogin { get; set; }
 
         // 🔐 Security & Refresh Tokens
+        [JsonIgnore]
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
 
         // 📧 Email Verification
+        [JsonIgnore]
         public string? EmailVerificationToken { get; set; }
         public DateTime? EmailVerifiedAt { get; set; }
 
         // 🔑 Password Reset
+        [JsonIgnore]
         public string? PasswordResetToken { get; set; }
         public DateTime? ResetTokenExpiryTime { get; set; }
 

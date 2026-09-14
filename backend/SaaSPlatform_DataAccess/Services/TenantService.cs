@@ -1,3 +1,5 @@
+using SaaSPlatform.Application.DTOS;
+using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform_Model.Entities;
 using System;
@@ -17,9 +19,10 @@ namespace SaaSPlatform.Application.Services
             _systemLogs = systemLogs;
         }
 
-        public async Task<IEnumerable<Tenant>> GetAllAsync()
+        // One page of the tenant list; the database does the filtering and paging.
+        public async Task<PagedResult<Tenant>> GetTenantsPage(string? search = null, string? plan = null, int page = 1, int pageSize = 20)
         {
-            return await _tenantRepository.GetAllAsync();
+            return await _tenantRepository.GetTenantsPage(search, plan, page, pageSize);
         }
 
         public async Task<Tenant?> GetByIdAsync(Guid Id)
@@ -27,7 +30,7 @@ namespace SaaSPlatform.Application.Services
             return await _tenantRepository.GetByIdAsync(Id);
         }
 
-        public async Task<Tenant> CreateAsync(Tenant tenant)
+        public async Task<Tenant> CreateAsync(Tenant tenant, Guid? userId = null)
         {
             if (string.IsNullOrEmpty(tenant.Name))
             {
@@ -39,11 +42,11 @@ namespace SaaSPlatform.Application.Services
             tenant.IsDeleted = false;
 
             var createdTenant = await _tenantRepository.AddAsync(tenant);
-            await _systemLogs.LogAsync("TENANT_CREATED", $"Tenant {createdTenant.Name} created.", null, createdTenant.Id);
+            await _systemLogs.LogAsync("TENANT_CREATED", $"Tenant {createdTenant.Name} created.", userId, createdTenant.Id);
             return createdTenant;
         }
 
-        public async Task<bool> UpdateAsync(Guid Id, Tenant tenant)
+        public async Task<bool> UpdateAsync(Guid Id, Tenant tenant, Guid? userId = null)
         {
             var existingTenant = await _tenantRepository.GetByIdAsync(Id);
             if (existingTenant == null || existingTenant.IsDeleted)
@@ -57,11 +60,11 @@ namespace SaaSPlatform.Application.Services
             existingTenant.IsActive = tenant.IsActive;
 
             await _tenantRepository.UpdateAsync(existingTenant);
-            await _systemLogs.LogAsync("TENANT_UPDATED", $"Tenant {existingTenant.Name} profile details updated.", null, existingTenant.Id);
+            await _systemLogs.LogAsync("TENANT_UPDATED", $"Tenant {existingTenant.Name} profile details updated.", userId, existingTenant.Id);
             return true;
         }
 
-        public async Task<bool> DeleteAsync(Guid Id)
+        public async Task<bool> DeleteAsync(Guid Id, Guid? userId = null)
         {
             var tenant = await _tenantRepository.GetByIdAsync(Id);
             if (tenant == null || tenant.IsDeleted)
@@ -71,11 +74,11 @@ namespace SaaSPlatform.Application.Services
 
             tenant.IsDeleted = true;
             await _tenantRepository.UpdateAsync(tenant);
-            await _systemLogs.LogAsync("TENANT_DELETED", $"Tenant {tenant.Name} soft deleted.", null, tenant.Id);
+            await _systemLogs.LogAsync("TENANT_DELETED", $"Tenant {tenant.Name} soft deleted.", userId, tenant.Id);
             return true;
         }
 
-        public async Task<bool> UpdateLogoAsync(Guid tenantId, string logoUrl)
+        public async Task<bool> UpdateLogoAsync(Guid tenantId, string logoUrl, Guid? userId = null)
         {
             var tenant = await _tenantRepository.GetByIdAsync(tenantId);
             if (tenant == null || tenant.IsDeleted)
@@ -85,7 +88,54 @@ namespace SaaSPlatform.Application.Services
 
             tenant.LogoImageUrl = logoUrl;
             await _tenantRepository.UpdateAsync(tenant);
-            await _systemLogs.LogAsync("TENANT_LOGO_UPDATED", $"Tenant {tenant.Name} company logo updated.", null, tenant.Id);
+            await _systemLogs.LogAsync("TENANT_LOGO_UPDATED", $"Tenant {tenant.Name} company logo updated.", userId, tenant.Id);
+            return true;
+        }
+
+        public async Task<TenantSettingsDto?> GetSettingsAsync(Guid tenantId)
+        {
+            var tenant = await _tenantRepository.GetByIdAsync(tenantId);
+            if (tenant == null || tenant.IsDeleted)
+            {
+                return null;
+            }
+
+            return new TenantSettingsDto
+            {
+                Id = tenant.Id,
+                Name = tenant.Name ?? string.Empty,
+                Domain = tenant.Domain ?? string.Empty,
+                ContactEmail = tenant.ContactEmail ?? string.Empty,
+                ContactPhone = tenant.ContactPhone ?? string.Empty,
+                LogoImageUrl = tenant.LogoImageUrl,
+                EmailNotifications = tenant.EmailNotificationsEnabled,
+                InAppNotifications = tenant.InAppNotificationsEnabled
+            };
+        }
+
+        public async Task<bool> UpdateSettingsAsync(Guid tenantId, TenantSettingsDto dto, Guid? userId = null)
+        {
+            var tenant = await _tenantRepository.GetByIdAsync(tenantId);
+            if (tenant == null || tenant.IsDeleted)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Name))
+            {
+                throw new InvalidOperationException("Workspace name is required.");
+            }
+
+            // Only allowed settings fields are applied. Id/Domain/LogoImageUrl from the
+            // request body are never trusted, and the tenant id comes exclusively from the caller.
+            tenant.Name = dto.Name.Trim();
+            tenant.ContactEmail = (dto.ContactEmail ?? string.Empty).Trim();
+            tenant.ContactPhone = (dto.ContactPhone ?? string.Empty).Trim();
+            tenant.EmailNotificationsEnabled = dto.EmailNotifications;
+            tenant.InAppNotificationsEnabled = dto.InAppNotifications;
+
+            await _tenantRepository.UpdateAsync(tenant);
+            await _systemLogs.LogAsync("TENANT_SETTINGS_UPDATED", $"Tenant {tenant.Name} settings updated.", userId, tenant.Id);
             return true;
         }
     }

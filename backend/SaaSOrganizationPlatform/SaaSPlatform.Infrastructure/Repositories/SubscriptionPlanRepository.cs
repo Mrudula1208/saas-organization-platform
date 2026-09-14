@@ -21,8 +21,19 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<IEnumerable<SubscriptionPlan>> GetAllAsync()
         {
-            return await _context.SubscriptionPlans.ToListAsync();
+            return await _context.SubscriptionPlans
+                .AsNoTracking()
+                .ToListAsync();
 
+        }
+
+        public async Task<SubscriptionPlan?> GetByNameAsync(string name)
+        {
+            var lowerName = name.ToLower();
+            return await _context.SubscriptionPlans
+                .AsNoTracking()
+                .Where(p => p.Name.ToLower() == lowerName)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<SubscriptionPlan> GetByIdAsync(Guid Id)

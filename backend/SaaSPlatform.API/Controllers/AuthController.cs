@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Auth;
 using SaaSPlatform.Application.Interfaces;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -98,6 +100,19 @@ namespace SaaSPlatform.API.Controllers
                 return BadRequest(new { success = false, message = "Failed to reset password. Check details or token expiry." });
             }
             return Ok(new { success = true, message = "Password reset successfully." });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Identity comes from the JWT; revokes the refresh token and writes a LOGOUT audit entry.
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(claim, out var userId))
+            {
+                await _authService.LogoutAsync(userId);
+            }
+            return Ok(new { success = true, message = "Logged out successfully." });
         }
     }
 

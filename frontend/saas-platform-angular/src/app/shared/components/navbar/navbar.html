@@ -40,7 +40,7 @@
             } @else {
               @for (notif of notifications; track notif.id) {
                 <div class="notification-item" (click)="readNotification(notif)">
-                  <div class="notification-icon" [style.background]="!notif.isRead ? 'rgba(59, 130, 246, 0.15)' : 'rgba(107, 114, 128, 0.15)'" [style.color]="!notif.isRead ? '#60a5fa' : '#6b7280'">
+                  <div class="notification-icon" [style.background]="!notif.isRead ? 'var(--primary-light)' : '#F3F4F6'" [style.color]="!notif.isRead ? 'var(--primary-color)' : 'var(--text-secondary)'">
                     <span class="material-symbols-outlined" style="font-size: 1.15rem;">
                       {{ getNotifIcon(notif) }}
                     </span>

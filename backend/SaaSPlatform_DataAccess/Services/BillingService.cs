@@ -1,6 +1,7 @@
 using SaaSPlatform.Application.DTOS.Billing;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
+using SaaSPlatform_Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,19 +20,37 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<CurrentPlanDto?> GetCurrentPlanAsync(Guid tenantId)
         {
+            // Check the tenant before doing any payment lookup. This keeps
+            // unknown-tenant requests cheap and preserves the old behaviour.
             var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId);
             if (tenant == null || tenant.IsDeleted)
             {
                 return null;
             }
 
+            var lastPaymentDate = await GetLastSuccessfulPaymentDateAsync(tenantId);
+            return await BuildCurrentPlanAsync(tenant, lastPaymentDate);
+        }
+
+        private async Task<CurrentPlanDto?> GetCurrentPlanAsync(Guid tenantId, DateTime? lastPaymentDate)
+        {
+            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId);
+            if (tenant == null || tenant.IsDeleted)
+            {
+                return null;
+            }
+
+            return await BuildCurrentPlanAsync(tenant, lastPaymentDate);
+        }
+
+        private async Task<CurrentPlanDto?> BuildCurrentPlanAsync(Tenant tenant, DateTime? lastPaymentDate)
+        {
             var plan = await _unitOfWork.SubscriptionPlans.GetByIdAsync(tenant.SubscriptionPlanId);
             if (plan == null)
             {
                 return null;
             }
 
-            var lastPaymentDate = await GetLastSuccessfulPaymentDateAsync(tenantId);
             var nextBillingDate = lastPaymentDate.HasValue
                 ? lastPaymentDate.Value.AddMonths(1)
                 : tenant.CreatedAt.AddMonths(1);
@@ -51,7 +70,18 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<IEnumerable<PaymentHistoryItemDto>> GetPaymentHistoryAsync(Guid tenantId)
         {
+            var history = await _unitOfWork.Payments.GetPaymentHistoryAsync(tenantId);
+            if (history != null)
+            {
+                return history;
+            }
+
+            // Compatibility path for older repository implementations.
             var payments = await _unitOfWork.Payments.GetAllAsync(tenantId);
+            if (payments == null)
+            {
+                return Enumerable.Empty<PaymentHistoryItemDto>();
+            }
 
             return payments
                 .OrderByDescending(p => p.PaymentDate)
@@ -79,9 +109,16 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<BillingSummaryDto> GetBillingSummaryAsync(Guid tenantId)
         {
-            var payments = await _unitOfWork.Payments.GetAllAsync(tenantId);
-            var list = payments.ToList();
+            var summary = await _unitOfWork.Payments.GetPaymentSummaryAsync(tenantId);
+            if (summary != null)
+            {
+                summary.CurrentPlan = await GetCurrentPlanAsync(tenantId, summary.LastPaymentDate);
+                return summary;
+            }
 
+            // Compatibility path for older repository implementations.
+            var payments = await _unitOfWork.Payments.GetAllAsync(tenantId);
+            var list = payments?.ToList() ?? new List<Payment>();
             var successful = list.Where(p => IsSuccessful(p.PaymentStatus)).ToList();
 
             return new BillingSummaryDto
@@ -99,7 +136,21 @@ namespace SaaSPlatform.Application.Services
 
         private async Task<DateTime?> GetLastSuccessfulPaymentDateAsync(Guid tenantId)
         {
+            var lastPaymentDate = await _unitOfWork.Payments.GetLastSuccessfulPaymentDateAsync(tenantId);
+            if (lastPaymentDate.HasValue)
+            {
+                return lastPaymentDate;
+            }
+
+            // Keep the old fallback for compatibility with repositories that
+            // predate the SQL projection. In the normal path a missing value means
+            // that the tenant has no successful payment.
             var payments = await _unitOfWork.Payments.GetAllAsync(tenantId);
+            if (payments == null)
+            {
+                return null;
+            }
+
             return payments
                 .Where(p => IsSuccessful(p.PaymentStatus))
                 .OrderByDescending(p => p.PaymentDate)

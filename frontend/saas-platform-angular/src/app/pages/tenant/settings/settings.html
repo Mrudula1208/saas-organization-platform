@@ -1,18 +1,18 @@
 <div class="animate-fade">
   <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800;">Workspace Settings</h1>
+    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Workspace Settings</h1>
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">Configure workspace information, your profile, notification preferences, security, and interface theme</p>
   </div>
 
   @if (successMessage) {
-    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+    <div class="alert alert-success" style="margin-bottom: 1.5rem;">
       <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
       <span>{{ successMessage }}</span>
     </div>
   }
 
   @if (errorMessage) {
-    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
       <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
       <span>{{ errorMessage }}</span>
     </div>
@@ -22,8 +22,8 @@
 
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
       <!-- Workspace Information Card -->
-      <div class="glass-card glow-primary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
           <span class="material-symbols-outlined" style="color: var(--primary-color);">domain</span>
           Workspace Information
         </h3>
@@ -67,8 +67,8 @@
       </div>
 
       <!-- Workspace Logo Card -->
-      <div class="glass-card glow-primary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
           <span class="material-symbols-outlined" style="color: var(--primary-color);">image</span>
           Workspace Logo
         </h3>
@@ -80,13 +80,13 @@
         <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem;">
           @if (logoPreviewUrl) {
             <div style="text-align: center;">
-              <img [src]="logoPreviewUrl" alt="New logo preview" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 2px dashed var(--accent-color); object-fit: contain; background: rgba(255,255,255,0.05); padding: 0.25rem;" />
-              <div style="font-size: 0.7rem; color: var(--accent-color); margin-top: 0.25rem;">Preview</div>
+              <img [src]="logoPreviewUrl" alt="New logo preview" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 2px dashed var(--primary-color); object-fit: contain; background: #F9FAFB; padding: 0.25rem;" />
+              <div style="font-size: 0.7rem; color: var(--primary-color); margin-top: 0.25rem;">Preview</div>
             </div>
           } @else if (tenantLogoUrl) {
-            <img [src]="tenantLogoUrl" alt="{{ tenantName }}-logo" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); object-fit: contain; background: rgba(255,255,255,0.05); padding: 0.25rem;" />
+            <img [src]="tenantLogoUrl" alt="{{ tenantName }}-logo" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); object-fit: contain; background: #F9FAFB; padding: 0.25rem;" />
           } @else {
-            <div style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: rgba(15,23,42,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; color: var(--text-muted);">
+            <div style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #F9FAFB; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; color: var(--text-muted);">
               <span class="material-symbols-outlined" style="font-size: 2rem;">image</span>
               <span style="font-size: 0.7rem;">No logo</span>
             </div>
@@ -108,7 +108,7 @@
         </div>
 
         @if (logoUploadError) {
-          <div class="animate-fade" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.65rem 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+          <div class="alert alert-error" style="margin-bottom: 1rem;">
             <span class="material-symbols-outlined" style="font-size: 1.15rem;">error</span>
             <span>{{ logoUploadError }}</span>
           </div>
@@ -126,8 +126,8 @@
       </div>
 
       <!-- Profile Card -->
-      <div class="glass-card glow-primary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
           <span class="material-symbols-outlined" style="color: var(--primary-color);">account_circle</span>
           Edit Profile Information
         </h3>
@@ -137,7 +137,7 @@
             @if (profileForm.profileImageUrl) {
               <img [src]="profileForm.profileImageUrl" alt="Profile avatar" style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px solid var(--primary-color); object-fit: cover;" />
             } @else {
-              <div style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px dashed var(--primary-color); display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,0.4); color: var(--text-muted);">
+              <div style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px dashed var(--primary-color); display: flex; align-items: center; justify-content: center; background: #F9FAFB; color: var(--text-muted);">
                 <span class="material-symbols-outlined" style="font-size: 2rem;">account_circle</span>
               </div>
             }
@@ -165,9 +165,9 @@
       </div>
 
       <!-- Password Card -->
-      <div class="glass-card glow-secondary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-          <span class="material-symbols-outlined" style="color: var(--secondary-color);">vpn_key</span>
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">vpn_key</span>
           Change Password Credentials
         </h3>
 
@@ -189,7 +189,7 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;" [disabled]="isChangingPassword">
+          <button type="submit" class="btn btn-outline" style="margin-top: 1rem; width: 100%;" [disabled]="isChangingPassword">
             {{ isChangingPassword ? 'Updating Password...' : 'Update Password' }}
           </button>
         </form>
@@ -199,23 +199,23 @@
     <!-- Right Side: Preferences and Theme -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
       <!-- Theme preference -->
-      <div class="glass-card glow-secondary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--secondary-color);">contrast</span>
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">contrast</span>
           Theme Preference
         </h3>
         <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">
           Change your interface style preference. The selected preference is saved on your active device configuration.
         </p>
-        <button class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
+        <button class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
           <span class="material-symbols-outlined">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</span>
           Toggle {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
         </button>
       </div>
 
       <!-- Notifications preference -->
-      <div class="glass-card glow-primary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
           <span class="material-symbols-outlined" style="color: var(--primary-color);">notifications</span>
           Preferences
         </h3>

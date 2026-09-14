@@ -11,8 +11,8 @@ namespace SaaSPlatform.Application.Interfaces
     {
         Task<IEnumerable<SubscriptionPlan>> GetAllAsync();
         Task<SubscriptionPlan> GetByIdAsync(Guid Id);
-        Task<SubscriptionPlan>AddAsync(SubscriptionPlan subscriptionPlan);
-        Task<bool>UpdateAsync(Guid Id, SubscriptionPlan subscriptionPlan);
-        Task <bool>DeleteAsync(Guid Id);
+        Task<SubscriptionPlan>AddAsync(SubscriptionPlan subscriptionPlan, Guid? userId = null);
+        Task<bool>UpdateAsync(Guid Id, SubscriptionPlan subscriptionPlan, Guid? userId = null);
+        Task <bool>DeleteAsync(Guid Id, Guid? userId = null);
     }
 }

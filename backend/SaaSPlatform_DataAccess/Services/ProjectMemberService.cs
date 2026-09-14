@@ -1,6 +1,7 @@
 ﻿using SaaSPlatform.Application.DTOS.ProjectMembers;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
+using SaaSPlatform_Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,9 +30,19 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<IEnumerable<ProjectMemberDto>> GetMembersByProjectAsync(Guid projectId, Guid tenantId)
         {
-            var project = await _projectRepository.GetByIdAsync(projectId);
-            if (project == null || project.IsDeleted || project.TenantId != tenantId)
-                return Enumerable.Empty<ProjectMemberDto>();
+            var projectTenantId = await _projectRepository.GetTenantIdAsync(projectId);
+            if (projectTenantId.HasValue)
+            {
+                if (projectTenantId.Value != tenantId)
+                    return Enumerable.Empty<ProjectMemberDto>();
+            }
+            else
+            {
+                // Compatibility path for older repository implementations.
+                var project = await _projectRepository.GetByIdAsync(projectId);
+                if (project == null || project.IsDeleted || project.TenantId != tenantId)
+                    return Enumerable.Empty<ProjectMemberDto>();
+            }
 
             var members = await _projectMemberRepository.GetMembersByProjectAsync(projectId, tenantId);
             return members.Select(MapToDto).ToList();
@@ -39,9 +50,20 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<ProjectMemberDto> AddMemberAsync(AddProjectMemberDto dto, Guid tenantId)
         {
-            var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
-            if (project == null || project.IsDeleted || project.TenantId != tenantId)
-                throw new KeyNotFoundException("Project not found in this tenant.");
+            var projectTenantId = await _projectRepository.GetTenantIdAsync(dto.ProjectId);
+            Project? project = null;
+            if (projectTenantId.HasValue)
+            {
+                if (projectTenantId.Value != tenantId)
+                    throw new KeyNotFoundException("Project not found in this tenant.");
+            }
+            else
+            {
+                // Compatibility path for older repository implementations.
+                project = await _projectRepository.GetByIdAsync(dto.ProjectId);
+                if (project == null || project.IsDeleted || project.TenantId != tenantId)
+                    throw new KeyNotFoundException("Project not found in this tenant.");
+            }
 
             var user = await _userRepository.GetUserById(dto.UserId);
             if (user == null || user.IsDeleted || user.TenantId != tenantId)
@@ -54,7 +76,7 @@ namespace SaaSPlatform.Application.Services
                 UserId = dto.UserId
             });
 
-            await _systemLogs.LogAsync("PROJECT_MEMBER_ADDED", $"User {user.Email} added to project {project.Name}.", user.Id, tenantId);
+            await _systemLogs.LogAsync("PROJECT_MEMBER_ADDED", $"User {user.Email} added to project {project?.Name ?? "project"}.", user.Id, tenantId);
 
             return MapToDto(member);
         }

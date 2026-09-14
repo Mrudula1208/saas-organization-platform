@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Tenant, TenantSettings } from '../../models/tenant.model';
+import { PagedResult } from '../../models/paged-result.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -71,9 +72,21 @@ export class TenantService {
     };
   }
 
-  getAll(): Observable<Tenant[]> {
-    return this.http.get<any[]>(this.apiUrl).pipe(
-      map(tenants => tenants.map(t => this.mapBackendTenantToFrontend(t)))
+  // One page of tenants, filtered and counted on the server.
+  getAll(page = 1, pageSize = 20, search = '', plan = ''): Observable<PagedResult<Tenant>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    if (plan) params = params.set('plan', plan);
+
+    return this.http.get<any>(this.apiUrl, { params }).pipe(
+      map(res => ({
+        data: (res.data || []).map((t: any) => this.mapBackendTenantToFrontend(t)),
+        totalCount: res.totalCount ?? 0,
+        page: res.page ?? page,
+        pageSize: res.pageSize ?? pageSize
+      }))
     );
   }
 

@@ -8,10 +8,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .notifications-header h1 {
   font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-heading);
 }
 
 .filters-row {
@@ -25,8 +29,8 @@
 
 .tabs-group {
   display: flex;
-  gap: 0.5rem;
-  background: rgba(15, 23, 42, 0.3);
+  gap: 0.25rem;
+  background: #F3F4F6;
   padding: 0.25rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
@@ -34,7 +38,7 @@
 
 .tab-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-secondary);
   font-family: var(--font-heading);
   font-weight: 600;
@@ -46,12 +50,13 @@
 }
 
 .tab-btn:hover {
-  color: var(--text-primary);
+  color: var(--text-heading);
 }
 
 .tab-btn.active {
-  background: var(--glass-bg);
-  color: var(--text-primary);
+  background: #FFFFFF;
+  color: var(--primary-color);
+  border-color: var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
@@ -80,9 +85,9 @@
 }
 
 .notif-bullet.unread {
-  box-shadow: 0 0 8px var(--primary-color);
+  background: var(--primary-color);
 }
 
 .notif-bullet.read {
-  background: var(--text-muted);
+  background: var(--border-color);
 }

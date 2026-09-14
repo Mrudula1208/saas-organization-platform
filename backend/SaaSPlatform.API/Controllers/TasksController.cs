@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
@@ -19,15 +20,20 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks(
+        public async Task<ActionResult<PagedResult<TaskItem>>> GetAllTasks(
             [FromQuery] Guid? projectId = null,
             [FromQuery] string? status = null,
-            [FromQuery] string? search = null)
+            [FromQuery] string? search = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             var tenantId = GetTenantId();
             if (tenantId == null) return Unauthorized();
 
-            var tasks = await _taskService.GetAllAsync(tenantId.Value, projectId, status, search);
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 200);
+
+            var tasks = await _taskService.GetTasksPage(tenantId.Value, projectId, status, search, page, pageSize);
             return Ok(tasks);
         }
 

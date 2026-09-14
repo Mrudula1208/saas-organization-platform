@@ -10,6 +10,7 @@ namespace SaaSPlatform.Application.Interfaces
     public interface ISubscriptionPlanRepository
     {
         Task<IEnumerable<SubscriptionPlan>> GetAllAsync();
+        Task<SubscriptionPlan?> GetByNameAsync(string name);
         Task<SubscriptionPlan> GetByIdAsync(Guid Id);
         Task<SubscriptionPlan> AddAsync(SubscriptionPlan subscriptionPlan);
         Task<bool> UpdateAsync(SubscriptionPlan subscriptionPlan);

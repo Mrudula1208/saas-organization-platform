@@ -20,6 +20,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public async Task<IEnumerable<ProjectMember>> GetMembersByProjectAsync(Guid projectId, Guid tenantId)
         {
             return await _context.ProjectMembers
+                .AsNoTracking()
                 .Include(pm => pm.User)
                 .Include(pm => pm.Project)
                 .Where(pm => pm.ProjectId == projectId && pm.Project.TenantId == tenantId)
@@ -30,7 +31,6 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public async Task<ProjectMember?> GetByIdAsync(Guid id)
         {
             return await _context.ProjectMembers
-                .Include(pm => pm.User)
                 .Include(pm => pm.Project)
                 .FirstOrDefaultAsync(pm => pm.Id == id);
         }
@@ -38,6 +38,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
         public async Task<ProjectMember?> GetByProjectAndUserAsync(Guid projectId, Guid userId)
         {
             return await _context.ProjectMembers
+                .AsNoTracking()
                 .FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
         }
 

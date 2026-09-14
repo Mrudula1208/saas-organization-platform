@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Project, UpdateProjectPayload, ProjectMember } from '../../models/project.model';
 import { TaskItem } from '../../models/task.model';
+import { PagedResult } from '../../models/paged-result.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -70,9 +71,21 @@ export class ProjectService {
   }
 
   /* Projects API wrappers */
-  getProjects(): Observable<Project[]> {
-    return this.http.get<any[]>(this.projectApiUrl, { headers: this.getHeaders() }).pipe(
-      map((projects) => projects.map((project) => this.mapProject(project)))
+  // One page of projects, filtered and counted on the server.
+  getProjects(page = 1, pageSize = 20, search = '', status = ''): Observable<PagedResult<Project>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    if (status) params = params.set('status', status);
+
+    return this.http.get<any>(this.projectApiUrl, { headers: this.getHeaders(), params }).pipe(
+      map(res => ({
+        data: (res.data || []).map((project: any) => this.mapProject(project)),
+        totalCount: res.totalCount ?? 0,
+        page: res.page ?? page,
+        pageSize: res.pageSize ?? pageSize
+      }))
     );
   }
 
@@ -120,13 +133,21 @@ export class ProjectService {
   }
 
   /* Tasks API wrappers */
-  getTasks(projectId?: string): Observable<TaskItem[]> {
-    let url = this.tasksApiUrl;
-    if (projectId) {
-      url = `${this.tasksApiUrl}?projectId=${projectId}`;
-    }
-    return this.http.get<any[]>(url, { headers: this.getHeaders() }).pipe(
-      map((tasks) => tasks.map((task) => this.mapTask(task)))
+  // One page of tasks, filtered and counted on the server.
+  getTasks(page = 1, pageSize = 20, projectId = '', search = ''): Observable<PagedResult<TaskItem>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
+    if (projectId) params = params.set('projectId', projectId);
+    if (search) params = params.set('search', search);
+
+    return this.http.get<any>(this.tasksApiUrl, { headers: this.getHeaders(), params }).pipe(
+      map(res => ({
+        data: (res.data || []).map((task: any) => this.mapTask(task)),
+        totalCount: res.totalCount ?? 0,
+        page: res.page ?? page,
+        pageSize: res.pageSize ?? pageSize
+      }))
     );
   }
 

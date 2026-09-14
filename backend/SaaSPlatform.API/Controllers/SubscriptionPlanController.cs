@@ -49,7 +49,7 @@ namespace SaaSPlatform.API.Controllers
                 IsActive = true
             };
 
-            var created = await _subscriptionPlanService.AddAsync(plan);
+            var created = await _subscriptionPlanService.AddAsync(plan, GetUserId());
             return Ok(created);
         }
 
@@ -67,7 +67,7 @@ namespace SaaSPlatform.API.Controllers
                 IsActive = dto.IsActive
             };
 
-            var result = await _subscriptionPlanService.UpdateAsync(Id, plan);
+            var result = await _subscriptionPlanService.UpdateAsync(Id, plan, GetUserId());
             if (!result)
                 return NotFound();
 
@@ -78,11 +78,19 @@ namespace SaaSPlatform.API.Controllers
         [HttpDelete("{Id}")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            var result = await _subscriptionPlanService.DeleteAsync(Id);
+            var result = await _subscriptionPlanService.DeleteAsync(Id, GetUserId());
             if (!result)
                 return NotFound();
 
             return NoContent();
+        }
+
+        private Guid? GetUserId()
+        {
+            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (claim != null && Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
+                return userId;
+            return null;
         }
     }
 }

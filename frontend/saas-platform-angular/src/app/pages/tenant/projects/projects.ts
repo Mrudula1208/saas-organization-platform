@@ -16,7 +16,6 @@ import { User } from '../../../models/user.model';
   styleUrl: './projects.css',
 })
 export class Projects implements OnInit {
-  projects: Project[] = [];
   filteredProjects: Project[] = [];
 
   isLoading = false;
@@ -24,6 +23,30 @@ export class Projects implements OnInit {
 
   searchQuery = '';
   statusFilter = '';
+
+  // Server-side pagination: the API filters, sorts and counts in the database.
+  page = 1;
+  pageSize = 20;
+  totalCount = 0;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+  }
+
+  prevPage() {
+    if (this.page > 1) {
+      this.page--;
+      this.loadProjects();
+    }
+  }
+
+  nextPage() {
+    if (this.page < this.totalPages) {
+      this.page++;
+      this.loadProjects();
+    }
+  }
 
   isCreateModalOpen = false;
   newProject = { name: '', description: '', startDate: '', endDate: '', priority: 'Medium' };
@@ -62,11 +85,17 @@ export class Projects implements OnInit {
     this.isLoading = true;
     this.loadError = '';
 
-    this.projectService.getProjects().subscribe({
-      next: (data: Project[]) => {
-        this.projects = data;
+    this.projectService.getProjects(this.page, this.pageSize, this.searchQuery, this.statusFilter).subscribe({
+      next: (res) => {
+        // The current page disappeared (e.g. last row deleted): show the last page that still has rows.
+        if (res.data.length === 0 && this.page > 1) {
+          this.page = Math.max(1, Math.ceil(res.totalCount / this.pageSize));
+          this.loadProjects();
+          return;
+        }
+        this.filteredProjects = res.data;
+        this.totalCount = res.totalCount;
         this.isLoading = false;
-        this.applyFilters();
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -75,23 +104,18 @@ export class Projects implements OnInit {
     });
   }
 
-  applyFilters() {
-    this.filteredProjects = this.projects.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            p.description.toLowerCase().includes(this.searchQuery.toLowerCase());
-      
-      const matchesStatus = this.statusFilter === '' || p.status === this.statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }
-
   onSearch() {
-    this.applyFilters();
+    // Ask the server only after the user stops typing.
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.page = 1;
+      this.loadProjects();
+    }, 400);
   }
 
   onFilterChange() {
-    this.applyFilters();
+    this.page = 1;
+    this.loadProjects();
   }
 
   openCreateModal() {
@@ -145,8 +169,10 @@ export class Projects implements OnInit {
   }
 
   loadTenantUsers() {
-    this.userService.getUsers().subscribe({
-      next: (data: User[]) => {
+    // The members dropdown needs a wide list, so ask for one big page (the API caps page size).
+    this.userService.getUsers(1, 200).subscribe({
+      next: (res) => {
+        const data = res.data;
         const tenantId = this.auth.getTenantId();
         this.tenantUsers = tenantId
           ? data.filter(u => u.tenantId === tenantId)

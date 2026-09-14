@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SaaSPlatform.API.Configurations;
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform_Model.Entities;
@@ -38,10 +39,62 @@ namespace SaaSPlatform.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "SuperAdmin")]
-        public async Task<ActionResult<IEnumerable<Tenant>>> GetAll()
+        public async Task<ActionResult<PagedResult<Tenant>>> GetAll(
+            [FromQuery] string? search = null,
+            [FromQuery] string? plan = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var tenants = await _tenantService.GetAllAsync();
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 200);
+
+            var tenants = await _tenantService.GetTenantsPage(search, plan, page, pageSize);
             return Ok(tenants);
+        }
+
+        // Tenant settings: the tenant id always comes from the JWT, never from the request.
+        [HttpGet("settings")]
+        public async Task<ActionResult> GetSettings()
+        {
+            var tenantId = GetTenantId();
+            if (tenantId == null)
+            {
+                return Unauthorized(new { success = false, message = "No tenant found for the authenticated user." });
+            }
+
+            var settings = await _tenantService.GetSettingsAsync(tenantId.Value);
+            if (settings == null)
+            {
+                return NotFound(new { success = false, message = "Tenant settings not found." });
+            }
+
+            return Ok(new { success = true, message = "Tenant settings loaded.", data = settings });
+        }
+
+        [HttpPut("settings")]
+        [Authorize(Roles = "TenantAdmin")]
+        public async Task<ActionResult> UpdateSettings([FromBody] TenantSettingsDto dto)
+        {
+            var tenantId = GetTenantId();
+            if (tenantId == null)
+            {
+                return Unauthorized(new { success = false, message = "No tenant found for the authenticated user." });
+            }
+
+            try
+            {
+                var result = await _tenantService.UpdateSettingsAsync(tenantId.Value, dto, GetUserId());
+                if (!result)
+                {
+                    return NotFound(new { success = false, message = "Tenant settings not found." });
+                }
+
+                return Ok(new { success = true, message = "Tenant settings saved successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet("{Id}")]
@@ -83,7 +136,7 @@ namespace SaaSPlatform.API.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var created = await _tenantService.CreateAsync(tenant);
+                var created = await _tenantService.CreateAsync(tenant, GetUserId());
                 return CreatedAtAction(nameof(GetById), new { Id = created.Id }, created);
             }
             catch (Exception ex)
@@ -98,15 +151,37 @@ namespace SaaSPlatform.API.Controllers
         {
             try
             {
+                // Tenant isolation: a TenantAdmin may only update their own tenant.
+                if (!User.IsInRole("SuperAdmin"))
+                {
+                    var callerTenantId = GetTenantId();
+                    if (callerTenantId == null || callerTenantId.Value != Id)
+                    {
+                        return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "You do not have access to this tenant." });
+                    }
+                }
+
+                // TenantAdmins cannot change the active status; only SuperAdmins can.
+                bool applyStatus = dto.IsActive;
+                if (!User.IsInRole("SuperAdmin"))
+                {
+                    var existing = await _tenantService.GetByIdAsync(Id);
+                    if (existing == null)
+                    {
+                        return NotFound(new { success = false, message = "Tenant not found." });
+                    }
+                    applyStatus = existing.IsActive;
+                }
+
                 var tenant = new Tenant
                 {
                     Name = dto.Name,
                     ContactEmail = dto.ContactEmail,
                     ContactPhone = dto.ContactPhone,
-                    IsActive = dto.IsActive
+                    IsActive = applyStatus
                 };
 
-                var result = await _tenantService.UpdateAsync(Id, tenant);
+                var result = await _tenantService.UpdateAsync(Id, tenant, GetUserId());
                 if (!result)
                 {
                     return NotFound(new { success = false, message = "Tenant not found." });
@@ -123,7 +198,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            var result = await _tenantService.DeleteAsync(Id);
+            var result = await _tenantService.DeleteAsync(Id, GetUserId());
             if (!result)
             {
                 return NotFound(new { success = false, message = "Tenant not found." });
@@ -132,9 +207,10 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost("{Id}/upload-logo")]
+        [Consumes("multipart/form-data")]
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         [RequestSizeLimit(MaxLogoSizeBytes)]
-        public async Task<IActionResult> UploadLogo(Guid Id, [FromForm] IFormFile file)
+        public async Task<IActionResult> UploadLogo(Guid Id, IFormFile file)
         {
             try
             {
@@ -186,7 +262,7 @@ namespace SaaSPlatform.API.Controllers
                 // Replace the previous logo file once the new one is safely saved.
                 DeleteExistingLogo(tenant.LogoImageUrl);
 
-                await _tenantService.UpdateLogoAsync(Id, relativeUrl);
+                await _tenantService.UpdateLogoAsync(Id, relativeUrl, GetUserId());
 
                 return Ok(new { success = true, logoUrl = relativeUrl, message = "Logo uploaded successfully." });
             }
@@ -228,6 +304,14 @@ namespace SaaSPlatform.API.Controllers
             {
                 System.IO.File.Delete(fileFullPath);
             }
+        }
+
+        private Guid? GetUserId()
+        {
+            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (claim != null && Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
+                return userId;
+            return null;
         }
 
         private Guid? GetTenantId()

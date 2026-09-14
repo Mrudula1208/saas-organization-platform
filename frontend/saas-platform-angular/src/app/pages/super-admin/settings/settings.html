@@ -1,26 +1,26 @@
 <div class="animate-fade">
   <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800;">System Settings</h1>
+    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">System Settings</h1>
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">Adjust global platform configurations, security protocols, system notifications, and themes</p>
   </div>
 
   @if (successMessage) {
-    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+    <div style="background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
       <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
       <span>{{ successMessage }}</span>
     </div>
   }
 
   @if (errorMessage) {
-    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+    <div class="api-error-alert animate-fade">
       <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
   <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
-    <div class="glass-card glow-primary" style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); font-size: 1.15rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <h3 style="font-family: var(--font-heading); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
         <span class="material-symbols-outlined" style="color: var(--primary-color);">tune</span>
         Global Configuration Parameters
       </h3>
@@ -83,32 +83,17 @@
 
     <!-- Right Column: Quick Toggles -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Theme Selection Card -->
-      <div class="glass-card glow-secondary">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--secondary-color);">contrast</span>
-          Theme Preference
-        </h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">
-          Switch between dark and light UI color schemes. Your choices will be saved to your profile cache.
-        </p>
-        <button class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
-          <span class="material-symbols-outlined">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</span>
-          Toggle {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
-        </button>
-      </div>
-
       <!-- Quick Platform Info -->
-      <div class="glass-card" style="border-color: rgba(255,255,255,0.05);">
-        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--accent-color);">info</span>
+      <div class="glass-card">
+        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">info</span>
           System Version
         </h3>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
-          <div>Environment: <strong style="color: var(--text-primary);">Production</strong></div>
-          <div>API Server: <strong style="color: var(--text-primary);">v1.4.2-dotnet8</strong></div>
-          <div>Front-End UI: <strong style="color: var(--text-primary);">v1.1.0-angular17</strong></div>
-          <div>Database Cluster: <strong style="color: var(--text-primary);">PostgreSQL 16</strong></div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+          <div>Environment: <strong style="color: var(--text-heading);">Production</strong></div>
+          <div>API Server: <strong style="color: var(--text-heading);">.NET 8 Clean Architecture</strong></div>
+          <div>Front-End UI: <strong style="color: var(--text-heading);">Angular 21</strong></div>
+          <div>Database Cluster: <strong style="color: var(--text-heading);">SQL Server / EF Core</strong></div>
         </div>
       </div>
     </div>

@@ -10,5 +10,9 @@ namespace SaaSPlatform.Application.DTOS.Users
         [Required(ErrorMessage = "New password is required.")]
         [MinLength(6, ErrorMessage = "New password must be at least 6 characters")]
         public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password confirmation is required.")]
+        [Compare(nameof(NewPassword), ErrorMessage = "New password and confirmation do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

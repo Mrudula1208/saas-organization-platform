@@ -5,15 +5,14 @@
 }
 
 .login-left {
-  flex: 1.2;
-  background: var(--bg-sidebar);
+  flex: 1.1;
+  background: #FFFFFF;
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 4rem;
   position: relative;
-  overflow: hidden;
 }
 
 .brand-wrapper {
@@ -21,21 +20,19 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 2.5rem;
-  animation: fadeIn 0.5s ease forwards;
 }
 
 .left-content {
-  max-width: 520px;
-  animation: slideInUp 0.6s ease forwards;
+  max-width: 500px;
 }
 
 .left-content h1 {
-  font-size: 2.75rem;
-  line-height: 1.2;
-  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.25;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
+  margin-bottom: 1.25rem;
+  color: var(--text-heading);
 }
 
 .left-content h1 span {
@@ -45,7 +42,7 @@
 .left-content p {
   font-size: 1.05rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .login-right {
@@ -59,18 +56,22 @@
 
 .login-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 2.5rem;
-  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .login-card h2 {
   font-size: 1.75rem;
   margin-bottom: 0.5rem;
+  color: var(--text-heading);
 }
 
 .login-card p {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 2rem;
 }
@@ -79,7 +80,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 1.5rem 0 2rem;
+  margin: 1.25rem 0 1.75rem;
   font-size: 0.85rem;
 }
 
@@ -101,13 +102,13 @@
 }
 
 .api-error-alert {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-color);
   font-size: 0.825rem;
   font-weight: 500;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;

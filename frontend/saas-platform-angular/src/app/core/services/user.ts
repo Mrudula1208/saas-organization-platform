@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Auth } from './auth';
 import { User } from '../../models/user.model';
+import { PagedResult } from '../../models/paged-result.model';
 import { environment } from '../../../environments/environment';
 
 export interface ApiResult {
@@ -55,8 +56,15 @@ export class UserService {
   // ---------- User management (real API only) ----------
   // Errors are passed on to the calling page so real API failures are shown to the user.
 
-  getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl, { headers: this.getHeaders() });
+  // One page of users, filtered and counted on the server.
+  getUsers(page = 1, pageSize = 20, search = '', role = ''): Observable<PagedResult<User>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    if (role) params = params.set('role', role);
+
+    return this.http.get<PagedResult<User>>(this.apiUrl, { headers: this.getHeaders(), params });
   }
 
   getUserById(id: string): Observable<User> {

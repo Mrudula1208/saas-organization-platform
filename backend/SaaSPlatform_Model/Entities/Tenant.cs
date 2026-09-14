@@ -23,6 +23,11 @@ namespace SaaSPlatform_Model.Entities
 
         public string? LogoImageUrl { get; set; }
 
+        // Workspace notification preferences (persisted tenant settings)
+        public bool EmailNotificationsEnabled { get; set; } = true;
+
+        public bool InAppNotificationsEnabled { get; set; } = true;
+
         public bool IsDeleted { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

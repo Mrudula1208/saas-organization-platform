@@ -1,17 +1,18 @@
 <div class="animate-fade">
   <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800;">Global Users Directory</h1>
+    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Global Users Directory</h1>
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor member access, role configuration, tenant alignment, and diagnostic audit statuses</p>
   </div>
 
   @if (errorMessage) {
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
-      {{ errorMessage }}
+    <div class="api-error-alert animate-fade">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ errorMessage }}</span>
     </div>
   }
 
   <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
+  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
         <input
@@ -35,7 +36,7 @@
   </div>
 
   <!-- Users Table Card -->
-  <div class="glass-card glow-secondary" style="padding: 0; overflow: hidden;">
+  <div class="glass-card" style="padding: 0; overflow: hidden;">
     <div class="table-container" style="border: none; margin-top: 0;">
       <table class="custom-table">
         <thead>
@@ -59,14 +60,14 @@
               </td>
               <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
                 <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
-                <span>{{ user.fullName }}</span>
+                <span style="color: var(--text-heading);">{{ user.fullName }}</span>
               </td>
               <td>{{ user.email }}</td>
-              <td style="font-weight: 600; color: var(--accent-color);">
+              <td style="font-weight: 600; color: var(--primary-color);">
                 {{ user.tenant?.name || '—' }}
               </td>
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin' || user.role === 'TenantAdmin'" [class.badge-purple]="user.role === 'Member'">
+                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin'" [class.badge-info]="user.role === 'TenantAdmin' || user.role === 'Member'">
                   {{ user.role }}
                 </span>
               </td>
@@ -98,6 +99,21 @@
           }
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Pagination controls -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+    <span style="color: var(--text-secondary); font-size: 0.875rem;">
+      @if (loading) {
+        Loading...
+      } @else {
+        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
+      }
+    </span>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
     </div>
   </div>
 </div>

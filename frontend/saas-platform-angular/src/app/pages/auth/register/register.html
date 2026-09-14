@@ -3,33 +3,33 @@
     <div style="text-align: center; margin-bottom: 2rem;">
       <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
         <div style="width: 2.5rem; height: 2.5rem; background: var(--primary-color); color: #fff; border-radius: var(--radius-md); display: grid; place-content: center; font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">S</div>
-        <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">{{ platformName }}</span>
+        <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-heading);">{{ platformName }}</span>
       </div>
-      <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin-top: 0.5rem;">Create Organization</h2>
+      <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin-top: 0.5rem; color: var(--text-heading);">Create Organization</h2>
       <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Register your business tenant environment and admin credentials</p>
     </div>
 
     @if (maintenanceMode) {
-      <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <div style="background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
         <span class="material-symbols-outlined" style="font-size: 1.25rem;">build</span>
         <span>The platform is currently undergoing scheduled maintenance. New registrations are paused.</span>
       </div>
     } @else if (!allowRegistrations) {
-      <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <div style="background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
         <span class="material-symbols-outlined" style="font-size: 1.25rem;">lock</span>
         <span>Public organization registrations are currently disabled by platform administrators.</span>
       </div>
     }
 
     @if (errorMessage) {
-      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <div class="api-error-alert animate-fade">
         <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
         <span>{{ errorMessage }}</span>
       </div>
     }
 
     @if (successMessage) {
-      <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
+      <div style="background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
         <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
         <span>{{ successMessage }}</span>
       </div>
@@ -177,7 +177,7 @@
         <a routerLink="/login" class="btn btn-outline">Cancel</a>
         <button
           type="submit"
-          class="btn btn-secondary"
+          class="btn btn-primary"
           [disabled]="submitting || maintenanceMode || !allowRegistrations || orgName.invalid || domainInput.invalid || adminNameInput.invalid || emailInput.invalid || passInput.invalid || confirmPassInput.invalid"
         >
           {{ submitting ? 'Creating...' : (!allowRegistrations || maintenanceMode ? 'Registration Disabled' : 'Create Organization') }}
@@ -187,7 +187,7 @@
 
     <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
       Already have an organization?
-      <a routerLink="/login" style="color: var(--secondary-color); text-decoration: none; font-weight: 600; margin-left: 0.25rem;">Sign In</a>
+      <a routerLink="/login" style="color: var(--primary-color); text-decoration: none; font-weight: 600; margin-left: 0.25rem;">Sign In</a>
     </div>
   </div>
 </div>

@@ -1,3 +1,4 @@
+using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
@@ -22,39 +23,23 @@ namespace SaaSPlatform.Application.Services
             _systemLogs = systemLogs;
         }
 
-        public async Task<IEnumerable<TaskItem>> GetAllAsync(Guid tenantId, Guid? projectId = null, string? status = null, string? search = null)
+        // One page of the tenant task list; the database does the filtering and paging.
+        public async Task<PagedResult<TaskItem>> GetTasksPage(Guid tenantId, Guid? projectId = null, string? status = null, string? search = null, int page = 1, int pageSize = 20)
         {
-            var tasks = await _taskRepository.GetAllAsync(tenantId);
-            var query = tasks.AsQueryable();
-
-            // Filter out soft-deleted tasks
-            query = query.Where(t => !t.IsDeleted);
-
-            if (projectId.HasValue && projectId.Value != Guid.Empty)
-            {
-                query = query.Where(t => t.ProjectId == projectId.Value);
-            }
-
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(t => t.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                var lowerSearch = search.ToLower();
-                query = query.Where(t => t.Name.ToLower().Contains(lowerSearch) || t.Description.ToLower().Contains(lowerSearch));
-            }
-
-            var result = query.ToList();
+            var result = await _taskRepository.GetTasksPage(tenantId, projectId, status, search, page, pageSize);
 
             // Break the JSON reference cycle: EF navigation fix-up fills
             // Project.Tasks with the loaded tasks, and that cycles back here.
-            foreach (var task in result)
+            foreach (var task in result.Data)
             {
                 if (task.Project != null)
                 {
-                    task.Project.Tasks = null;
+                    task.Project.Tasks = null!;
+                }
+
+                if (task.AssignedUser != null)
+                {
+                    task.AssignedUser.AssignedTasks = null!;
                 }
             }
 
@@ -75,10 +60,18 @@ namespace SaaSPlatform.Application.Services
                 throw new Exception("Task name is required.");
             }
 
-            var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
-            if (project == null || project.IsDeleted || project.TenantId != dto.TenantId)
+            var projectTenantId = await _projectRepository.GetTenantIdAsync(dto.ProjectId);
+            if (projectTenantId.HasValue)
             {
-                throw new Exception("Selected project was not found in this tenant.");
+                if (projectTenantId.Value != dto.TenantId)
+                    throw new Exception("Selected project was not found in this tenant.");
+            }
+            else
+            {
+                // Compatibility path for older repository implementations.
+                var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
+                if (project == null || project.IsDeleted || project.TenantId != dto.TenantId)
+                    throw new Exception("Selected project was not found in this tenant.");
             }
 
             var task = new TaskItem
@@ -93,7 +86,7 @@ namespace SaaSPlatform.Application.Services
                 DueDate = dto.DueDate,
                 IsCompleted = false,
                 IsDeleted = false,
-                TenantId = project.TenantId,
+                TenantId = dto.TenantId,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -125,6 +118,7 @@ namespace SaaSPlatform.Application.Services
             }
             else
             {
+                task.IsCompleted = false;
                 task.CompletedAt = null;
             }
 

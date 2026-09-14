@@ -15,5 +15,8 @@ namespace SaaSPlatform.Application.DTOS.Users
         public string Role { get; set; } = "Member";
 
         public string? ProfileImageUrl { get; set; }
+
+        // Optional: the edit form can change the active status together with the other fields.
+        public bool? IsActive { get; set; }
     }
 }

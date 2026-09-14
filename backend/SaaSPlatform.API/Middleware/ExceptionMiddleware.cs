@@ -8,10 +8,12 @@ namespace SaaSPlatform.API.Middleware
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IWebHostEnvironment _environment;
 
-        public ExceptionMiddleware(RequestDelegate next)
+        public ExceptionMiddleware(RequestDelegate next, IWebHostEnvironment environment)
         {
             _next = next;
+            _environment = environment;
         }
         public async Task Invoke(HttpContext context, ISystemLogRepository systemLogs)
         {
@@ -51,15 +53,19 @@ namespace SaaSPlatform.API.Middleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
+            // Never expose exception details to production clients; the full error is
+            // still written to the system log above. Development keeps the detail for debugging.
+            var message = _environment.IsDevelopment()
+                ? ex.InnerException?.Message ?? ex.Message
+                : "An unexpected error occurred. Please try again later.";
+
             var response = new
             {
                 success = false,
-                message = ex.InnerException?.Message ?? ex.Message,
+                message,
             };
 
             return context.Response.WriteAsync(JsonSerializer.Serialize(response));
-
-
         }
     }
 }

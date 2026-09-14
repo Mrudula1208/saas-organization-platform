@@ -47,6 +47,21 @@ namespace SaaSPlatform.Tests
         }
 
         [Fact]
+        public async Task GetUsers_AsSuperAdmin_CallsGetPlatformUsersPage()
+        {
+            var tenantId = Guid.NewGuid();
+            TestHelpers.SetUser(_controller, role: "SuperAdmin", tenantId: tenantId);
+            _users.Setup(x => x.GetPlatformUsersPage("Alice", "TenantAdmin", null, 1, 20))
+                .ReturnsAsync(new PagedResult<User>());
+
+            var result = await _controller.GetUsers(search: "Alice", role: "TenantAdmin", isActive: null, page: 1, pageSize: 20);
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.IsType<PagedResult<User>>(ok.Value);
+            _users.Verify(x => x.GetPlatformUsersPage("Alice", "TenantAdmin", null, 1, 20), Times.Once);
+        }
+
+        [Fact]
         public async Task GetUserById_UnknownUser_ReturnsNotFound()
         {
             TestHelpers.SetUser(_controller, tenantId: Guid.NewGuid());

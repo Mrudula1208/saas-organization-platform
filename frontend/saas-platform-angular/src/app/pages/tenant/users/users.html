@@ -1,7 +1,7 @@
 <div class="animate-fade">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <div>
-      <h1 style="font-size: 2rem; font-weight: 800;">Team Members Directory</h1>
+      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Team Members Directory</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Manage your organization's user accounts, roles, access permissions, and profiles</p>
     </div>
 
@@ -12,13 +12,14 @@
   </div>
 
   @if (errorMessage) {
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
-      {{ errorMessage }}
+    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+      <span>{{ errorMessage }}</span>
     </div>
   }
 
   <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; border-color: rgba(255,255,255,0.05);">
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
       <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
         <input
@@ -41,7 +42,7 @@
   </div>
 
   <!-- Users Table Card -->
-  <div class="glass-card glow-primary" style="padding: 0; overflow: hidden;">
+  <div class="card" style="padding: 0; overflow: hidden;">
     <div class="table-container" style="border: none; margin-top: 0;">
       <table class="custom-table">
         <thead>
@@ -57,13 +58,13 @@
         <tbody>
           @for (user of filteredUsers; track user.id) {
             <tr>
-              <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+              <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: var(--text-heading);">
                 <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
                 <span>{{ user.fullName }}</span>
               </td>
-              <td>{{ user.email }}</td>
+              <td style="color: var(--text-secondary);">{{ user.email }}</td>
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'TenantAdmin'" [class.badge-purple]="user.role === 'Member'">
+                <span class="badge" [class.badge-success]="user.role === 'TenantAdmin'" [class.badge-info]="user.role === 'Member'">
                   {{ user.role === 'TenantAdmin' ? 'Tenant Admin' : user.role }}
                 </span>
               </td>
@@ -72,7 +73,7 @@
                   {{ user.isActive ? 'Active' : 'Suspended' }}
                 </span>
               </td>
-              <td>{{ user.createdAt | date:'mediumDate' }}</td>
+              <td style="color: var(--text-secondary);">{{ user.createdAt | date:'mediumDate' }}</td>
               <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
                 <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openEditModal(user)">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
@@ -85,13 +86,28 @@
           } @empty {
             <tr>
               <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">group</span>
+                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem; color: var(--text-muted);">group</span>
                 <div>No team members match your selection filters.</div>
               </td>
             </tr>
           }
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Pagination controls -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+    <span style="color: var(--text-secondary); font-size: 0.875rem;">
+      @if (loading) {
+        Loading...
+      } @else {
+        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
+      }
+    </span>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
+      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
     </div>
   </div>
 

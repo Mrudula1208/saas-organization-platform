@@ -1,4 +1,5 @@
 using SaaSPlatform.Application.DTOS.Auth;
+using System;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.Application.Interfaces
@@ -8,6 +9,7 @@ namespace SaaSPlatform.Application.Interfaces
         Task<TokenResponseDto?> LoginAsync(LoginDto dto);
         Task<TokenResponseDto?> RegisterTenantAsync(RegisterTenantDto dto);
         Task<TokenResponseDto?> RefreshTokenAsync(string accessToken, string refreshToken);
+        Task LogoutAsync(Guid userId);
         Task<bool> VerifyEmailAsync(VerifyEmailDto dto);
         Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<bool> ResetPasswordAsync(ResetPasswordDto dto);

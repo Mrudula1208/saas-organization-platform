@@ -13,12 +13,18 @@ import { getErrorMessage } from '../../../core/helpers';
   styleUrl: './users.css',
 })
 export class Users implements OnInit {
-  users: User[] = [];
   filteredUsers: User[] = [];
 
   searchQuery = '';
   roleFilter = '';
   errorMessage = '';
+
+  // Server-side pagination: the API filters, sorts and counts in the database.
+  page = 1;
+  pageSize = 20;
+  totalCount = 0;
+  loading = false;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private userService: UserService) {}
 
@@ -26,38 +32,58 @@ export class Users implements OnInit {
     this.loadUsers();
   }
 
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+  }
+
   loadUsers() {
+    this.loading = true;
     this.errorMessage = '';
-    this.userService.getUsers().subscribe({
-      next: (data: User[]) => {
-        this.users = data;
-        this.applyFilters();
+    this.userService.getUsers(this.page, this.pageSize, this.searchQuery, this.roleFilter).subscribe({
+      next: (res) => {
+        // The current page disappeared (e.g. last row deleted): show the last page that still has rows.
+        if (res.data.length === 0 && this.page > 1) {
+          this.page = Math.max(1, Math.ceil(res.totalCount / this.pageSize));
+          this.loadUsers();
+          return;
+        }
+        this.filteredUsers = res.data;
+        this.totalCount = res.totalCount;
+        this.loading = false;
       },
       error: (err) => {
+        this.loading = false;
         this.errorMessage = getErrorMessage(err, 'Could not load users. Please try again later.');
       }
     });
   }
 
-  applyFilters() {
-    this.filteredUsers = this.users.filter((u: User) => {
-      const tenantName = u.tenant?.name || u.tenantName || '';
-      const matchesSearch = u.fullName.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            u.email.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            tenantName.toLowerCase().includes(this.searchQuery.toLowerCase());
-
-      const matchesRole = this.roleFilter === '' || u.role === this.roleFilter;
-
-      return matchesSearch && matchesRole;
-    });
-  }
-
   onSearch() {
-    this.applyFilters();
+    // Ask the server only after the user stops typing.
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.page = 1;
+      this.loadUsers();
+    }, 400);
   }
 
   onFilterChange() {
-    this.applyFilters();
+    this.page = 1;
+    this.loadUsers();
+  }
+
+  prevPage() {
+    if (this.page > 1) {
+      this.page--;
+      this.loadUsers();
+    }
+  }
+
+  nextPage() {
+    if (this.page < this.totalPages) {
+      this.page++;
+      this.loadUsers();
+    }
   }
 
   toggleUserStatus(user: User) {
