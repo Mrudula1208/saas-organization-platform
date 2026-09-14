@@ -1,12 +1,28 @@
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using SaaSPlatform.Application.DTOS.Reports;
 using SaaSPlatform.Application.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.Application.Services
 {
     public class ReportService : IReportService
     {
+        static ReportService()
+        {
+            // QuestPDF community license (free for small/evaluation projects).
+            QuestPDF.Settings.License = LicenseType.Community;
+            // EPPlus requires an explicit license selection before a package can be created.
+            ExcelPackage.License.SetNonCommercialOrganization("SaaS Organization Platform");
+        }
+
         private readonly IReportRepository _reportRepository;
 
         public ReportService(IReportRepository reportRepository)
@@ -32,6 +48,342 @@ namespace SaaSPlatform.Application.Services
         public async Task<AdminReportDto> GetAdminReportAsync()
         {
             return await _reportRepository.GetAdminReportDataAsync();
+        }
+
+        // ------------------------------------------------------------------
+        // Export generation (PDF via QuestPDF, Excel via EPPlus)
+        // ------------------------------------------------------------------
+
+        public async Task<ReportExportFileDto> ExportTenantReportPdfAsync(Guid tenantId)
+        {
+            var (tenantName, report, projects) = await LoadExportDataAsync(tenantId);
+            var generatedAt = DateTime.UtcNow;
+            var monthlyRows = BuildMonthlyRows(report);
+            var metrics = BuildMetrics(report);
+
+            var bytes = Document.Create(document =>
+            {
+                document.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(28);
+                    page.DefaultTextStyle(style => style.FontSize(10));
+
+                    page.Header().Column(header =>
+                    {
+                        header.Item().Text("Workspace Analytics Report").FontSize(20).Bold();
+                        header.Item().Text(tenantName).FontSize(13).FontColor("#9F1239");
+                        header.Item().Text($"Generated {generatedAt:yyyy-MM-dd HH:mm} UTC").FontSize(9).FontColor("#6B7280");
+                        header.Item().PaddingTop(6).LineHorizontal(1).LineColor("#9F1239");
+                    });
+
+                    page.Content().Column(content =>
+                    {
+                        // ----- Summary -----
+                        content.Item().PaddingTop(12).Text("Summary").FontSize(14).Bold();
+                        content.Item().PaddingTop(4).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Background("#1F2937").Padding(5).Text("Metric").Bold().FontColor("#FFFFFF");
+                                header.Cell().Background("#1F2937").Padding(5).Text("Value").Bold().FontColor("#FFFFFF");
+                            });
+
+                            foreach (var metric in metrics)
+                            {
+                                table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(metric.Label);
+                                table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(metric.Value).Bold();
+                            }
+                        });
+
+                        // ----- Monthly activity -----
+                        content.Item().PaddingTop(14).Text("Monthly Activity").FontSize(14).Bold();
+                        if (monthlyRows.Count == 0)
+                        {
+                            content.Item().PaddingTop(4).Text("No project or task activity was recorded for this period.")
+                                .FontColor("#6B7280");
+                        }
+                        else
+                        {
+                            content.Item().PaddingTop(4).Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Month").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Projects Opened").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Tasks Opened").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Tasks Closed").Bold().FontColor("#FFFFFF");
+                                });
+
+                                foreach (var row in monthlyRows)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(row.Label);
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(row.ProjectsOpened.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(row.TasksOpened.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(row.TasksClosed.ToString());
+                                }
+                            });
+                        }
+
+                        // ----- Projects -----
+                        content.Item().PaddingTop(14).Text("Projects").FontSize(14).Bold();
+                        if (projects.Count == 0)
+                        {
+                            content.Item().PaddingTop(4).Text("No projects yet.").FontColor("#6B7280");
+                        }
+                        else
+                        {
+                            content.Item().PaddingTop(4).Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Project").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Status").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Tasks").Bold().FontColor("#FFFFFF");
+                                    header.Cell().Background("#1F2937").Padding(5).Text("Completed").Bold().FontColor("#FFFFFF");
+                                });
+
+                                foreach (var project in projects)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(project.Name);
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(project.Status);
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(project.TaskCount.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(project.CompletedTaskCount.ToString());
+                                }
+                            });
+                        }
+                    });
+
+                    page.Footer().AlignCenter().PaddingTop(10)
+                        .Text($"{tenantName} — Workspace Analytics Report — {generatedAt:yyyy-MM-dd}")
+                        .FontSize(8).FontColor("#9CA3AF");
+                });
+            }).GeneratePdf();
+
+            return new ReportExportFileDto
+            {
+                Content = bytes,
+                ContentType = "application/pdf",
+                FileName = BuildFileName(tenantName, "pdf", generatedAt)
+            };
+        }
+
+        public async Task<ReportExportFileDto> ExportTenantReportExcelAsync(Guid tenantId)
+        {
+            var (tenantName, report, projects) = await LoadExportDataAsync(tenantId);
+            var generatedAt = DateTime.UtcNow;
+            var monthlyRows = BuildMonthlyRows(report);
+
+            using var package = new ExcelPackage();
+
+            // ----- Summary sheet -----
+            var summary = package.Workbook.Worksheets.Add("Summary");
+            summary.Cells[1, 1].Value = "Workspace Analytics Report";
+            summary.Cells[1, 1].Style.Font.Size = 16;
+            summary.Cells[1, 1].Style.Font.Bold = true;
+            summary.Cells[2, 1].Value = "Workspace";
+            summary.Cells[2, 2].Value = tenantName;
+            summary.Cells[3, 1].Value = "Generated (UTC)";
+            summary.Cells[3, 2].Value = generatedAt.ToString("yyyy-MM-dd HH:mm");
+
+            summary.Cells[5, 1].Value = "Metric";
+            summary.Cells[5, 2].Value = "Value";
+            summary.Cells[5, 1, 5, 2].Style.Font.Bold = true;
+            summary.Cells[5, 1, 5, 2].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            summary.Cells[5, 1, 5, 2].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(31, 41, 55));
+            summary.Cells[5, 1, 5, 2].Style.Font.Color.SetColor(System.Drawing.Color.White);
+
+            summary.Cells[6, 1].Value = "Total Projects";
+            summary.Cells[6, 2].Value = report.TotalProjects;
+            summary.Cells[7, 1].Value = "Total Tasks";
+            summary.Cells[7, 2].Value = report.TotalTasks;
+            summary.Cells[8, 1].Value = "Completed Tasks";
+            summary.Cells[8, 2].Value = report.CompletedTasks;
+            summary.Cells[9, 1].Value = "Pending Tasks";
+            summary.Cells[9, 2].Value = report.PendingTasks;
+            summary.Cells[10, 1].Value = "In Progress Tasks";
+            summary.Cells[10, 2].Value = report.InProgressTasks;
+            summary.Cells[11, 1].Value = "Team Members";
+            summary.Cells[11, 2].Value = report.TotalMembers;
+            summary.Cells[12, 1].Value = "Avg Tasks / Member";
+            summary.Cells[12, 2].Value = report.AvgTasksPerMember;
+            summary.Cells[13, 1].Value = "Completion Rate (%)";
+            summary.Cells[13, 2].Value = report.CompletionRate;
+            summary.Column(1).Width = 26;
+            summary.Column(2).Width = 22;
+
+            // ----- Monthly Activity sheet -----
+            var monthly = package.Workbook.Worksheets.Add("Monthly Activity");
+            monthly.Cells[1, 1].Value = "Month";
+            monthly.Cells[1, 2].Value = "Projects Opened";
+            monthly.Cells[1, 3].Value = "Tasks Opened";
+            monthly.Cells[1, 4].Value = "Tasks Closed";
+            monthly.Cells[1, 1, 1, 4].Style.Font.Bold = true;
+            monthly.Cells[1, 1, 1, 4].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            monthly.Cells[1, 1, 1, 4].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(31, 41, 55));
+            monthly.Cells[1, 1, 1, 4].Style.Font.Color.SetColor(System.Drawing.Color.White);
+
+            if (monthlyRows.Count == 0)
+            {
+                monthly.Cells[2, 1].Value = "No project or task activity was recorded for this period.";
+            }
+            else
+            {
+                for (var i = 0; i < monthlyRows.Count; i++)
+                {
+                    var row = monthlyRows[i];
+                    monthly.Cells[i + 2, 1].Value = row.Label;
+                    monthly.Cells[i + 2, 2].Value = row.ProjectsOpened;
+                    monthly.Cells[i + 2, 3].Value = row.TasksOpened;
+                    monthly.Cells[i + 2, 4].Value = row.TasksClosed;
+                }
+            }
+            monthly.Column(1).Width = 18;
+            monthly.Column(2).Width = 18;
+            monthly.Column(3).Width = 16;
+            monthly.Column(4).Width = 16;
+
+            // ----- Projects sheet -----
+            var projectsSheet = package.Workbook.Worksheets.Add("Projects");
+            projectsSheet.Cells[1, 1].Value = "Project";
+            projectsSheet.Cells[1, 2].Value = "Status";
+            projectsSheet.Cells[1, 3].Value = "Tasks";
+            projectsSheet.Cells[1, 4].Value = "Completed";
+            projectsSheet.Cells[1, 1, 1, 4].Style.Font.Bold = true;
+            projectsSheet.Cells[1, 1, 1, 4].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            projectsSheet.Cells[1, 1, 1, 4].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(31, 41, 55));
+            projectsSheet.Cells[1, 1, 1, 4].Style.Font.Color.SetColor(System.Drawing.Color.White);
+
+            if (projects.Count == 0)
+            {
+                projectsSheet.Cells[2, 1].Value = "No projects yet.";
+            }
+            else
+            {
+                for (var i = 0; i < projects.Count; i++)
+                {
+                    var project = projects[i];
+                    projectsSheet.Cells[i + 2, 1].Value = project.Name;
+                    projectsSheet.Cells[i + 2, 2].Value = project.Status;
+                    projectsSheet.Cells[i + 2, 3].Value = project.TaskCount;
+                    projectsSheet.Cells[i + 2, 4].Value = project.CompletedTaskCount;
+                }
+            }
+            projectsSheet.Column(1).Width = 32;
+            projectsSheet.Column(2).Width = 16;
+            projectsSheet.Column(3).Width = 10;
+            projectsSheet.Column(4).Width = 12;
+
+            return new ReportExportFileDto
+            {
+                Content = package.GetAsByteArray(),
+                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                FileName = BuildFileName(tenantName, "xlsx", generatedAt)
+            };
+        }
+
+        // ------------------------------------------------------------------
+        // Helpers
+        // ------------------------------------------------------------------
+
+        private async Task<(string TenantName, TenantReportDto Report, List<TenantProjectBreakdownDto> Projects)> LoadExportDataAsync(Guid tenantId)
+        {
+            var report = await _reportRepository.GetTenantReportDataAsync(tenantId);
+            var tenantName = await _reportRepository.GetTenantNameAsync(tenantId);
+            var projects = await _reportRepository.GetTenantProjectBreakdownAsync(tenantId);
+
+            if (string.IsNullOrWhiteSpace(tenantName))
+                tenantName = "Workspace";
+
+            return (tenantName, report, projects);
+        }
+
+        private static List<(string Label, string Value)> BuildMetrics(TenantReportDto report)
+        {
+            var culture = CultureInfo.InvariantCulture;
+            return new List<(string Label, string Value)>
+            {
+                ("Total Projects", report.TotalProjects.ToString(culture)),
+                ("Total Tasks", report.TotalTasks.ToString(culture)),
+                ("Completed Tasks", report.CompletedTasks.ToString(culture)),
+                ("Pending Tasks", report.PendingTasks.ToString(culture)),
+                ("In Progress Tasks", report.InProgressTasks.ToString(culture)),
+                ("Team Members", report.TotalMembers.ToString(culture)),
+                ("Avg Tasks / Member", report.AvgTasksPerMember.ToString(culture)),
+                ("Completion Rate", report.CompletionRate.ToString(culture) + "%")
+            };
+        }
+
+        private sealed class MonthlyExportRow
+        {
+            public int Year { get; set; }
+            public int Month { get; set; }
+            public int ProjectsOpened { get; set; }
+            public int TasksOpened { get; set; }
+            public int TasksClosed { get; set; }
+            public string Label =>
+                CultureInfo.InvariantCulture.DateTimeFormat.GetAbbreviatedMonthName(Month) + " " + Year;
+        }
+
+        private static List<MonthlyExportRow> BuildMonthlyRows(TenantReportDto report)
+        {
+            var rows = new SortedDictionary<(int Year, int Month), MonthlyExportRow>();
+
+            void Merge(IEnumerable<MonthlyStatDto> stats, Action<MonthlyExportRow> add)
+            {
+                foreach (var stat in stats)
+                {
+                    var key = (stat.Year, stat.Month);
+                    if (!rows.TryGetValue(key, out var row))
+                    {
+                        row = new MonthlyExportRow { Year = stat.Year, Month = stat.Month };
+                        rows[key] = row;
+                    }
+                    add(row);
+                }
+            }
+
+            Merge(report.MonthlyProjects, r => r.ProjectsOpened++);
+            Merge(report.MonthlyTasksCreated, r => r.TasksOpened++);
+            Merge(report.MonthlyTasksCompleted, r => r.TasksClosed++);
+
+            return rows.Values.ToList();
+        }
+
+        private static string BuildFileName(string tenantName, string extension, DateTime generatedAt)
+        {
+            var safe = new string((string.IsNullOrWhiteSpace(tenantName) ? "workspace" : tenantName)
+                .Where(c => char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '_')
+                .ToArray())
+                .Trim()
+                .Replace(' ', '-');
+
+            if (safe.Length == 0)
+                safe = "workspace";
+
+            return $"workspace-analytics_{safe}_{generatedAt:yyyyMMdd}.{extension}";
         }
     }
 }
