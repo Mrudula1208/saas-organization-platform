@@ -256,6 +256,9 @@ namespace SaaSPlatform.API.Controllers
                 dto.Role = role;
 
                 var invitedUser = await _userService.InviteUserAsync(tenantId.Value, dto);
+                invitedUser.PasswordHash = string.Empty;
+                invitedUser.Tenant = null;
+                invitedUser.AssignedTasks = null;
 
                 return Ok(new ApiResponse<User>
                 {

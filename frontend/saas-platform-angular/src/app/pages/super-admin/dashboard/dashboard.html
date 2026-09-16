@@ -89,7 +89,7 @@
             <span style="font-weight: 600; color: var(--text-heading);">{{ basicPlanCount }} Tenants</span>
           </div>
           <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="(basicPlanCount / totalTenants) * 100" style="height: 100%; background: #9CA3AF; border-radius: var(--radius-full);"></div>
+            <div [style.width.%]="totalTenants > 0 ? (basicPlanCount / totalTenants) * 100 : 0" style="height: 100%; background: #9CA3AF; border-radius: var(--radius-full);"></div>
           </div>
         </div>
         <div>
@@ -98,7 +98,7 @@
             <span style="font-weight: 600; color: var(--text-heading);">{{ proPlanCount }} Tenants</span>
           </div>
           <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="(proPlanCount / totalTenants) * 100" style="height: 100%; background: var(--primary-color); border-radius: var(--radius-full);"></div>
+            <div [style.width.%]="totalTenants > 0 ? (proPlanCount / totalTenants) * 100 : 0" style="height: 100%; background: var(--primary-color); border-radius: var(--radius-full);"></div>
           </div>
         </div>
         <div>
@@ -107,7 +107,7 @@
             <span style="font-weight: 600; color: var(--text-heading);">{{ enterprisePlanCount }} Tenants</span>
           </div>
           <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="(enterprisePlanCount / totalTenants) * 100" style="height: 100%; background: var(--text-heading); border-radius: var(--radius-full);"></div>
+            <div [style.width.%]="totalTenants > 0 ? (enterprisePlanCount / totalTenants) * 100 : 0" style="height: 100%; background: var(--text-heading); border-radius: var(--radius-full);"></div>
           </div>
         </div>
       </div>

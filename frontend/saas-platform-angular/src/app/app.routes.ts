@@ -38,6 +38,7 @@ export const routes: Routes = [
   { path: '', component: LandingPage },
   { path: 'login', component: Login },
   { path: 'register-tenant', component: Register },
+  { path: 'register', redirectTo: 'register-tenant', pathMatch: 'full' },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: 'logout', component: Logout },

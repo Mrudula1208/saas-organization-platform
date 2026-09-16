@@ -13,6 +13,7 @@ using FluentValidation;
 using SaaSPlatform.API.Configurations;
 using Microsoft.Extensions.Options;
 using System.IO;
+using System.Text.Json.Serialization;
 
 namespace SaaSPlatform.API
 {
@@ -24,7 +25,11 @@ namespace SaaSPlatform.API
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                });
             builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("StorageSettings"));
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();

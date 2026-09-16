@@ -4,6 +4,7 @@ using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
+using System.Security.Claims;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -77,6 +78,22 @@ namespace SaaSPlatform.API.Controllers
             if (tenantId == null) return Unauthorized();
 
             dto.TenantId = tenantId.Value;
+            if (string.IsNullOrWhiteSpace(dto.Name) && !string.IsNullOrWhiteSpace(dto.Title))
+            {
+                dto.Name = dto.Title;
+            }
+            if (string.IsNullOrWhiteSpace(dto.Title) && !string.IsNullOrWhiteSpace(dto.Name))
+            {
+                dto.Title = dto.Name;
+            }
+            if (dto.AssignedUserId == Guid.Empty)
+            {
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId.HasValue)
+                {
+                    dto.AssignedUserId = currentUserId.Value;
+                }
+            }
 
             var task = await _taskService.CreateAsync(dto);
 
@@ -121,6 +138,14 @@ namespace SaaSPlatform.API.Controllers
             var tenantClaim = User.FindFirst("TenantId")?.Value;
             if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
                 return tenantId;
+            return null;
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
+                return userId;
             return null;
         }
     }
