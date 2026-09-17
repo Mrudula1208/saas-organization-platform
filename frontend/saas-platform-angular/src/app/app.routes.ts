@@ -67,7 +67,7 @@ export const routes: Routes = [
     path: 'tenant',
     component: DashboardLayout,
     canActivate: [authGuard],
-    data: { roles: ['TenantAdmin', 'Member'] },
+    data: { roles: ['TenantAdmin', 'Manager', 'Member'] },
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: TenantDashboard },

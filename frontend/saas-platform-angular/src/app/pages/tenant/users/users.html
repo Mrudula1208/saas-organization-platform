@@ -64,7 +64,7 @@
               </td>
               <td style="color: var(--text-secondary);">{{ user.email }}</td>
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'TenantAdmin'" [class.badge-info]="user.role === 'Member'">
+                <span class="badge" [class.badge-success]="user.role === 'TenantAdmin'" [class.badge-warning]="user.role === 'Manager'" [class.badge-info]="user.role === 'Member'">
                   {{ user.role === 'TenantAdmin' ? 'Tenant Admin' : user.role }}
                 </span>
               </td>
@@ -163,6 +163,7 @@
             <label class="form-label" for="add-role">Organization Role</label>
             <select id="add-role" class="form-select" [(ngModel)]="newUser.role" name="role">
               <option value="Member">Member (standard access)</option>
+              <option value="Manager">Manager (project & team lead)</option>
               <option value="TenantAdmin">Tenant Admin (full org rights)</option>
             </select>
           </div>
@@ -225,6 +226,7 @@
             <label class="form-label" for="edit-role">Organization Role</label>
             <select id="edit-role" class="form-select" [(ngModel)]="editUserForm.role" name="role">
               <option value="Member">Member</option>
+              <option value="Manager">Manager</option>
               <option value="TenantAdmin">Tenant Admin</option>
             </select>
           </div>

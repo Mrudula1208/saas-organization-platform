@@ -141,7 +141,7 @@ namespace SaaSPlatform.Application.Services
             await _systemLogs.LogAsync("USER_INVITED", $"User {createdUser.Email} invited to join tenant.", createdUser.Id, tenantId);
 
             // Simulate sending invitation email
-            Console.WriteLine($"[EMAIL SIMULATION] Invite User sent to {createdUser.Email} with token {createdUser.EmailVerificationToken}");
+            Console.WriteLine($"[EMAIL SIMULATION] Invite User email dispatched to {createdUser.Email}.");
 
             return createdUser;
         }

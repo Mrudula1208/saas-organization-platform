@@ -20,7 +20,7 @@ namespace SaaSPlatform.API.Controllers
     public class UserController : ControllerBase
     {
         // The only roles that exist in this application.
-        private static readonly string[] KnownRoles = { "SuperAdmin", "TenantAdmin", "Member" };
+        private static readonly string[] KnownRoles = { "SuperAdmin", "TenantAdmin", "Manager", "Member" };
 
         private readonly IUserService _userService;
 

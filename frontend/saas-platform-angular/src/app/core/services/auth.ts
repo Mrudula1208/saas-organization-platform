@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
@@ -57,28 +57,49 @@ export class Auth {
     }
   }
 
-  login(dto: any): Observable<{ token: string }> {
+  login(dto: any): Observable<{ token: string; refreshToken?: string }> {
     return this.http.post<any>(`${this.apiUrl}/login`, dto).pipe(
       map((res) => {
         const token = res?.data?.accessToken || res?.token;
         if (!token) {
           throw new Error(res?.message || 'Login failed. Please check your credentials and try again.');
         }
-        return { token };
+        const refreshToken = res?.data?.refreshToken;
+        return { token, refreshToken };
       }),
-      tap((res) => this.saveToken(res.token))
+      tap((res) => this.saveToken(res.token, res.refreshToken))
     );
   }
 
-  registerTenant(dto: any): Observable<{ token: string }> {
+  registerTenant(dto: any): Observable<{ token: string; refreshToken?: string }> {
     return this.http.post<any>(`${this.apiUrl}/register-tenant`, dto).pipe(
       map((res) => ({
-        token: res?.data?.accessToken || res?.token || ''
+        token: res?.data?.accessToken || res?.token || '',
+        refreshToken: res?.data?.refreshToken
       })),
       tap((res) => {
         if (res.token) {
-          this.saveToken(res.token);
+          this.saveToken(res.token, res.refreshToken);
         }
+      })
+    );
+  }
+
+  refreshToken(): Observable<{ token: string }> {
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('saas_token') : null;
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('saas_refresh_token') : null;
+    if (!accessToken || !refreshToken) {
+      return throwError(() => new Error('No refresh token available.'));
+    }
+    return this.http.post<any>(`${this.apiUrl}/refresh`, { accessToken, refreshToken }).pipe(
+      map((res) => {
+        const token = res?.data?.accessToken;
+        const newRefresh = res?.data?.refreshToken;
+        if (!token) {
+          throw new Error('Failed to refresh authentication token.');
+        }
+        this.saveToken(token, newRefresh);
+        return { token };
       })
     );
   }
@@ -91,9 +112,12 @@ export class Auth {
     return this.http.post<any>(`${this.apiUrl}/reset-password`, dto);
   }
 
-  private saveToken(token: string) {
+  private saveToken(token: string, refreshToken?: string) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('saas_token', token);
+      if (refreshToken) {
+        localStorage.setItem('saas_refresh_token', refreshToken);
+      }
       const claims = this.decodeToken(token);
       this.currentUser.set(claims);
     }
@@ -109,6 +133,7 @@ export class Auth {
     }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('saas_token');
+      localStorage.removeItem('saas_refresh_token');
     }
     this.currentUser.set(null);
   }

@@ -101,6 +101,8 @@ export class Navbar implements OnInit {
     if (!role) return '';
     if (role === 'SuperAdmin') return 'Super Admin';
     if (role === 'TenantAdmin') return 'Tenant Admin';
+    if (role === 'Manager') return 'Manager';
+    if (role === 'Member') return 'Member';
     return role;
   }
 

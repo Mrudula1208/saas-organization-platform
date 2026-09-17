@@ -94,12 +94,19 @@ namespace SaaSPlatform.API.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
-            var result = await _authService.ResetPasswordAsync(dto);
-            if (!result)
+            try
             {
-                return BadRequest(new { success = false, message = "Failed to reset password. Check details or token expiry." });
+                var result = await _authService.ResetPasswordAsync(dto);
+                if (!result)
+                {
+                    return BadRequest(new { success = false, message = "Failed to reset password. Check details or token expiry." });
+                }
+                return Ok(new { success = true, message = "Password reset successfully." });
             }
-            return Ok(new { success = true, message = "Password reset successfully." });
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [Authorize]
@@ -114,11 +121,5 @@ namespace SaaSPlatform.API.Controllers
             }
             return Ok(new { success = true, message = "Logged out successfully." });
         }
-    }
-
-    public class TokenRequestDto
-    {
-        public string AccessToken { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
     }
 }

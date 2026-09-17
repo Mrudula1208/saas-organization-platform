@@ -67,7 +67,7 @@
                 {{ user.tenant?.name || '—' }}
               </td>
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin'" [class.badge-info]="user.role === 'TenantAdmin' || user.role === 'Member'">
+                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin'" [class.badge-warning]="user.role === 'Manager'" [class.badge-info]="user.role === 'TenantAdmin' || user.role === 'Member'">
                   {{ user.role }}
                 </span>
               </td>

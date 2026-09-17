@@ -30,6 +30,11 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<TokenResponseDto?> LoginAsync(LoginDto dto)
         {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            {
+                return null;
+            }
+
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
             if (user == null)
             {
@@ -38,10 +43,27 @@ namespace SaaSPlatform.Application.Services
                 return null;
             }
 
-            // 🚫 Check Lockout
-            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+            // 🚫 Check Inactive or Deleted Account
+            if (user.IsDeleted || !user.IsActive)
             {
-                throw new Exception($"Account is locked. Try again in {Math.Ceiling(user.LockoutEnd.Value.Subtract(DateTime.UtcNow).TotalMinutes)} minutes.");
+                await _unitOfWork.SystemLogs.LogAsync("LOGIN_BLOCKED", $"Login blocked for inactive/deleted user: {user.Email}", user.Id, user.TenantId);
+                throw new InvalidOperationException("Account is inactive or disabled. Please contact your organization administrator.");
+            }
+
+            // 🚫 Check Lockout
+            if (user.LockoutEnd.HasValue)
+            {
+                if (user.LockoutEnd.Value > DateTime.UtcNow)
+                {
+                    var minutes = Math.Max(1, (int)Math.Ceiling(user.LockoutEnd.Value.Subtract(DateTime.UtcNow).TotalMinutes));
+                    throw new Exception($"Account is locked. Try again in {minutes} minutes.");
+                }
+                else
+                {
+                    // Lockout period has elapsed; reset attempts
+                    user.LockoutEnd = null;
+                    user.FailedLoginAttempts = 0;
+                }
             }
 
             // 🔐 Verify Password
@@ -73,18 +95,37 @@ namespace SaaSPlatform.Application.Services
             // Reset Lockout upon success
             user.FailedLoginAttempts = 0;
             user.LockoutEnd = null;
+            user.LastLogin = DateTime.UtcNow;
+
+            var tokenResponse = GenerateTokensForUser(user);
+            user.RefreshToken = tokenResponse.RefreshToken;
+            user.RefreshTokenExpiryTime = tokenResponse.RefreshTokenExpiryTime;
 
             await _unitOfWork.Users.UpdateUser(user.Id, user);
 
             // Log successful authentication event
             await _unitOfWork.SystemLogs.LogAsync("LOGIN_SUCCESS", $"User {user.Email} successfully authenticated", user.Id, user.TenantId);
 
-            var tokenResponse = GenerateTokensForUser(user);
             return tokenResponse;
         }
 
         public async Task<TokenResponseDto?> RegisterTenantAsync(RegisterTenantDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                throw new ArgumentException("Organization name is required.");
+            if (string.IsNullOrWhiteSpace(dto.Domain))
+                throw new ArgumentException("Domain name is required.");
+            if (string.IsNullOrWhiteSpace(dto.AdminName))
+                throw new ArgumentException("Admin full name is required.");
+            if (string.IsNullOrWhiteSpace(dto.AdminEmail))
+                throw new ArgumentException("A valid admin email address is required.");
+            if (string.IsNullOrWhiteSpace(dto.Password))
+                throw new ArgumentException("Password is required.");
+            if (dto.Password.Length < 6)
+                throw new ArgumentException("Password must be at least 6 characters long.");
+            if (!string.Equals(dto.Password, dto.ConfirmPassword))
+                throw new ArgumentException("Passwords do not match.");
+
             // Check platform settings for maintenance mode and registration allowance
             if (_unitOfWork.Settings != null)
             {
@@ -167,8 +208,8 @@ namespace SaaSPlatform.Application.Services
             // Save transaction
             await _unitOfWork.SaveChangesAsync();
 
-            // Simulate sending verification email in console
-            Console.WriteLine($"[EMAIL SIMULATION] Verification Email sent to {user.Email} with token: {user.EmailVerificationToken}");
+            // Simulate sending verification email in console (never log secrets)
+            Console.WriteLine($"[EMAIL SIMULATION] Verification Email dispatched to {user.Email}.");
 
             // Generate Tokens
             var tokenResponse = GenerateTokensForUser(user);
@@ -181,6 +222,11 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<TokenResponseDto?> RefreshTokenAsync(string accessToken, string refreshToken)
         {
+            if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return null;
+            }
+
             var principal = GetPrincipalFromExpiredToken(accessToken);
             if (principal == null)
             {
@@ -193,10 +239,17 @@ namespace SaaSPlatform.Application.Services
                 return null;
             }
 
-            var userId = Guid.Parse(userIdClaim);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return null;
+            }
+
             var user = await _unitOfWork.Users.GetUserById(userId);
 
-            if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            if (user == null || user.IsDeleted || !user.IsActive ||
+                string.IsNullOrEmpty(user.RefreshToken) ||
+                user.RefreshToken != refreshToken ||
+                user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 return null;
             }
@@ -213,6 +266,11 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailDto dto)
         {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token))
+            {
+                return false;
+            }
+
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
             if (user == null || user.EmailVerificationToken != dto.Token)
             {
@@ -228,10 +286,15 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+            {
+                return false;
+            }
+
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
             if (user == null)
             {
-                return false; // Return false or simulate success to prevent user enumeration. We will return false.
+                return false; // Return false to indicate no matching user (controller still returns generic OK message)
             }
 
             user.PasswordResetToken = Guid.NewGuid().ToString();
@@ -240,21 +303,39 @@ namespace SaaSPlatform.Application.Services
             await _unitOfWork.Users.UpdateUser(user.Id, user);
             await _unitOfWork.SystemLogs.LogAsync("FORGOT_PASSWORD_REQUEST", $"Password reset request initiated for user: {user.Email}", user.Id, user.TenantId);
 
-            // Simulate sending reset email in console
-            Console.WriteLine($"[EMAIL SIMULATION] Password Reset Email sent to {user.Email} with token: {user.PasswordResetToken}");
+            // Simulate sending reset email in console (never log the actual token in production logs)
+            Console.WriteLine($"[EMAIL SIMULATION] Password Reset Email dispatched to {user.Email}.");
             return true;
         }
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
         {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.Password))
+            {
+                return false;
+            }
+
+            if (!string.Equals(dto.Password, dto.ConfirmPassword))
+            {
+                throw new ArgumentException("Passwords do not match.");
+            }
+
+            if (dto.Password.Length < 6)
+            {
+                throw new ArgumentException("Password must be at least 6 characters long.");
+            }
+
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
-            if (user == null || user.PasswordResetToken != dto.Token || user.ResetTokenExpiryTime <= DateTime.UtcNow)
+            if (user == null || user.IsDeleted || !user.IsActive ||
+                string.IsNullOrEmpty(user.PasswordResetToken) ||
+                user.PasswordResetToken != dto.Token ||
+                user.ResetTokenExpiryTime <= DateTime.UtcNow)
             {
                 return false;
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-            user.PasswordResetToken = null; // Clear token
+            user.PasswordResetToken = null; // Clear token immediately to prevent reuse
             user.ResetTokenExpiryTime = null;
             user.FailedLoginAttempts = 0; // Clear attempts on password reset
             user.LockoutEnd = null;
@@ -288,6 +369,7 @@ namespace SaaSPlatform.Application.Services
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("TenantId", user.TenantId.ToString()),
                 new Claim(ClaimTypes.Role, user.Role),
+                new Claim("Role", user.Role),
                 new Claim(ClaimTypes.Name, user.FullName)
             };
 
@@ -323,25 +405,32 @@ namespace SaaSPlatform.Application.Services
 
         private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
         {
-            var tokenValidationParameters = new TokenValidationParameters
+            try
             {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
-                ValidateLifetime = false // Here we map key details from expired token
-            };
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+                    ValidateLifetime = false // Here we map key details from expired token
+                };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            var jwtSecurityToken = securityToken as JwtSecurityToken;
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+                var jwtSecurityToken = securityToken as JwtSecurityToken;
 
-            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token signature.");
+                if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return null;
+                }
+
+                return principal;
             }
-
-            return principal;
+            catch
+            {
+                return null;
+            }
         }
     }
 

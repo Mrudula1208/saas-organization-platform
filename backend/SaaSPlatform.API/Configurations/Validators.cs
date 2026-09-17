@@ -48,4 +48,32 @@ namespace SaaSPlatform.API.Configurations
             RuleFor(x => x.TenantId).NotEmpty().WithMessage("Tenant context is required.");
         }
     }
+
+    public class ForgotPasswordDtoValidator : AbstractValidator<ForgotPasswordDto>
+    {
+        public ForgotPasswordDtoValidator()
+        {
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("A valid email address is required.");
+        }
+    }
+
+    public class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDto>
+    {
+        public ResetPasswordDtoValidator()
+        {
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("A valid email address is required.");
+            RuleFor(x => x.Token).NotEmpty().WithMessage("Password reset token is required.");
+            RuleFor(x => x.Password).NotEmpty().MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
+            RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords must match.");
+        }
+    }
+
+    public class TokenRequestDtoValidator : AbstractValidator<TokenRequestDto>
+    {
+        public TokenRequestDtoValidator()
+        {
+            RuleFor(x => x.AccessToken).NotEmpty().WithMessage("Access token is required.");
+            RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
+        }
+    }
 }
