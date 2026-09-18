@@ -15,12 +15,18 @@ namespace SaaSPlatform.Application.Services
         private readonly ITaskRepository _taskRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly ISystemLogRepository _systemLogs;
+        private readonly IUserRepository? _userRepository;
 
-        public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, ISystemLogRepository systemLogs)
+        public TaskService(
+            ITaskRepository taskRepository,
+            IProjectRepository projectRepository,
+            ISystemLogRepository systemLogs,
+            IUserRepository? userRepository = null)
         {
             _taskRepository = taskRepository;
             _projectRepository = projectRepository;
             _systemLogs = systemLogs;
+            _userRepository = userRepository;
         }
 
         // One page of the tenant task list; the database does the filtering and paging.
@@ -74,6 +80,15 @@ namespace SaaSPlatform.Application.Services
                     throw new Exception("Selected project was not found in this tenant.");
             }
 
+            if (dto.AssignedUserId != Guid.Empty && _userRepository != null)
+            {
+                var assignedUser = await _userRepository.GetUserById(dto.AssignedUserId);
+                if (assignedUser == null || assignedUser.IsDeleted || assignedUser.TenantId != dto.TenantId)
+                {
+                    throw new Exception("Assigned user was not found in this tenant.");
+                }
+            }
+
             var task = new TaskItem
             {
                 Id = Guid.NewGuid(),
@@ -101,6 +116,15 @@ namespace SaaSPlatform.Application.Services
             if (task == null || task.IsDeleted)
             {
                 throw new Exception("Task not found.");
+            }
+
+            if (dto.AssignedUserId != Guid.Empty && _userRepository != null)
+            {
+                var assignedUser = await _userRepository.GetUserById(dto.AssignedUserId);
+                if (assignedUser == null || assignedUser.IsDeleted || assignedUser.TenantId != task.TenantId)
+                {
+                    throw new Exception("Assigned user was not found in this tenant.");
+                }
             }
 
             task.Name = dto.Name;

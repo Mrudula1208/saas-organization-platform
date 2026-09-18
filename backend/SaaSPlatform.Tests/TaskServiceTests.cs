@@ -14,11 +14,12 @@ namespace SaaSPlatform.Tests
         private readonly Mock<ITaskRepository> _tasks = new();
         private readonly Mock<IProjectRepository> _projects = new();
         private readonly Mock<ISystemLogRepository> _logs = new();
+        private readonly Mock<IUserRepository> _users = new();
         private readonly TaskService _service;
 
         public TaskServiceTests()
         {
-            _service = new TaskService(_tasks.Object, _projects.Object, _logs.Object);
+            _service = new TaskService(_tasks.Object, _projects.Object, _logs.Object, _users.Object);
         }
 
         private static Project CreateProject(Guid tenantId, bool isDeleted = false)
@@ -274,6 +275,66 @@ namespace SaaSPlatform.Tests
             Assert.Equal(3, result.TotalCount);
             // The project's task collection is cleared so the JSON response has no reference cycle.
             Assert.Null(only.Project.Tasks);
+        }
+
+        [Fact]
+        public async Task CreateAsync_AssignedUserFromAnotherTenant_Throws()
+        {
+            var tenantId = Guid.NewGuid();
+            var foreignTenantId = Guid.NewGuid();
+            var project = CreateProject(tenantId);
+            var foreignUser = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Foreign User",
+                Email = "foreign@other.com",
+                TenantId = foreignTenantId,
+                IsActive = true
+            };
+
+            _projects.Setup(x => x.GetByIdAsync(project.Id)).ReturnsAsync(project);
+            _users.Setup(x => x.GetUserById(foreignUser.Id)).ReturnsAsync(foreignUser);
+
+            var ex = await Assert.ThrowsAsync<Exception>(() =>
+                _service.CreateAsync(new CreateTaskDto
+                {
+                    Name = "Cross-tenant task",
+                    ProjectId = project.Id,
+                    TenantId = tenantId,
+                    AssignedUserId = foreignUser.Id
+                }));
+
+            Assert.Equal("Assigned user was not found in this tenant.", ex.Message);
+            _tasks.Verify(x => x.AddAsync(It.IsAny<TaskItem>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_AssignedUserFromAnotherTenant_Throws()
+        {
+            var tenantId = Guid.NewGuid();
+            var foreignTenantId = Guid.NewGuid();
+            var task = CreateTask(tenantId);
+            var foreignUser = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = "Foreign User",
+                Email = "foreign@other.com",
+                TenantId = foreignTenantId,
+                IsActive = true
+            };
+
+            _tasks.Setup(x => x.GetByIdAsync(task.Id)).ReturnsAsync(task);
+            _users.Setup(x => x.GetUserById(foreignUser.Id)).ReturnsAsync(foreignUser);
+
+            var ex = await Assert.ThrowsAsync<Exception>(() =>
+                _service.UpdateAsync(task.Id, new UpdateTaskDto
+                {
+                    Name = task.Name,
+                    AssignedUserId = foreignUser.Id
+                }));
+
+            Assert.Equal("Assigned user was not found in this tenant.", ex.Message);
+            _tasks.Verify(x => x.UpdateAsync(It.IsAny<TaskItem>()), Times.Never);
         }
     }
 }

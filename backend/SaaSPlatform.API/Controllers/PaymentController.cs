@@ -63,6 +63,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var tenantId = GetTenantId();
@@ -75,7 +76,7 @@ namespace SaaSPlatform.API.Controllers
             // A payment can only be deleted inside its own tenant (super admins may delete any payment).
             var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
             if (payment.TenantId != tenantId.Value && role != "SuperAdmin")
-                return Forbid();
+                return NotFound();
 
             var result = await _paymentService.DeleteAsync(id, GetUserId());
             if (!result)

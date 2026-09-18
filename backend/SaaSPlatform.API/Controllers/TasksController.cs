@@ -45,7 +45,7 @@ namespace SaaSPlatform.API.Controllers
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(id);
-            if (existing == null || existing.TenantId != tenantId.Value)
+            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
             {
                 return NotFound(new { success = false, message = "Task not found." });
             }
@@ -65,7 +65,7 @@ namespace SaaSPlatform.API.Controllers
             if (tenantId == null) return Unauthorized();
 
             var task = await _taskService.GetByIdAsync(Id);
-            if (task == null || task.TenantId != tenantId.Value)
+            if (task == null || (task.TenantId != tenantId.Value && !IsSuperAdmin()))
                 return NotFound();
 
             return Ok(task);
@@ -95,14 +95,21 @@ namespace SaaSPlatform.API.Controllers
                 }
             }
 
-            var task = await _taskService.CreateAsync(dto);
+            try
+            {
+                var task = await _taskService.CreateAsync(dto);
 
-            // Clear navigation references to avoid a JSON reference cycle
-            // (the tracked Project will navigate back to this task).
-            task.Project = null;
-            task.AssignedUser = null;
+                // Clear navigation references to avoid a JSON reference cycle
+                // (the tracked Project will navigate back to this task).
+                task.Project = null;
+                task.AssignedUser = null;
 
-            return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
+                return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -112,11 +119,23 @@ namespace SaaSPlatform.API.Controllers
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(Id);
-            if (existing == null || existing.TenantId != tenantId.Value)
+            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
                 return NotFound();
 
-            await _taskService.UpdateAsync(Id, dto);
-            return NoContent();
+            if (string.IsNullOrWhiteSpace(dto.Name) && !string.IsNullOrWhiteSpace(dto.Title))
+            {
+                dto.Name = dto.Title;
+            }
+
+            try
+            {
+                await _taskService.UpdateAsync(Id, dto);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -126,7 +145,7 @@ namespace SaaSPlatform.API.Controllers
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(Id);
-            if (existing == null || existing.TenantId != tenantId.Value)
+            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
                 return NotFound();
 
             await _taskService.DeleteAsync(Id);
@@ -147,6 +166,12 @@ namespace SaaSPlatform.API.Controllers
             if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
                 return userId;
             return null;
+        }
+
+        private bool IsSuperAdmin()
+        {
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
         }
     }
 
