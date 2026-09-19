@@ -4,6 +4,13 @@
     <p style="color: var(--text-secondary); margin-top: 0.25rem;">View your current subscription plan, billing information and payment history</p>
   </div>
 
+  @if (upgradeSuccessMessage) {
+    <div class="alert alert-success" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+      <span>{{ upgradeSuccessMessage }}</span>
+    </div>
+  }
+
   @if (errorMessage) {
     <div class="alert alert-error" style="margin-bottom: 1.5rem;">
       <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
@@ -103,7 +110,7 @@
                       <span class="badge" [class.badge-success]="isPaid(inv.paymentStatus)" [class.badge-danger]="!isPaid(inv.paymentStatus)">{{ inv.paymentStatus }}</span>
                     </td>
                     <td style="text-align: right;">
-                      <button class="btn btn-outline btn-icon" style="width: 2rem; height: 2rem; border-radius: var(--radius-sm);" (click)="downloadInvoice(inv.id)">
+                      <button class="btn btn-outline btn-icon" style="width: 2rem; height: 2rem; border-radius: var(--radius-sm);" (click)="downloadInvoice(inv)">
                         <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--primary-color);">download</span>
                       </button>
                     </td>
@@ -140,6 +147,129 @@
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Last Payment</div>
           <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-top: 0.25rem;">{{ summary?.lastPaymentDate ? (summary?.lastPaymentDate | date:'mediumDate') : '—' }}</div>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Upgrade Subscription Modal -->
+  @if (isUpgradeModalOpen) {
+    <div class="modal-backdrop">
+      <div class="modal-container" style="max-width: 680px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Upgrade Workspace Subscription</h3>
+          <button class="modal-close" (click)="closeUpgradeModal()">&times;</button>
+        </div>
+
+        @if (upgradeErrorMessage) {
+          <div class="alert alert-error" style="margin-bottom: 1rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">error</span>
+            <span>{{ upgradeErrorMessage }}</span>
+          </div>
+        }
+
+        <div style="margin-bottom: 1.25rem;">
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+            Select a plan to scale your organization with higher team capacity, project limits, and storage.
+          </p>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+            @for (plan of availablePlans; track plan.id) {
+              <div 
+                (click)="selectPlan(plan)"
+                [style.cursor]="plan.id.toLowerCase() === currentPlan?.subscriptionPlanId?.toLowerCase() ? 'not-allowed' : 'pointer'"
+                [style.border]="selectedPlan?.id === plan.id ? '2px solid var(--primary-color)' : '1px solid var(--border-color)'"
+                [style.background]="selectedPlan?.id === plan.id ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)'"
+                style="padding: 1.25rem; border-radius: var(--radius-md); transition: all 0.2s ease; position: relative;">
+                
+                @if (plan.id.toLowerCase() === currentPlan?.subscriptionPlanId?.toLowerCase()) {
+                  <span class="badge badge-success" style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 0.7rem;">Active</span>
+                } @else if (selectedPlan?.id === plan.id) {
+                  <span class="badge" style="position: absolute; top: 0.75rem; right: 0.75rem; font-size: 0.7rem; background: var(--primary-color); color: white;">Selected</span>
+                }
+
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-heading); margin-bottom: 0.25rem;">{{ plan.name }}</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-bottom: 0.75rem;">
+                  ${{ plan.price }}<span style="font-size: 0.85rem; font-weight: 400; color: var(--text-secondary);">/mo</span>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                  <div><strong style="color: var(--text-heading);">{{ plan.maxUsers }}</strong> Team Users</div>
+                  <div><strong style="color: var(--text-heading);">{{ plan.maxProjects }}</strong> Active Projects</div>
+                  <div><strong style="color: var(--text-heading);">{{ (plan.storageLimitMB / 1024).toFixed(0) }} GB</strong> Storage</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (selectedPlan && selectedPlan.id.toLowerCase() !== currentPlan?.subscriptionPlanId?.toLowerCase()) {
+          <div class="form-group" style="margin-top: 1.25rem;">
+            <label class="form-label">Payment Method</label>
+            <select class="form-select" [(ngModel)]="selectedPaymentMethod">
+              <option value="Credit Card">Credit Card (ending 4242)</option>
+              <option value="PayPal">PayPal Account</option>
+              <option value="Bank Transfer">Direct Wire / Corporate Invoice</option>
+            </select>
+          </div>
+
+          <div style="background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-sm); margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">New Monthly Rate</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-heading);">{{ selectedPlan.name }} Plan</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">Amount Due Today</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--primary-color);">${{ selectedPlan.price }}.00</div>
+            </div>
+          </div>
+        }
+
+        <div class="modal-actions" style="margin-top: 1.5rem;">
+          <button type="button" class="btn btn-outline" (click)="closeUpgradeModal()" [disabled]="isProcessingUpgrade">Cancel</button>
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            [disabled]="!selectedPlan || selectedPlan.id.toLowerCase() === currentPlan?.subscriptionPlanId?.toLowerCase() || isProcessingUpgrade"
+            (click)="confirmUpgrade()">
+            {{ isProcessingUpgrade ? 'Processing Upgrade...' : 'Confirm Upgrade & Pay' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Update Card Modal -->
+  @if (isUpdateCardModalOpen) {
+    <div class="modal-backdrop">
+      <div class="modal-container" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Update Billing Card</h3>
+          <button class="modal-close" (click)="closeUpdateCardModal()">&times;</button>
+        </div>
+        <form (submit)="saveCard()">
+          <div class="form-group">
+            <label class="form-label">Cardholder Name</label>
+            <input type="text" class="form-input" placeholder="e.g. Jane Doe" [(ngModel)]="cardForm.cardholderName" name="cardholder" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Card Number</label>
+            <input type="text" class="form-input" [(ngModel)]="cardForm.cardNumber" name="cardNumber" required />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Expiry (MM/YY)</label>
+              <input type="text" class="form-input" [(ngModel)]="cardForm.expiry" name="expiry" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">CVC</label>
+              <input type="text" class="form-input" [(ngModel)]="cardForm.cvv" name="cvv" required />
+            </div>
+          </div>
+          <div class="modal-actions" style="margin-top: 1.5rem;">
+            <button type="button" class="btn btn-outline" (click)="closeUpdateCardModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Billing Card</button>
+          </div>
+        </form>
       </div>
     </div>
   }

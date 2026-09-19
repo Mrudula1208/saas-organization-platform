@@ -2,6 +2,7 @@ using Moq;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Application.Services;
 using SaaSPlatform.Domain.Entities;
+using SaaSPlatform_Model.Entities;
 using Xunit;
 
 namespace SaaSPlatform.Tests
@@ -113,6 +114,35 @@ namespace SaaSPlatform.Tests
             Assert.NotNull(result);
             Assert.Single(result);
             Assert.Equal("Acme Corp", result[0].TenantName);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithSubscriptionPlan_UpdatesTenantPlanAndAudits()
+        {
+            var tenantId = Guid.NewGuid();
+            var newPlanId = Guid.NewGuid();
+            var payment = CreateValidPayment(tenantId);
+            payment.SubscriptionPlanId = newPlanId;
+
+            _payments.Setup(x => x.AddAsync(It.IsAny<Payment>()))
+                .ReturnsAsync((Payment p) => p);
+
+            var tenant = new Tenant { Id = tenantId, Name = "Acme Corp", SubscriptionPlanId = Guid.NewGuid() };
+            var mockTenantRepo = new Mock<ITenantRepository>();
+            mockTenantRepo.Setup(x => x.GetByIdAsync(tenantId)).ReturnsAsync(tenant);
+            mockTenantRepo.Setup(x => x.UpdateAsync(tenant)).Returns(Task.CompletedTask);
+
+            var plan = new SubscriptionPlan { Id = newPlanId, Name = "Enterprise", IsActive = true };
+            var mockPlanRepo = new Mock<ISubscriptionPlanRepository>();
+            mockPlanRepo.Setup(x => x.GetByIdAsync(newPlanId)).ReturnsAsync(plan);
+
+            var service = new PaymentService(_payments.Object, _logs.Object, mockTenantRepo.Object, mockPlanRepo.Object);
+
+            var created = await service.CreateAsync(payment);
+
+            Assert.Equal(newPlanId, tenant.SubscriptionPlanId);
+            mockTenantRepo.Verify(x => x.UpdateAsync(tenant), Times.Once);
+            _logs.Verify(x => x.LogAsync("PLAN_UPGRADED", It.Is<string>(s => s.Contains("Enterprise")), It.IsAny<Guid?>(), tenant.Id), Times.Once);
         }
     }
 }

@@ -14,11 +14,19 @@ namespace SaaSPlatform.Application.Services
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly ISystemLogRepository _systemLogs;
+        private readonly ITenantRepository? _tenantRepository;
+        private readonly ISubscriptionPlanRepository? _planRepository;
 
-        public PaymentService(IPaymentRepository paymentRepository, ISystemLogRepository systemLogs)
+        public PaymentService(
+            IPaymentRepository paymentRepository, 
+            ISystemLogRepository systemLogs,
+            ITenantRepository? tenantRepository = null,
+            ISubscriptionPlanRepository? planRepository = null)
         {
             _paymentRepository = paymentRepository;
             _systemLogs = systemLogs;
+            _tenantRepository = tenantRepository;
+            _planRepository = planRepository;
         }
 
         public async Task<IEnumerable<Payment>>GetAllAsync(Guid tenantId)
@@ -59,6 +67,29 @@ namespace SaaSPlatform.Application.Services
                 "PAYMENT_RECEIVED",
                 $"Payment of {created.Amount.ToString(CultureInfo.InvariantCulture)} via {created.PaymentMethod} recorded with status {created.PaymentStatus} (transaction {created.TransactionId}).",
                 actorId, created.TenantId);
+
+            // If this payment is for a subscription plan, update the tenant's plan
+            if (_tenantRepository != null && payement.SubscriptionPlanId != Guid.Empty)
+            {
+                var tenant = await _tenantRepository.GetByIdAsync(payement.TenantId);
+                if (tenant != null && !tenant.IsDeleted)
+                {
+                    tenant.SubscriptionPlanId = payement.SubscriptionPlanId;
+                    await _tenantRepository.UpdateAsync(tenant);
+
+                    string planName = "new";
+                    if (_planRepository != null)
+                    {
+                        var plan = await _planRepository.GetByIdAsync(payement.SubscriptionPlanId);
+                        if (plan != null) planName = plan.Name;
+                    }
+
+                    await _systemLogs.LogAsync(
+                        "PLAN_UPGRADED",
+                        $"Tenant {tenant.Name} upgraded to {planName} plan via payment {created.TransactionId}.",
+                        actorId, tenant.Id);
+                }
+            }
 
             return created;
         }

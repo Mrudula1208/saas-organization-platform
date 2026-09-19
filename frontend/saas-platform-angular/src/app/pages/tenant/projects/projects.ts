@@ -20,6 +20,7 @@ export class Projects implements OnInit {
 
   isLoading = false;
   loadError = '';
+  createError = '';
 
   searchQuery = '';
   statusFilter = '';
@@ -119,6 +120,7 @@ export class Projects implements OnInit {
   }
 
   openCreateModal() {
+    this.createError = '';
     const today = new Date().toISOString().split('T')[0];
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     this.newProject = { name: '', description: '', startDate: today, endDate: nextMonth, priority: 'Medium' };
@@ -127,15 +129,20 @@ export class Projects implements OnInit {
 
   closeCreateModal() {
     this.isCreateModalOpen = false;
+    this.createError = '';
   }
 
   saveProject() {
     if (!this.newProject.name) return;
 
+    this.createError = '';
     this.projectService.createProject(this.newProject).subscribe({
       next: () => {
         this.loadProjects();
         this.closeCreateModal();
+      },
+      error: (err) => {
+        this.createError = this.extractErrorMessage(err, 'Failed to create project. Please verify organization subscription limits.');
       }
     });
   }

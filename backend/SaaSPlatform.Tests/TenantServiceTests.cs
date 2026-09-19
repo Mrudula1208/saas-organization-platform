@@ -179,5 +179,56 @@ namespace SaaSPlatform.Tests
             Assert.NotNull(result);
             _tenants.Verify(x => x.GetTenantsPage("Acme", "Pro", 1, 10), Times.Once);
         }
+
+        [Fact]
+        public async Task ChangePlanAsync_UnknownTenant_ReturnsFalse()
+        {
+            _tenants.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Tenant?)null);
+
+            var result = await _service.ChangePlanAsync(Guid.NewGuid(), Guid.NewGuid());
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ChangePlanAsync_InactiveOrMissingPlan_Throws()
+        {
+            var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Acme", SubscriptionPlanId = Guid.NewGuid() };
+            _tenants.Setup(x => x.GetByIdAsync(tenant.Id)).ReturnsAsync(tenant);
+
+            var mockPlans = new Mock<ISubscriptionPlanRepository>();
+            mockPlans.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((SaaSPlatform.Domain.Entities.SubscriptionPlan?)null);
+
+            var serviceWithPlans = new TenantService(_tenants.Object, _logs.Object, mockPlans.Object);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                serviceWithPlans.ChangePlanAsync(tenant.Id, Guid.NewGuid()));
+
+            Assert.Contains("does not exist or is inactive", ex.Message);
+        }
+
+        [Fact]
+        public async Task ChangePlanAsync_ValidPlan_UpdatesSubscriptionAndLogs()
+        {
+            var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Acme", SubscriptionPlanId = Guid.NewGuid() };
+            var newPlanId = Guid.NewGuid();
+            var newPlan = new SaaSPlatform.Domain.Entities.SubscriptionPlan { Id = newPlanId, Name = "Pro", IsActive = true };
+
+            _tenants.Setup(x => x.GetByIdAsync(tenant.Id)).ReturnsAsync(tenant);
+            _tenants.Setup(x => x.UpdateAsync(tenant)).Returns(Task.CompletedTask);
+
+            var mockPlans = new Mock<ISubscriptionPlanRepository>();
+            mockPlans.Setup(x => x.GetByIdAsync(newPlanId)).ReturnsAsync(newPlan);
+
+            var actorId = Guid.NewGuid();
+            var serviceWithPlans = new TenantService(_tenants.Object, _logs.Object, mockPlans.Object);
+
+            var result = await serviceWithPlans.ChangePlanAsync(tenant.Id, newPlanId, actorId);
+
+            Assert.True(result);
+            Assert.Equal(newPlanId, tenant.SubscriptionPlanId);
+            _tenants.Verify(x => x.UpdateAsync(tenant), Times.Once);
+            _logs.Verify(x => x.LogAsync("TENANT_PLAN_CHANGED", It.Is<string>(s => s.Contains("Pro")), actorId, tenant.Id), Times.Once);
+        }
     }
 }

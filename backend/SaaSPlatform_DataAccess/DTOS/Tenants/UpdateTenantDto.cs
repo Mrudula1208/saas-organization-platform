@@ -14,5 +14,7 @@ namespace SaaSPlatform.Application.DTOS.Tenants
         public string ContactPhone { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
+
+        public Guid? SubscriptionPlanId { get; set; }
     }
 }

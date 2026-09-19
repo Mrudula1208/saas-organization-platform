@@ -18,5 +18,6 @@ namespace SaaSPlatform.Application.Interfaces
         Task<bool> UpdateLogoAsync(Guid tenantId, string logoUrl, Guid? userId = null);
         Task<TenantSettingsDto?> GetSettingsAsync(Guid tenantId);
         Task<bool> UpdateSettingsAsync(Guid tenantId, TenantSettingsDto dto, Guid? userId = null);
+        Task<bool> ChangePlanAsync(Guid tenantId, Guid newPlanId, Guid? userId = null);
     }
 }

@@ -52,4 +52,14 @@ export class BillingService {
       headers: this.getHeaders(),
     });
   }
+
+  createPayment(data: {
+    subscriptionPlanId: string;
+    amount: number;
+    paymentMethod: string;
+  }): Observable<any> {
+    return this.http.post<any>(this.paymentApiUrl, data, {
+      headers: this.getHeaders(),
+    });
+  }
 }

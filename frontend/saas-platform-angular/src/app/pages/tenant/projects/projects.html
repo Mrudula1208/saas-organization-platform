@@ -142,6 +142,12 @@
           <h3 class="modal-title">Create Workspace Project</h3>
           <button class="modal-close" (click)="closeCreateModal()">&times;</button>
         </div>
+        @if (createError) {
+          <div class="alert alert-error" style="margin: 1rem 1.5rem 0 1.5rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">error</span>
+            <span>{{ createError }}</span>
+          </div>
+        }
         <form (submit)="saveProject()">
           <div class="form-group">
             <label class="form-label" for="proj-name">Project Name *</label>

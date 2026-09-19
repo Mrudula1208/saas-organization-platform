@@ -26,15 +26,18 @@ namespace SaaSPlatform.API.Controllers
         private readonly ITenantService _tenantService;
         private readonly IWebHostEnvironment _environment;
         private readonly StorageSettings _storageSettings;
+        private readonly ISubscriptionPlanRepository? _planRepository;
 
         public TenantController(
             ITenantService tenantService,
             IWebHostEnvironment environment,
-            IOptions<StorageSettings> storageSettings)
+            IOptions<StorageSettings> storageSettings,
+            ISubscriptionPlanRepository? planRepository = null)
         {
             _tenantService = tenantService;
             _environment = environment;
             _storageSettings = storageSettings.Value;
+            _planRepository = planRepository;
         }
 
         [HttpGet]
@@ -186,9 +189,35 @@ namespace SaaSPlatform.API.Controllers
                 {
                     return NotFound(new { success = false, message = "Tenant not found." });
                 }
+
+                // SuperAdmins can change the subscription plan
+                if (User.IsInRole("SuperAdmin") && dto.SubscriptionPlanId.HasValue && dto.SubscriptionPlanId.Value != Guid.Empty)
+                {
+                    await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId.Value, GetUserId());
+                }
+
                 return Ok(new { success = true, message = "Tenant updated successfully." });
             }
             catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPut("{Id}/plan")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> ChangePlan(Guid Id, [FromBody] ChangePlanDto dto)
+        {
+            try
+            {
+                var result = await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId, GetUserId());
+                if (!result)
+                {
+                    return NotFound(new { success = false, message = "Tenant not found." });
+                }
+                return Ok(new { success = true, message = "Subscription plan updated successfully." });
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { success = false, message = ex.Message });
             }
@@ -248,6 +277,45 @@ namespace SaaSPlatform.API.Controllers
 
                 var logosPath = GetLogosPath();
                 Directory.CreateDirectory(logosPath);
+
+                // Enforce subscription storage limit
+                if (_planRepository != null && tenant.SubscriptionPlanId != Guid.Empty)
+                {
+                    var plan = await _planRepository.GetByIdAsync(tenant.SubscriptionPlanId);
+                    if (plan != null && plan.StorageLimitMB > 0)
+                    {
+                        long currentUsageBytes = 0;
+                        if (Directory.Exists(logosPath))
+                        {
+                            var dirInfo = new DirectoryInfo(logosPath);
+                            currentUsageBytes = dirInfo.GetFiles($"{Id:N}_*").Sum(f => f.Length);
+                        }
+
+                        long oldLogoBytes = 0;
+                        if (!string.IsNullOrWhiteSpace(tenant.LogoImageUrl))
+                        {
+                            var oldFileName = Path.GetFileName(tenant.LogoImageUrl);
+                            if (!string.IsNullOrEmpty(oldFileName))
+                            {
+                                var oldFilePath = Path.Combine(logosPath, oldFileName);
+                                if (System.IO.File.Exists(oldFilePath))
+                                {
+                                    oldLogoBytes = new FileInfo(oldFilePath).Length;
+                                }
+                            }
+                        }
+
+                        long newProjectedBytes = Math.Max(0, currentUsageBytes - oldLogoBytes) + file.Length;
+                        long maxLimitBytes = (long)plan.StorageLimitMB * 1024 * 1024;
+                        if (newProjectedBytes > maxLimitBytes)
+                        {
+                            return BadRequest(new { 
+                                success = false, 
+                                message = $"Storage limit of {plan.StorageLimitMB} MB reached for the {plan.Name} plan. Please upgrade your subscription to upload more files." 
+                            });
+                        }
+                    }
+                }
 
                 // Generate a safe, unique filename. The client-supplied name/path is never trusted.
                 var fileName = $"{Id:N}_{Guid.NewGuid():N}{extension}";

@@ -12,11 +12,16 @@ namespace SaaSPlatform.Application.Services
     {
         private readonly ITenantRepository _tenantRepository;
         private readonly ISystemLogRepository _systemLogs;
+        private readonly ISubscriptionPlanRepository? _planRepository;
 
-        public TenantService(ITenantRepository tenantRepository, ISystemLogRepository systemLogs)
+        public TenantService(
+            ITenantRepository tenantRepository, 
+            ISystemLogRepository systemLogs, 
+            ISubscriptionPlanRepository? planRepository = null)
         {
             _tenantRepository = tenantRepository;
             _systemLogs = systemLogs;
+            _planRepository = planRepository;
         }
 
         // One page of the tenant list; the database does the filtering and paging.
@@ -136,6 +141,31 @@ namespace SaaSPlatform.Application.Services
 
             await _tenantRepository.UpdateAsync(tenant);
             await _systemLogs.LogAsync("TENANT_SETTINGS_UPDATED", $"Tenant {tenant.Name} settings updated.", userId, tenant.Id);
+            return true;
+        }
+
+        public async Task<bool> ChangePlanAsync(Guid tenantId, Guid newPlanId, Guid? userId = null)
+        {
+            var tenant = await _tenantRepository.GetByIdAsync(tenantId);
+            if (tenant == null || tenant.IsDeleted)
+            {
+                return false;
+            }
+
+            string planName = newPlanId.ToString();
+            if (_planRepository != null)
+            {
+                var plan = await _planRepository.GetByIdAsync(newPlanId);
+                if (plan == null || !plan.IsActive)
+                {
+                    throw new InvalidOperationException("The requested subscription plan does not exist or is inactive.");
+                }
+                planName = plan.Name;
+            }
+
+            tenant.SubscriptionPlanId = newPlanId;
+            await _tenantRepository.UpdateAsync(tenant);
+            await _systemLogs.LogAsync("TENANT_PLAN_CHANGED", $"Tenant {tenant.Name} subscription plan changed to {planName}.", userId, tenant.Id);
             return true;
         }
     }
