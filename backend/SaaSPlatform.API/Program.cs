@@ -31,6 +31,8 @@ namespace SaaSPlatform.API
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 });
             builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("StorageSettings"));
+            builder.Services.Configure<SaaSPlatform.Application.DTOS.Email.EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
 

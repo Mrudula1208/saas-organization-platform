@@ -345,6 +345,24 @@ namespace SaaSPlatform.Tests
         }
 
         [Fact]
+        public async Task ForgotPasswordAsync_DispatchesResetEmail_WhenEmailServiceConfigured()
+        {
+            var user = CreateActiveUser("tenant@acme.com", "password");
+            _users.Setup(x => x.GetByEmailAsync(user.Email)).ReturnsAsync(user);
+            _users.Setup(x => x.UpdateUser(user.Id, It.IsAny<User>())).ReturnsAsync(true);
+
+            var mockEmail = new Mock<IEmailService>();
+            var serviceWithEmail = new AuthService(_unitOfWork.Object, CreateConfig(), null!, mockEmail.Object);
+
+            var result = await serviceWithEmail.ForgotPasswordAsync(new ForgotPasswordDto { Email = user.Email });
+
+            Assert.True(result);
+            mockEmail.Verify(
+                x => x.SendPasswordResetEmailAsync(user.Email, user.PasswordResetToken!, It.IsAny<string?>()),
+                Times.Once);
+        }
+
+        [Fact]
         public async Task LogoutAsync_RevokesRefreshTokenAndAudits()
         {
             var user = CreateActiveUser("tenant@acme.com", "password");

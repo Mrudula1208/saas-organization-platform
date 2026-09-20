@@ -20,12 +20,18 @@ namespace SaaSPlatform.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _config;
         private readonly IMapper _mapper;
+        private readonly IEmailService? _emailService;
 
-        public AuthService(IUnitOfWork unitOfWork, IConfiguration config, IMapper mapper)
+        public AuthService(
+            IUnitOfWork unitOfWork, 
+            IConfiguration config, 
+            IMapper mapper,
+            IEmailService? emailService = null)
         {
             _unitOfWork = unitOfWork;
             _config = config;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         public async Task<TokenResponseDto?> LoginAsync(LoginDto dto)
@@ -208,8 +214,15 @@ namespace SaaSPlatform.Application.Services
             // Save transaction
             await _unitOfWork.SaveChangesAsync();
 
-            // Simulate sending verification email in console (never log secrets)
-            Console.WriteLine($"[EMAIL SIMULATION] Verification Email dispatched to {user.Email}.");
+            // Send welcome / verification email
+            if (_emailService != null)
+            {
+                await _emailService.SendWelcomeEmailAsync(user.Email, user.FullName, tenant.Name);
+            }
+            else
+            {
+                Console.WriteLine($"[EMAIL SIMULATION] Verification Email dispatched to {user.Email}.");
+            }
 
             // Generate Tokens
             var tokenResponse = GenerateTokensForUser(user);
@@ -303,8 +316,15 @@ namespace SaaSPlatform.Application.Services
             await _unitOfWork.Users.UpdateUser(user.Id, user);
             await _unitOfWork.SystemLogs.LogAsync("FORGOT_PASSWORD_REQUEST", $"Password reset request initiated for user: {user.Email}", user.Id, user.TenantId);
 
-            // Simulate sending reset email in console (never log the actual token in production logs)
-            Console.WriteLine($"[EMAIL SIMULATION] Password Reset Email dispatched to {user.Email}.");
+            // Send password reset email
+            if (_emailService != null)
+            {
+                await _emailService.SendPasswordResetEmailAsync(user.Email, user.PasswordResetToken);
+            }
+            else
+            {
+                Console.WriteLine($"[EMAIL SIMULATION] Password Reset Email dispatched to {user.Email}. Token: {user.PasswordResetToken}");
+            }
             return true;
         }
 

@@ -1,3 +1,4 @@
+
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Users;
 using SaaSPlatform.Application.Interfaces;
@@ -15,17 +16,20 @@ namespace SaaSPlatform.Application.Services
         private readonly ISystemLogRepository _systemLogs;
         private readonly ITenantRepository? _tenantRepository;
         private readonly ISubscriptionPlanRepository? _planRepository;
+        private readonly IEmailService? _emailService;
 
         public UserService(
             IUserRepository userRepository,
             ISystemLogRepository systemLogs,
             ITenantRepository? tenantRepository = null,
-            ISubscriptionPlanRepository? planRepository = null)
+            ISubscriptionPlanRepository? planRepository = null,
+            IEmailService? emailService = null)
         {
             _userRepository = userRepository;
             _systemLogs = systemLogs;
             _tenantRepository = tenantRepository;
             _planRepository = planRepository;
+            _emailService = emailService;
         }
 
         // One page of the tenant user list; the database does the filtering and paging.
@@ -140,8 +144,22 @@ namespace SaaSPlatform.Application.Services
             var createdUser = await _userRepository.CreateUser(user);
             await _systemLogs.LogAsync("USER_INVITED", $"User {createdUser.Email} invited to join tenant.", createdUser.Id, tenantId);
 
-            // Simulate sending invitation email
-            Console.WriteLine($"[EMAIL SIMULATION] Invite User email dispatched to {createdUser.Email}.");
+            // Send invitation email
+            if (_emailService != null)
+            {
+                var tenant = _tenantRepository != null ? await _tenantRepository.GetByIdAsync(tenantId) : null;
+                await _emailService.SendUserInvitationEmailAsync(
+                    createdUser.Email,
+                    createdUser.FullName,
+                    tenant?.Name ?? "Workspace",
+                    createdUser.Role,
+                    "Generated via invitation link",
+                    null);
+            }
+            else
+            {
+                Console.WriteLine($"[EMAIL SIMULATION] Invite User email dispatched to {createdUser.Email}.");
+            }
 
             return createdUser;
         }
