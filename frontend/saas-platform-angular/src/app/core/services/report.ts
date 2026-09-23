@@ -55,6 +55,26 @@ export class ReportService {
       .pipe(map((res) => this.toFileResponse(res, 'workspace-analytics.xlsx')));
   }
 
+  exportAdminReportPdf(): Observable<{ blob: Blob; fileName: string }> {
+    return this.http
+      .get(`${this.apiUrl}/admin-report/export/pdf`, {
+        headers: this.getHeaders(),
+        observe: 'response',
+        responseType: 'blob',
+      })
+      .pipe(map((res) => this.toFileResponse(res, 'platform-analytics.pdf')));
+  }
+
+  exportAdminReportExcel(): Observable<{ blob: Blob; fileName: string }> {
+    return this.http
+      .get(`${this.apiUrl}/admin-report/export/excel`, {
+        headers: this.getHeaders(),
+        observe: 'response',
+        responseType: 'blob',
+      })
+      .pipe(map((res) => this.toFileResponse(res, 'platform-analytics.xlsx')));
+  }
+
   private toFileResponse(
     res: HttpResponse<Blob>,
     fallbackName: string

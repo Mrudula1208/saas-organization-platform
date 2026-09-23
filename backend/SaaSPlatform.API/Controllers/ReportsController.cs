@@ -52,6 +52,36 @@ namespace SaaSPlatform.API.Controllers
             return Ok(data);
         }
 
+        [HttpGet("admin-report/export/pdf")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> ExportAdminPdf()
+        {
+            try
+            {
+                var file = await _reportService.ExportAdminReportPdfAsync();
+                return File(file.Content, file.ContentType, file.FileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to generate admin PDF report: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("admin-report/export/excel")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> ExportAdminExcel()
+        {
+            try
+            {
+                var file = await _reportService.ExportAdminReportExcelAsync();
+                return File(file.Content, file.ContentType, file.FileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to generate admin Excel report: {ex.Message}" });
+            }
+        }
+
         // PDF/Excel exports: tenant id always comes from the JWT, never from the request.
         [HttpGet("export/pdf")]
         public async Task<IActionResult> ExportPdf()

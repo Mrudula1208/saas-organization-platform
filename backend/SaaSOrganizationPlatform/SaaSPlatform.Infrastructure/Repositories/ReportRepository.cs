@@ -295,5 +295,23 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 .OrderBy(p => p.Name)
                 .ToListAsync();
         }
+
+        public async Task<System.Collections.Generic.List<AdminTenantBreakdownDto>> GetAdminTenantBreakdownAsync()
+        {
+            return await (from t in _context.Tenants.Where(t => !t.IsDeleted)
+                          join p in _context.SubscriptionPlans on t.SubscriptionPlanId equals p.Id into plans
+                          from plan in plans.DefaultIfEmpty()
+                          orderby t.CreatedAt descending
+                          select new AdminTenantBreakdownDto
+                          {
+                              Name = t.Name,
+                              Domain = t.Domain,
+                              PlanName = plan != null ? plan.Name : "Standard",
+                              IsActive = t.IsActive,
+                              UserCount = _context.Users.Count(u => u.TenantId == t.Id && !u.IsDeleted),
+                              ProjectCount = _context.Projects.Count(p => p.TenantId == t.Id && !p.IsDeleted),
+                              CreatedAt = t.CreatedAt
+                          }).ToListAsync();
+        }
     }
 }

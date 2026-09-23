@@ -39,6 +39,8 @@ namespace SaaSPlatform.Tests
         [Theory]
         [InlineData(typeof(ReportsController), "GetAdminDashboard")]
         [InlineData(typeof(ReportsController), "GetAdminReport")]
+        [InlineData(typeof(ReportsController), "ExportAdminPdf")]
+        [InlineData(typeof(ReportsController), "ExportAdminExcel")]
         [InlineData(typeof(SubscriptionPlanController), "Create")]
         [InlineData(typeof(SubscriptionPlanController), "Update")]
         [InlineData(typeof(SubscriptionPlanController), "Delete")]

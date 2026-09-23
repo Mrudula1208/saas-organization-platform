@@ -95,8 +95,8 @@ export class Reports implements OnInit {
 
     const request =
       format === 'PDF'
-        ? this.reportService.exportTenantReportPdf()
-        : this.reportService.exportTenantReportExcel();
+        ? this.reportService.exportAdminReportPdf()
+        : this.reportService.exportAdminReportExcel();
 
     request.subscribe({
       next: ({ blob, fileName }) => {

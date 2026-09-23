@@ -15,5 +15,6 @@ namespace SaaSPlatform.Application.Interfaces
         Task<AdminReportDto> GetAdminReportDataAsync();
         Task<string> GetTenantNameAsync(Guid tenantId);
         Task<System.Collections.Generic.List<TenantProjectBreakdownDto>> GetTenantProjectBreakdownAsync(Guid tenantId);
+        Task<System.Collections.Generic.List<AdminTenantBreakdownDto>> GetAdminTenantBreakdownAsync();
     }
 }

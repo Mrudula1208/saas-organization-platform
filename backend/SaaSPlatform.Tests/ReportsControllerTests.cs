@@ -112,5 +112,71 @@ namespace SaaSPlatform.Tests
             var message = TestHelpers.ReadMessage(objectResult.Value);
             Assert.Contains("Failed to generate Excel report", message);
         }
+
+        [Fact]
+        public async Task ExportAdminPdf_Success_ReturnsFileWithDownloadName()
+        {
+            TestHelpers.SetUser(_controller, role: "SuperAdmin");
+            _reports.Setup(x => x.ExportAdminReportPdfAsync()).ReturnsAsync(new ReportExportFileDto
+            {
+                Content = Encoding.ASCII.GetBytes("%PDF-1.7 admin test"),
+                ContentType = "application/pdf",
+                FileName = "platform-analytics_executive_20260926.pdf"
+            });
+
+            var result = await _controller.ExportAdminPdf();
+
+            var file = Assert.IsType<FileContentResult>(result);
+            Assert.Equal("application/pdf", file.ContentType);
+            Assert.Equal("platform-analytics_executive_20260926.pdf", file.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportAdminPdf_ServiceThrows_Returns500WithMessage()
+        {
+            TestHelpers.SetUser(_controller, role: "SuperAdmin");
+            _reports.Setup(x => x.ExportAdminReportPdfAsync())
+                .ThrowsAsync(new Exception("PDF engine error"));
+
+            var result = await _controller.ExportAdminPdf();
+
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, objectResult.StatusCode);
+            var message = TestHelpers.ReadMessage(objectResult.Value);
+            Assert.Contains("Failed to generate admin PDF report", message);
+        }
+
+        [Fact]
+        public async Task ExportAdminExcel_Success_ReturnsFileWithDownloadName()
+        {
+            TestHelpers.SetUser(_controller, role: "SuperAdmin");
+            _reports.Setup(x => x.ExportAdminReportExcelAsync()).ReturnsAsync(new ReportExportFileDto
+            {
+                Content = new byte[] { (byte)'P', (byte)'K' },
+                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                FileName = "platform-analytics_executive_20260926.xlsx"
+            });
+
+            var result = await _controller.ExportAdminExcel();
+
+            var file = Assert.IsType<FileContentResult>(result);
+            Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
+            Assert.Equal("platform-analytics_executive_20260926.xlsx", file.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportAdminExcel_ServiceThrows_Returns500WithMessage()
+        {
+            TestHelpers.SetUser(_controller, role: "SuperAdmin");
+            _reports.Setup(x => x.ExportAdminReportExcelAsync())
+                .ThrowsAsync(new Exception("EPPlus engine error"));
+
+            var result = await _controller.ExportAdminExcel();
+
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, objectResult.StatusCode);
+            var message = TestHelpers.ReadMessage(objectResult.Value);
+            Assert.Contains("Failed to generate admin Excel report", message);
+        }
     }
 }

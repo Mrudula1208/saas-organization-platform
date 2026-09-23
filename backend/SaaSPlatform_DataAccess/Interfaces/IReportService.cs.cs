@@ -12,5 +12,7 @@ namespace SaaSPlatform.Application.Interfaces
         Task<AdminReportDto> GetAdminReportAsync();
         Task<ReportExportFileDto> ExportTenantReportPdfAsync(Guid tenantId);
         Task<ReportExportFileDto> ExportTenantReportExcelAsync(Guid tenantId);
+        Task<ReportExportFileDto> ExportAdminReportPdfAsync();
+        Task<ReportExportFileDto> ExportAdminReportExcelAsync();
     }
 }
