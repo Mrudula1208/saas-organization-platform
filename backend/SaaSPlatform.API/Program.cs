@@ -14,6 +14,10 @@ using SaaSPlatform.API.Configurations;
 using Microsoft.Extensions.Options;
 using System.IO;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using SaaSPlatform.API.HealthChecks;
 
 namespace SaaSPlatform.API
 {
@@ -158,8 +162,38 @@ namespace SaaSPlatform.API
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             
-            // 🩺 Health Checks for container orchestrators (Docker, Kubernetes)
-            builder.Services.AddHealthChecks();
+            // 🩺 Health Checks for container orchestrators (Docker, Kubernetes) and load balancers
+            builder.Services.AddHealthChecks()
+                .AddCheck<DatabaseHealthCheck>("Database");
+
+            // 🛡️ Rate Limiting to protect sensitive auth endpoints and prevent API abuse
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.OnRejected = async (context, token) =>
+                {
+                    context.HttpContext.Response.ContentType = "application/json";
+                    await context.HttpContext.Response.WriteAsync(
+                        "{\"success\":false,\"message\":\"Too many requests. Please slow down and try again later.\"}",
+                        cancellationToken: token);
+                };
+
+                options.AddFixedWindowLimiter("auth-policy", opt =>
+                {
+                    opt.PermitLimit = 10;
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    opt.QueueLimit = 0;
+                });
+
+                options.AddSlidingWindowLimiter("general-policy", opt =>
+                {
+                    opt.PermitLimit = 120;
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.SegmentsPerWindow = 4;
+                    opt.QueueLimit = 0;
+                });
+            });
             
             var app = builder.Build();
 
@@ -204,11 +238,36 @@ namespace SaaSPlatform.API
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCors("AllowAngular");
+            app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
-            app.MapHealthChecks("/health");
+            app.MapHealthChecks("/health", new HealthCheckOptions
+            {
+                ResponseWriter = async (context, report) =>
+                {
+                    context.Response.ContentType = "application/json";
+                    var response = new
+                    {
+                        status = report.Status.ToString(),
+                        totalDurationMs = Math.Round(report.TotalDuration.TotalMilliseconds, 2),
+                        timestamp = DateTime.UtcNow,
+                        checks = report.Entries.Select(e => new
+                        {
+                            name = e.Key,
+                            status = e.Value.Status.ToString(),
+                            description = e.Value.Description,
+                            durationMs = Math.Round(e.Value.Duration.TotalMilliseconds, 2)
+                        })
+                    };
+                    await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+                }
+            });
+            app.MapHealthChecks("/health/live", new HealthCheckOptions
+            {
+                Predicate = _ => false
+            });
 
             app.Run();
         }

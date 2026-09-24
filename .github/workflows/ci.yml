@@ -1,0 +1,58 @@
+name: Multi-Tenant SaaS CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-ci:
+    name: Backend Build & Tests (.NET 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore backend/SaaSPlatform.Tests/SaaSPlatform.Tests.csproj
+
+      - name: Build backend
+        run: dotnet build backend/SaaSPlatform.Tests/SaaSPlatform.Tests.csproj --no-restore --configuration Release
+
+      - name: Run unit & integration tests
+        run: dotnet test backend/SaaSPlatform.Tests/SaaSPlatform.Tests.csproj --no-build --configuration Release --verbosity normal
+
+  frontend-ci:
+    name: Frontend Build & Tests (Angular 18)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend/saas-platform-angular
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/saas-platform-angular/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm test -- --watch=false
+
+      - name: Build production bundle
+        run: npm run build
