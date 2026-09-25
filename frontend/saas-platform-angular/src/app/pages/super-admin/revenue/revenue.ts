@@ -1,18 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TenantService } from '../../../core/services/tenant';
+import { BillingService } from '../../../core/services/billing';
 import { Tenant } from '../../../models/tenant.model';
+import { AdminTransaction } from '../../../models/payment.model';
 import { getErrorMessage } from '../../../core/helpers';
-
-interface Transaction {
-  id: string;
-  tenantName: string;
-  plan: string;
-  amount: number;
-  date: string;
-  status: string;
-  invoiceId: string;
-}
 
 interface MonthlyRevenueRecord {
   month: string;
@@ -33,61 +25,96 @@ export class Revenue implements OnInit {
   arpu = 0;
   annualRecurringRevenue = 0;
 
-  transactions: Transaction[] = [
-    { id: '1', tenantName: 'Acme Corp', plan: 'Pro', amount: 45, date: '2026-05-25T10:30:00Z', status: 'Succeeded', invoiceId: 'INV-2026-042' },
-    { id: '2', tenantName: 'Globex Corporation', plan: 'Enterprise', amount: 180, date: '2026-05-24T14:45:00Z', status: 'Succeeded', invoiceId: 'INV-2026-041' },
-    { id: '3', tenantName: 'Umbrella Corp', plan: 'Pro', amount: 45, date: '2026-05-20T09:15:00Z', status: 'Succeeded', invoiceId: 'INV-2026-040' },
-    { id: '4', tenantName: 'Initech Inc', plan: 'Basic', amount: 15, date: '2026-05-18T16:00:00Z', status: 'Succeeded', invoiceId: 'INV-2026-039' },
-    { id: '5', tenantName: 'Acme Corp', plan: 'Pro', amount: 45, date: '2026-04-25T10:30:00Z', status: 'Succeeded', invoiceId: 'INV-2026-021' },
-    { id: '6', tenantName: 'Globex Corporation', plan: 'Enterprise', amount: 180, date: '2026-04-24T14:45:00Z', status: 'Succeeded', invoiceId: 'INV-2026-020' }
-  ];
+  transactions: AdminTransaction[] = [];
+  revenueHistory: MonthlyRevenueRecord[] = [];
 
-  revenueHistory: MonthlyRevenueRecord[] = [
-    { month: 'DEC', amount: 190, heightPercent: 35 },
-    { month: 'JAN', amount: 240, heightPercent: 45 },
-    { month: 'FEB', amount: 320, heightPercent: 60 },
-    { month: 'MAR', amount: 380, heightPercent: 70 },
-    { month: 'APR', amount: 440, heightPercent: 85 },
-    { month: 'MAY', amount: 510, heightPercent: 100 }
-  ];
-
+  isLoading = true;
   errorMessage = '';
 
-  constructor(private tenantService: TenantService) {}
+  constructor(
+    private tenantService: TenantService,
+    private billingService: BillingService
+  ) {}
 
   ngOnInit() {
-    this.calculateRevenueStats();
+    this.loadRevenueData();
   }
 
-  calculateRevenueStats() {
+  loadRevenueData() {
+    this.isLoading = true;
     this.errorMessage = '';
-    this.tenantService.getAll().subscribe({
-      next: (tenants: Tenant[]) => {
-        this.activeSubscribers = tenants.length;
-        
-        // Sum the monthly revenue of all tenants
+
+    // Load active tenants to calculate current MRR and ARPU
+    this.tenantService.getAll(1, 200).subscribe({
+      next: (res) => {
+        const tenants = res.data;
+        this.activeSubscribers = res.totalCount;
+
+        // Sum monthly revenue across all tenant accounts
         this.mrr = tenants.reduce((sum: number, t: Tenant) => sum + (t.monthlyRevenue || 0), 0);
         this.arpu = this.activeSubscribers > 0 ? parseFloat((this.mrr / this.activeSubscribers).toFixed(2)) : 0;
         this.annualRecurringRevenue = this.mrr * 12;
 
-        // Dynamically adjust the latest month (May) amount to reflect the live data
-        const latestIdx = this.revenueHistory.findIndex((h: MonthlyRevenueRecord) => h.month === 'MAY');
-        if (latestIdx !== -1) {
-          this.revenueHistory[latestIdx].amount = this.mrr;
-          
-          // Recalculate all height percentages relative to the maximum monthly amount
-          const maxAmt = Math.max(...this.revenueHistory.map((h: MonthlyRevenueRecord) => h.amount));
-          if (maxAmt > 0) {
-            this.revenueHistory.forEach((h: MonthlyRevenueRecord) => {
-              h.heightPercent = Math.round((h.amount / maxAmt) * 100);
-            });
+        // Load database transactions for the ledger table and monthly chart
+        this.billingService.getAdminTransactions().subscribe({
+          next: (txs) => {
+            this.transactions = txs;
+            this.buildMonthlyHistory(txs, this.mrr);
+            this.isLoading = false;
+          },
+          error: (err) => {
+            // Still build history with MRR if transactions fail
+            this.buildMonthlyHistory([], this.mrr);
+            this.errorMessage = getErrorMessage(err, 'Could not load transaction history.');
+            this.isLoading = false;
           }
-        }
+        });
       },
       error: (err) => {
-        this.errorMessage = getErrorMessage(err, 'Could not load revenue statistics. Please try again later.');
+        this.errorMessage = getErrorMessage(err, 'Could not load revenue statistics.');
+        this.isLoading = false;
       }
     });
   }
-}
 
+  private buildMonthlyHistory(txs: AdminTransaction[], currentMrr: number) {
+    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const now = new Date();
+    const history: MonthlyRevenueRecord[] = [];
+
+    // Build the last 6 months progression
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mName = monthNames[d.getMonth()];
+      const year = d.getFullYear();
+      const monthIdx = d.getMonth();
+
+      // Sum all successful payments made in this month and year
+      const monthTotal = txs
+        .filter(t => {
+          const tDate = new Date(t.date);
+          return tDate.getFullYear() === year &&
+                 tDate.getMonth() === monthIdx &&
+                 (t.status || '').toLowerCase() === 'success';
+        })
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      // If current month has no logged transaction receipts yet, use active MRR
+      const finalAmount = (i === 0 && monthTotal === 0) ? currentMrr : monthTotal;
+
+      history.push({
+        month: mName,
+        amount: finalAmount,
+        heightPercent: 10
+      });
+    }
+
+    // Scale bar heights relative to the highest earning month
+    const maxAmt = Math.max(...history.map(h => h.amount), 1);
+    history.forEach(h => {
+      h.heightPercent = Math.max(10, Math.round((h.amount / maxAmt) * 100));
+    });
+
+    this.revenueHistory = history;
+  }
+}

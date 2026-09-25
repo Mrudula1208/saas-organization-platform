@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CurrentPlan, PaymentRecord, BillingSummary, Payment } from '../../models/payment.model';
+import { CurrentPlan, PaymentRecord, BillingSummary, Payment, AdminTransaction } from '../../models/payment.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 })
 export class BillingService {
   private readonly apiUrl = environment.apiUrl + '/Billing';
+  private readonly paymentApiUrl = environment.apiUrl + '/Payment';
 
   constructor(private http: HttpClient) {}
 
@@ -30,6 +31,12 @@ export class BillingService {
 
   getPayments(): Observable<PaymentRecord[]> {
     return this.http.get<PaymentRecord[]>(`${this.apiUrl}/payments`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  getAdminTransactions(): Observable<AdminTransaction[]> {
+    return this.http.get<AdminTransaction[]>(`${this.paymentApiUrl}/admin-transactions`, {
       headers: this.getHeaders(),
     });
   }

@@ -38,3 +38,13 @@ export interface BillingSummary {
   lastPaymentDate: string | null;
   currentPlan: CurrentPlan | null;
 }
+
+export interface AdminTransaction {
+  id: string;
+  tenantName: string;
+  plan: string;
+  amount: number;
+  date: string;
+  status: string;
+  invoiceId: string;
+}

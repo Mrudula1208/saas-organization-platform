@@ -114,6 +114,10 @@
                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">{{ act.time }}</div>
               </div>
             </div>
+          } @empty {
+            <div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              No recent workspace activity recorded yet.
+            </div>
           }
         </div>
       </div>
