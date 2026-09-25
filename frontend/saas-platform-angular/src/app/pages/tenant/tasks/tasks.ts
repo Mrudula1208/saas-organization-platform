@@ -31,9 +31,37 @@ export class Tasks implements OnInit {
   searchQuery = '';
   errorMessage = '';
 
+  // Server-side pagination: the API filters, sorts and counts in the database.
+  page = 1;
+  pageSize = 20;
+  totalCount = 0;
+  loading = false;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+  }
+
+  prevPage() {
+    if (this.page > 1) {
+      this.page--;
+      this.loadTasks();
+    }
+  }
+
+  nextPage() {
+    if (this.page < this.totalPages) {
+      this.page++;
+      this.loadTasks();
+    }
+  }
+
   // Modals state
   isCreateModalOpen = false;
   newTask = { name: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '' };
+
+  isEditModalOpen = false;
+  editTask = { id: '', name: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '', status: 'To Do', isCompleted: false };
 
   // Drag & Drop State
   // Holds the reference to the task item that is currently being dragged by the user
@@ -50,17 +78,18 @@ export class Tasks implements OnInit {
 
   loadData() {
     this.errorMessage = '';
-    this.projectService.getProjects().subscribe({
-      next: (projData: Project[]) => {
-        this.projects = projData;
+    // Dropdowns need a wide list, so ask for one big page (the API caps page size).
+    this.projectService.getProjects(1, 200).subscribe({
+      next: (res) => {
+        this.projects = res.data;
         if (this.projects.length > 0) {
           // Default to first project if available
           this.selectedProjectId = this.projects[0].id;
         }
 
-        this.userService.getUsers().subscribe({
-          next: (userData: User[]) => {
-            this.users = userData;
+        this.userService.getUsers(1, 200).subscribe({
+          next: (userRes) => {
+            this.users = userRes.data;
             this.loadTasks();
           },
           error: (err) => {
@@ -76,38 +105,46 @@ export class Tasks implements OnInit {
   }
 
   loadTasks() {
-    this.projectService.getTasks().subscribe({
-      next: (taskData: TaskItem[]) => {
-        this.allTasks = taskData;
+    this.loading = true;
+    this.projectService.getTasks(this.page, this.pageSize, this.selectedProjectId, this.searchQuery).subscribe({
+      next: (res) => {
+        // The current page disappeared: show the last page that still has rows.
+        if (res.data.length === 0 && this.page > 1) {
+          this.page = Math.max(1, Math.ceil(res.totalCount / this.pageSize));
+          this.loadTasks();
+          return;
+        }
+        this.allTasks = res.data;
+        this.totalCount = res.totalCount;
+        this.loading = false;
         this.applyFilters();
       },
       error: (err) => {
+        this.loading = false;
         this.errorMessage = getErrorMessage(err, 'Could not load tasks. Please try again later.');
       }
     });
   }
 
+  // The server already filtered by project and search text; this only splits the current page into Kanban columns.
   applyFilters() {
-    // Filter tasks by selected project and search query
-    const filtered = this.allTasks.filter((t: TaskItem) => {
-      const matchesProject = !this.selectedProjectId || t.projectId === this.selectedProjectId;
-      const matchesSearch = !this.searchQuery || t.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            (t.description && t.description.toLowerCase().includes(this.searchQuery.toLowerCase()));
-      return matchesProject && matchesSearch;
-    });
-
-    // Segment into Kanban columns
-    this.todoTasks = filtered.filter((t: TaskItem) => t.status === 'To Do');
-    this.inProgressTasks = filtered.filter((t: TaskItem) => t.status === 'In Progress');
-    this.completedTasks = filtered.filter((t: TaskItem) => t.status === 'Completed');
+    this.todoTasks = this.allTasks.filter((t: TaskItem) => t.status === 'To Do');
+    this.inProgressTasks = this.allTasks.filter((t: TaskItem) => t.status === 'In Progress');
+    this.completedTasks = this.allTasks.filter((t: TaskItem) => t.status === 'Completed');
   }
 
   onFilterChange() {
-    this.applyFilters();
+    this.page = 1;
+    this.loadTasks();
   }
 
   onSearch() {
-    this.applyFilters();
+    // Ask the server only after the user stops typing.
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.page = 1;
+      this.loadTasks();
+    }, 400);
   }
 
   switchView(view: 'board' | 'table') {
@@ -143,6 +180,47 @@ export class Tasks implements OnInit {
       },
       error: (err) => {
         this.errorMessage = getErrorMessage(err, 'Could not create the task.');
+      }
+    });
+  }
+
+  // EDIT TASK
+  openEditModal(task: TaskItem) {
+    let formattedDue = '';
+    if (task.dueDate) {
+      const d = new Date(task.dueDate);
+      formattedDue = !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+    }
+    this.editTask = {
+      id: task.id,
+      name: task.name,
+      description: task.description || '',
+      projectId: task.projectId,
+      assignedUserId: task.assignedUserId || (this.users.length > 0 ? this.users[0].id : ''),
+      priority: task.priority || 'Medium',
+      dueDate: formattedDue,
+      status: task.status || 'To Do',
+      isCompleted: task.isCompleted || task.status === 'Completed'
+    };
+    this.isEditModalOpen = true;
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen = false;
+  }
+
+  saveEditTask() {
+    if (!this.editTask.name || !this.editTask.id) return;
+
+    this.editTask.isCompleted = this.editTask.status === 'Completed';
+
+    this.projectService.updateTask(this.editTask.id, this.editTask).subscribe({
+      next: () => {
+        this.loadTasks();
+        this.closeEditModal();
+      },
+      error: (err) => {
+        this.errorMessage = getErrorMessage(err, 'Could not update the task.');
       }
     });
   }
