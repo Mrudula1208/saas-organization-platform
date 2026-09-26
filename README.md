@@ -119,7 +119,7 @@ docker-compose down
 
 ## 🧪 Automated Testing
 
-### Backend Unit Tests (228 Tests)
+### Backend Unit Tests (258 Tests)
 ```bash
 dotnet test backend/SaaSPlatform.Tests/SaaSPlatform.Tests.csproj
 ```
