@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../../core/services/billing';
 import { SubscriptionPlanService } from '../../../core/services/subscription-plan';
+import { Auth } from '../../../core/services/auth';
 import {
   CurrentPlan,
   PaymentRecord,
@@ -46,8 +47,13 @@ export class Billing implements OnInit {
 
   constructor(
     private billingService: BillingService,
-    private planService: SubscriptionPlanService
+    private planService: SubscriptionPlanService,
+    public auth: Auth
   ) {}
+
+  get canManageBilling(): boolean {
+    return this.auth.hasRole(['TenantAdmin', 'SuperAdmin']);
+  }
 
   ngOnInit() {
     this.loadBillingInfo();

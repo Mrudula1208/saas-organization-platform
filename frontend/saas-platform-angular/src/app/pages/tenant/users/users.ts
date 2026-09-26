@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user';
+import { Auth } from '../../../core/services/auth';
 import { User } from '../../../models/user.model';
 import { getErrorMessage } from '../../../core/helpers';
 
@@ -32,7 +33,14 @@ export class Users implements OnInit {
   newUser = { fullName: '', email: '', password: '', role: 'Member', profileImageUrl: '' };
   editUserForm = { id: '', fullName: '', email: '', role: '', isActive: true };
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    public auth: Auth
+  ) {}
+
+  get canManageUsers(): boolean {
+    return this.auth.hasRole(['TenantAdmin', 'SuperAdmin']);
+  }
 
   ngOnInit() {
     this.loadUsers();

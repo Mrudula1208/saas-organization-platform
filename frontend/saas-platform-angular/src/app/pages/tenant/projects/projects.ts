@@ -78,6 +78,14 @@ export class Projects implements OnInit {
     return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
   }
 
+  get canCreateProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get canDeleteProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
+  }
+
   viewProject(id: string) {
     this.router.navigate(['/tenant/projects', id]);
   }

@@ -5,10 +5,12 @@
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization deliverables, timeline deadlines, project health, and owner allocations</p>
     </div>
 
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      <span class="material-symbols-outlined">create_new_folder</span>
-      Create Project
-    </button>
+    @if (canCreateProject) {
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <span class="material-symbols-outlined">create_new_folder</span>
+        Create Project
+      </button>
+    }
   </div>
 
   <!-- Search and filter controls bar -->
@@ -97,12 +99,16 @@
                 <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="View details" (click)="viewProject(project.id)">
                   <span class="material-symbols-outlined" style="font-size: 1rem;">visibility</span>
                 </button>
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Manage members" (click)="openMembersModal(project)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">group</span>
-                </button>
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Delete project" (click)="deleteProject(project.id)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                </button>
+                @if (canManageMembers) {
+                  <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Manage members" (click)="openMembersModal(project)">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">group</span>
+                  </button>
+                }
+                @if (canDeleteProject) {
+                  <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Delete project" (click)="deleteProject(project.id)">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                  </button>
+                }
               </td>
             </tr>
           } @empty {

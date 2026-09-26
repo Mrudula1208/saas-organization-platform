@@ -75,10 +75,17 @@
           }
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button class="btn btn-primary" style="flex: 1;" (click)="requestPlanChange()">Upgrade Plan</button>
-          <button class="btn btn-outline" style="flex: 1;" (click)="updatePaymentMethod()">Update Card</button>
-        </div>
+        @if (canManageBilling) {
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button class="btn btn-primary" style="flex: 1;" (click)="requestPlanChange()">Upgrade Plan</button>
+            <button class="btn btn-outline" style="flex: 1;" (click)="updatePaymentMethod()">Update Card</button>
+          </div>
+        } @else {
+          <div style="margin-top: 2rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.35rem; color: #3b82f6;">lock</span>
+            Only organization administrators can modify subscription tiers or payment methods.
+          </div>
+        }
       </div>
 
       <!-- Invoices Ledger -->
