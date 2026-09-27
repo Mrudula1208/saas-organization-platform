@@ -104,27 +104,42 @@
 
     <!-- Operational metrics -->
     <div class="card" style="margin-top: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem;">Workspace Productivity Logs</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
-        <div style="background: #F9FAFB; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Pending Tasks</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--warning-color); margin-top: 0.25rem;">{{ pendingTasks }}</div>
+      <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="material-symbols-outlined" style="color: var(--primary-color);">speed</span>
+        Workspace Productivity Logs
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Pending Tasks</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--warning-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ pendingTasks }}</div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalProjects }} total projects</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--warning-color);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">pending_actions</span>
+          </div>
         </div>
-        <div style="background: #F9FAFB; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">In Progress Tasks</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-top: 0.25rem;">{{ inProgressTasks }}</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">In Progress Tasks</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ inProgressTasks }}</div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Currently being worked on</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--primary-color);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">hourglass_top</span>
+          </div>
         </div>
-        <div style="background: #F9FAFB; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Task Completion Rate</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--success-color); margin-top: 0.25rem;">{{ completionRate }}%</div>
-          <div style="font-size: 0.75rem; color: var(--success-color); margin-top: 0.25rem;">{{ completedTasks }} of {{ totalTasks }} tasks completed</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Task Completion Rate</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--success-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ completionRate }}%</div>
+          <div style="font-size: 0.75rem; color: var(--success-color); font-weight: 600; margin-top: 0.25rem;">{{ completedTasks }} of {{ totalTasks }} tasks completed</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--success-color);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">check_circle</span>
+          </div>
         </div>
-        <div style="background: #F9FAFB; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Active Tasks / Member</div>
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-heading); margin-top: 0.25rem;">{{ avgTasksPerMember }} Tasks</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Active Tasks / Member</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ avgTasksPerMember }} Tasks</div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalMembers }} team members</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">groups</span>
+          </div>
         </div>
       </div>
     </div>

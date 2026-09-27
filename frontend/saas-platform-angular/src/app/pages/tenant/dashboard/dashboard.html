@@ -20,11 +20,11 @@
     <div class="dashboard-grid">
       <!-- Users KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon">
+        <div class="kpi-icon" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; border-color: rgba(79, 70, 229, 0.2);">
           <span class="material-symbols-outlined">group</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">TEAM SIZE</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TEAM SIZE</div>
           <div class="kpi-value">{{ totalUsers }}</div>
           <div style="color: var(--text-muted); font-size: 0.75rem;">Registered members</div>
         </div>
@@ -32,11 +32,11 @@
 
       <!-- Projects KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: #F3F4F6; color: var(--text-heading); border-color: var(--border-color);">
+        <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: #0EA5E9; border-color: rgba(14, 165, 233, 0.2);">
           <span class="material-symbols-outlined">folder</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">TOTAL PROJECTS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL PROJECTS</div>
           <div class="kpi-value">{{ totalProjects }}</div>
           <div style="color: var(--text-muted); font-size: 0.75rem;">Workspace projects</div>
         </div>
@@ -44,11 +44,11 @@
 
       <!-- Active Tasks KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon">
+        <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #D97706; border-color: rgba(245, 158, 11, 0.2);">
           <span class="material-symbols-outlined">assignment_late</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">ACTIVE TASKS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ACTIVE TASKS</div>
           <div class="kpi-value">{{ activeTasksCount }}</div>
           <div style="color: var(--text-muted); font-size: 0.75rem;">Tasks in progress or to do</div>
         </div>
@@ -56,14 +56,14 @@
 
       <!-- Completed Tasks KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: var(--success-bg); color: var(--success-color); border-color: var(--success-border);">
+        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">
           <span class="material-symbols-outlined">task_alt</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">COMPLETED TASKS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">COMPLETED TASKS</div>
           <div class="kpi-value">{{ completedTasksCount }}</div>
           <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">check</span>
             <span>Task execution high</span>
           </div>
         </div>
@@ -106,7 +106,7 @@
         <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;">
           @for (act of recentActivities; track act.id) {
             <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-              <div style="padding: 0.35rem; border-radius: var(--radius-sm); display: grid; place-content: center; background: #FAF9F6; border: 1px solid var(--border-color);" [style.color]="act.color">
+              <div style="padding: 0.35rem; border-radius: var(--radius-sm); display: grid; place-content: center; background: var(--bg-card-hover); border: 1px solid var(--border-color);" [style.color]="act.color">
                 <span class="material-symbols-outlined" style="font-size: 1.15rem;">{{ act.icon }}</span>
               </div>
               <div style="flex: 1;">

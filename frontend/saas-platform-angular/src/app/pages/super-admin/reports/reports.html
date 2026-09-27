@@ -84,24 +84,42 @@
 
     <!-- Global Metrics Summary -->
     <div class="glass-card" style="margin-top: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--text-heading);">Executive Summary Metrics</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem;">
-        <div style="background: #FAF9F6; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Avg Tenant Lifetime</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-top: 0.25rem;">{{ avgTenantLifetime }} Months</div>
+      <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--text-heading); display: flex; align-items: center; gap: 0.5rem;">
+        <span class="material-symbols-outlined" style="color: var(--primary-color);">insights</span>
+        Executive Summary Metrics
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Avg Tenant Lifetime</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ avgTenantLifetime }} Months</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Average retention period</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--primary-color);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">calendar_month</span>
+          </div>
         </div>
-        <div style="background: #FAF9F6; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Customer Acquisition Cost</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-top: 0.25rem;">${{ customerAcquisitionCost }} / org</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Customer Acquisition Cost</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">${{ customerAcquisitionCost }} / org</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Blended sales & marketing</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">price_check</span>
+          </div>
         </div>
-        <div style="background: #FAF9F6; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Platform Churn Rate</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-top: 0.25rem;">{{ churnRate }}%</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Platform Churn Rate</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ churnRate }}%</div>
+          <div style="font-size: 0.75rem; color: var(--success-color); font-weight: 600; margin-top: 0.25rem;">Zero active churn</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">trending_down</span>
+          </div>
         </div>
-        <div style="background: #FAF9F6; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-          <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Registered Users</div>
-          <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color); margin-top: 0.25rem;">{{ totalUsers }}</div>
+        <div class="stat-tile">
+          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Registered Users</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--success-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ totalUsers }}</div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalTenants }} organizations</div>
+          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--success-color);">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem;">group</span>
+          </div>
         </div>
       </div>
     </div>

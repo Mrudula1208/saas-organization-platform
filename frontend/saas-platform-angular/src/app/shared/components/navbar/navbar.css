@@ -28,19 +28,19 @@
 .search-box input {
   width: 100%;
   padding: 0.55rem 1rem 0.55rem 2.25rem;
-  background: #FAF9F6;
+  background: var(--bg-card-hover);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-heading);
   font-size: 0.875rem;
   outline: none;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .search-box input:focus {
   border-color: var(--primary-color);
-  background: #FFFFFF;
-  box-shadow: 0 0 0 2px rgba(159, 18, 57, 0.12);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 .search-icon {
@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 2px;
-  border: 2px solid #FFFFFF;
+  border: 2px solid var(--bg-sidebar);
 }
 
 /* Dropdown Panels */
@@ -102,7 +102,7 @@
   top: 55px;
   right: 0;
   width: 320px;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
@@ -160,7 +160,7 @@
 }
 
 .notification-item:hover {
-  background: #FAF9F6;
+  background: var(--bg-card-hover);
 }
 
 .notification-icon {
@@ -242,7 +242,7 @@
 }
 
 .profile-trigger:hover {
-  background: #F9FAFB;
+  background: var(--bg-card-hover);
 }
 
 .profile-panel {
@@ -268,7 +268,7 @@
 }
 
 .profile-item:hover {
-  background: #FAF9F6;
+  background: var(--bg-card-hover);
   color: var(--text-heading);
 }
 

@@ -6,7 +6,7 @@
 
 .login-left {
   flex: 1.1;
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -58,7 +58,7 @@
   width: 100%;
   max-width: 420px;
   padding: 2.5rem;
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);

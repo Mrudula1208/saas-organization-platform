@@ -15,14 +15,14 @@
   <div class="dashboard-grid">
     <!-- MRR KPI -->
     <div class="glass-card kpi-card">
-      <div class="kpi-icon">
+      <div class="kpi-icon" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; border-color: rgba(79, 70, 229, 0.2);">
         <span class="material-symbols-outlined">payments</span>
       </div>
       <div>
-        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">MONTHLY REVENUE (MRR)</div>
+        <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">MONTHLY REVENUE (MRR)</div>
         <div class="kpi-value">${{ mrr }}</div>
         <div class="kpi-trend up">
-          <span class="material-symbols-outlined" style="font-size: 1rem;">trending_up</span>
+          <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
           <span>SaaS Subscription MRR</span>
         </div>
       </div>
@@ -30,11 +30,11 @@
 
     <!-- Active Subscribers KPI -->
     <div class="glass-card kpi-card">
-      <div class="kpi-icon" style="background: #F3F4F6; color: var(--text-heading); border-color: var(--border-color);">
-        <span class="material-symbols-outlined">shopping_cart</span>
+      <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: #0EA5E9; border-color: rgba(14, 165, 233, 0.2);">
+        <span class="material-symbols-outlined">corporate_fare</span>
       </div>
       <div>
-        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">ACTIVE ORGANIZATIONS</div>
+        <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ACTIVE ORGANIZATIONS</div>
         <div class="kpi-value">{{ activeSubscribers }}</div>
         <div style="color: var(--text-muted); font-size: 0.75rem;">Premium active tenants</div>
       </div>
@@ -42,11 +42,11 @@
 
     <!-- ARPU KPI -->
     <div class="glass-card kpi-card">
-      <div class="kpi-icon">
+      <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #D97706; border-color: rgba(245, 158, 11, 0.2);">
         <span class="material-symbols-outlined">account_balance_wallet</span>
       </div>
       <div>
-        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">AVERAGE REV / ACCT (ARPU)</div>
+        <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">AVERAGE REV / ACCT (ARPU)</div>
         <div class="kpi-value">${{ arpu }}</div>
         <div style="color: var(--text-muted); font-size: 0.75rem;">Average tenant monthly yield</div>
       </div>
@@ -54,13 +54,14 @@
 
     <!-- ARR KPI -->
     <div class="glass-card kpi-card">
-      <div class="kpi-icon" style="background: var(--success-bg); color: var(--success-color); border-color: var(--success-border);">
+      <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">
         <span class="material-symbols-outlined">trending_up</span>
       </div>
       <div>
-        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">ANNUAL ESTIMATED RUN (ARR)</div>
+        <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ANNUAL ESTIMATED RUN (ARR)</div>
         <div class="kpi-value">${{ annualRecurringRevenue }}</div>
         <div class="kpi-trend up">
+          <span class="material-symbols-outlined" style="font-size: 0.95rem;">auto_graph</span>
           <span>Based on current MRR</span>
         </div>
       </div>
@@ -108,7 +109,9 @@
         <tbody>
           @for (tx of transactions; track tx.id) {
             <tr>
-              <td style="font-family: monospace; font-weight: 600; color: var(--primary-color);">{{ tx.invoiceId }}</td>
+              <td>
+                <span class="badge-code">{{ tx.invoiceId }}</span>
+              </td>
               <td style="font-weight: 600; color: var(--text-heading);">{{ tx.tenantName }}</td>
               <td>
                 <span class="badge" [class.badge-success]="tx.plan === 'Enterprise'" [class.badge-info]="tx.plan === 'Pro' || tx.plan === 'Basic'">

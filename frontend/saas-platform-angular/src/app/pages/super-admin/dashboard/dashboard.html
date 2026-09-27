@@ -20,14 +20,14 @@
     <div class="dashboard-grid">
       <!-- Tenants KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon">
+        <div class="kpi-icon" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; border-color: rgba(79, 70, 229, 0.2);">
           <span class="material-symbols-outlined">corporate_fare</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">TOTAL TENANTS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL TENANTS</div>
           <div class="kpi-value">{{ totalTenants }}</div>
           <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">trending_up</span>
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
             <span>+12% this month</span>
           </div>
         </div>
@@ -35,14 +35,14 @@
 
       <!-- Active Users KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: #F3F4F6; color: var(--text-heading); border-color: var(--border-color);">
+        <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: #0EA5E9; border-color: rgba(14, 165, 233, 0.2);">
           <span class="material-symbols-outlined">group</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">ACTIVE USERS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ACTIVE USERS</div>
           <div class="kpi-value">{{ activeUsers }}</div>
           <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">trending_up</span>
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
             <span>+8% active</span>
           </div>
         </div>
@@ -50,14 +50,14 @@
 
       <!-- MRR KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon">
+        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">
           <span class="material-symbols-outlined">payments</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">MONTHLY REVENUE</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">MONTHLY REVENUE</div>
           <div class="kpi-value">${{ monthlyRevenue }}</div>
           <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">trending_up</span>
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
             <span>MRR Growth</span>
           </div>
         </div>
@@ -65,13 +65,13 @@
 
       <!-- System Health KPI -->
       <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: var(--success-bg); color: var(--success-color); border-color: var(--success-border);">
+        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6; border-color: rgba(139, 92, 246, 0.2);">
           <span class="material-symbols-outlined">security</span>
         </div>
         <div>
-          <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">SYSTEM STATUS</div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">SYSTEM STATUS</div>
           <div class="kpi-value" style="font-size: 1.5rem; color: var(--success-color); margin-top: 0.25rem; margin-bottom: 0.25rem;">ONLINE</div>
-          <div style="color: var(--text-muted); font-size: 0.75rem;">All nodes operational</div>
+          <div style="color: var(--text-muted); font-size: 0.75rem;">All services active</div>
         </div>
       </div>
     </div>
