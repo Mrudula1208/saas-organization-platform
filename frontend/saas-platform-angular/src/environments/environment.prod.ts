@@ -5,6 +5,6 @@
 // e.g. apiUrl: 'https://api.example.com/api', apiOrigin: 'https://api.example.com'.
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  apiOrigin: '',
+  apiUrl: 'http://saasplatform-backend.somee.com/api',
+  apiOrigin: 'http://saasplatform-backend.somee.com',
 };
