@@ -173,4 +173,8 @@ export class TenantService {
       }))
     );
   }
+
+  exportWorkspace(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export-workspace`, { responseType: 'blob' });
+  }
 }

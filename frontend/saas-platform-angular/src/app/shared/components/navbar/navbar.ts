@@ -1,14 +1,25 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
 import { AppNotification } from '../../../models/notification.model';
 
+export interface CommandItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  category: 'Navigation' | 'Actions';
+  icon: string;
+  badge?: string;
+  action: () => void;
+}
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
@@ -16,6 +27,11 @@ export class Navbar implements OnInit {
   isDarkTheme = true;
   showNotifications = false;
   showProfile = false;
+
+  // Command Palette State
+  showCommandPalette = false;
+  commandSearch = '';
+  selectedCommandIndex = 0;
 
   constructor(
     private auth: Auth,
@@ -159,6 +175,127 @@ export class Navbar implements OnInit {
     if (!target.closest('.profile-menu') && !target.closest('.nav-btn')) {
       this.showProfile = false;
       this.showNotifications = false;
+    }
+  }
+
+  // --- Command Palette Methods ---
+  openCommandPalette() {
+    this.showCommandPalette = true;
+    this.commandSearch = '';
+    this.selectedCommandIndex = 0;
+    this.showNotifications = false;
+    this.showProfile = false;
+  }
+
+  closeCommandPalette() {
+    this.showCommandPalette = false;
+    this.commandSearch = '';
+  }
+
+  toggleCommandPalette() {
+    if (this.showCommandPalette) {
+      this.closeCommandPalette();
+    } else {
+      this.openCommandPalette();
+    }
+  }
+
+  getAllCommands(): CommandItem[] {
+    const role = this.user()?.role;
+    const isSuperAdmin = role === 'SuperAdmin';
+    const isTenantAdmin = role === 'TenantAdmin';
+
+    const commands: CommandItem[] = [];
+
+    if (isSuperAdmin) {
+      commands.push(
+        { id: 'admin-dash', title: 'Global Dashboard', subtitle: 'Platform KPIs & Active Subscriptions', category: 'Navigation', icon: 'dashboard', badge: 'Admin', action: () => this.navigateAndClose('/admin/dashboard') },
+        { id: 'admin-tenants', title: 'Tenants Directory', subtitle: 'Manage organization workspaces', category: 'Navigation', icon: 'corporate_fare', badge: 'Admin', action: () => this.navigateAndClose('/admin/tenants') },
+        { id: 'admin-users', title: 'Global Users Directory', subtitle: 'Platform-wide user accounts', category: 'Navigation', icon: 'group', badge: 'Admin', action: () => this.navigateAndClose('/admin/users') },
+        { id: 'admin-plans', title: 'Subscription Plans', subtitle: 'Tier quotas & pricing limits', category: 'Navigation', icon: 'loyalty', badge: 'Admin', action: () => this.navigateAndClose('/admin/subscription-plans') },
+        { id: 'admin-rev', title: 'Revenue Analytics', subtitle: 'MRR, ARPU & billing receipts', category: 'Navigation', icon: 'analytics', badge: 'Admin', action: () => this.navigateAndClose('/admin/revenue') },
+        { id: 'admin-logs', title: 'System Diagnostic Logs', subtitle: 'Audit traces & exception telemetry', category: 'Navigation', icon: 'terminal', badge: 'Admin', action: () => this.navigateAndClose('/admin/system-logs') },
+        { id: 'admin-reports', title: 'Platform Reports Hub', subtitle: 'Consolidated ecosystem metrics', category: 'Navigation', icon: 'monitoring', badge: 'Admin', action: () => this.navigateAndClose('/admin/reports') },
+        { id: 'admin-settings', title: 'System Settings', subtitle: 'Global configurations & security', category: 'Navigation', icon: 'settings', badge: 'Admin', action: () => this.navigateAndClose('/admin/settings') }
+      );
+    } else {
+      commands.push(
+        { id: 't-dash', title: 'Workspace Dashboard', subtitle: 'Project velocity & team overview', category: 'Navigation', icon: 'dashboard', action: () => this.navigateAndClose('/tenant/dashboard') },
+        { id: 't-proj', title: 'Projects Workspace', subtitle: 'Deliverables & timeline tracking', category: 'Navigation', icon: 'folder_open', action: () => this.navigateAndClose('/tenant/projects') },
+        { id: 't-tasks', title: 'Tasks Kanban Board', subtitle: 'Interactive drag-and-drop task workflow', category: 'Navigation', icon: 'assignment', badge: 'Kanban', action: () => this.navigateAndClose('/tenant/tasks') },
+        { id: 't-users', title: 'Team Members Directory', subtitle: 'Manage organization user accounts', category: 'Navigation', icon: 'group', action: () => this.navigateAndClose('/tenant/users') },
+        { id: 't-reports', title: 'Analytics & Reports', subtitle: 'Productivity metrics & PDF exports', category: 'Navigation', icon: 'monitoring', action: () => this.navigateAndClose('/tenant/reports') },
+        { id: 't-settings', title: 'Workspace Settings', subtitle: 'Organization info, security & theme', category: 'Navigation', icon: 'settings', action: () => this.navigateAndClose('/tenant/settings') }
+      );
+
+      if (isTenantAdmin) {
+        commands.push(
+          { id: 't-billing', title: 'Subscription & Billing', subtitle: 'Tier quota guardrails & invoices', category: 'Navigation', icon: 'receipt_long', badge: 'Billing', action: () => this.navigateAndClose('/tenant/billing') }
+        );
+      }
+
+      commands.push(
+        { id: 't-notif', title: 'Notifications Center', subtitle: 'View task assignments & system alerts', category: 'Navigation', icon: 'notifications', action: () => this.navigateAndClose('/tenant/notifications') }
+      );
+    }
+
+    // Global Actions
+    commands.push(
+      { id: 'act-theme', title: `Toggle ${this.isDarkTheme ? 'Light' : 'Dark'} Theme`, subtitle: 'Switch color theme preference', category: 'Actions', icon: 'contrast', action: () => { this.toggleTheme(); this.closeCommandPalette(); } },
+      { id: 'act-notif', title: 'View All Notifications', subtitle: 'Open in-app activity notifications', category: 'Actions', icon: 'notifications', action: () => this.navigateAndClose(this.getNotificationsLink()) },
+      { id: 'act-logout', title: 'Sign Out Session', subtitle: 'Safely end active user authentication', category: 'Actions', icon: 'logout', action: () => { this.closeCommandPalette(); this.onLogout(); } }
+    );
+
+    return commands;
+  }
+
+  get filteredCommands(): CommandItem[] {
+    const list = this.getAllCommands();
+    const query = this.commandSearch.trim().toLowerCase();
+    if (!query) return list;
+    return list.filter(c => 
+      c.title.toLowerCase().includes(query) || 
+      (c.subtitle && c.subtitle.toLowerCase().includes(query)) ||
+      c.category.toLowerCase().includes(query)
+    );
+  }
+
+  navigateAndClose(path: string) {
+    this.closeCommandPalette();
+    this.router.navigate([path]);
+  }
+
+  navigateCommands(direction: number) {
+    const total = this.filteredCommands.length;
+    if (total === 0) return;
+    this.selectedCommandIndex = (this.selectedCommandIndex + direction + total) % total;
+  }
+
+  executeSelectedCommand() {
+    const commands = this.filteredCommands;
+    if (commands.length > 0 && this.selectedCommandIndex < commands.length) {
+      commands[this.selectedCommandIndex].action();
+    }
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.toggleCommandPalette();
+    } else if (event.key === 'Escape' && this.showCommandPalette) {
+      this.closeCommandPalette();
+    } else if (this.showCommandPalette) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.navigateCommands(1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.navigateCommands(-1);
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        this.executeSelectedCommand();
+      }
     }
   }
 }

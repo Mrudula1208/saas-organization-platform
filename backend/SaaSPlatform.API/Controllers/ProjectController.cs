@@ -17,10 +17,12 @@ namespace SaaSPlatform.API.Controllers
     public class ProjectController : ControllerBase
     {
         private readonly IProjectService _projectService;
+        private readonly INotificationService? _notificationService;
 
-        public ProjectController(IProjectService projectService)
+        public ProjectController(IProjectService projectService, INotificationService? notificationService = null)
         {
             _projectService = projectService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -74,6 +76,16 @@ namespace SaaSPlatform.API.Controllers
             try
             {
                 var project = await _projectService.CreateAsync(dto);
+
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(tenantId.Value, $"New project '{project.Name}' was created.");
+                    }
+                    catch { /* Safe catch */ }
+                }
+
                 return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
             }
             catch (ArgumentException ex)
@@ -122,6 +134,16 @@ namespace SaaSPlatform.API.Controllers
             try
             {
                 await _projectService.DeleteAsync(id, tenantId.Value);
+
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(tenantId.Value, "A project was deleted from the workspace.");
+                    }
+                    catch { /* Safe catch */ }
+                }
+
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

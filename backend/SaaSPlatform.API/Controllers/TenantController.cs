@@ -340,6 +340,48 @@ namespace SaaSPlatform.API.Controllers
             }
         }
 
+        [HttpGet("export-workspace")]
+        [Authorize(Roles = "TenantAdmin,SuperAdmin")]
+        public async Task<IActionResult> ExportWorkspace()
+        {
+            var tenantId = GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var tenant = await _tenantService.GetByIdAsync(tenantId.Value);
+            if (tenant == null) return NotFound(new { success = false, message = "Tenant not found." });
+
+            var settings = await _tenantService.GetSettingsAsync(tenantId.Value);
+
+            var exportPayload = new
+            {
+                ExportedAt = DateTime.UtcNow,
+                ExportedByUserId = GetUserId(),
+                Platform = "Multi-Tenant SaaS Organization Platform",
+                Workspace = new
+                {
+                    tenant.Id,
+                    tenant.Name,
+                    tenant.Domain,
+                    tenant.ContactEmail,
+                    tenant.ContactPhone,
+                    tenant.SubscriptionPlanId,
+                    tenant.IsActive,
+                    tenant.CreatedAt,
+                    tenant.LogoImageUrl,
+                    tenant.EmailNotificationsEnabled,
+                    tenant.InAppNotificationsEnabled
+                },
+                Settings = settings
+            };
+
+            var jsonBytes = System.Text.Encoding.UTF8.GetBytes(
+                System.Text.Json.JsonSerializer.Serialize(exportPayload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })
+            );
+
+            var safeDomain = string.IsNullOrWhiteSpace(tenant.Domain) ? "workspace" : tenant.Domain.Replace(" ", "_");
+            return File(jsonBytes, "application/json", $"{safeDomain}_workspace_export_{DateTime.UtcNow:yyyyMMdd}.json");
+        }
+
         private string GetLogosPath()
         {
             var uploadsPath = Path.Combine(_environment.ContentRootPath, _storageSettings.UploadsPath);

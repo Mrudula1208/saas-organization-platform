@@ -3,9 +3,10 @@
     <button class="nav-btn mobile-toggle" (click)="toggleSidebar()" aria-label="Toggle Navigation Menu">
       <span class="material-symbols-outlined">menu</span>
     </button>
-    <div class="search-box">
+    <div class="search-box" (click)="openCommandPalette()" style="cursor: pointer;" title="Open Command Palette (Ctrl + K)">
       <span class="material-symbols-outlined search-icon">search</span>
-      <input type="text" placeholder="Search dashboard..." aria-label="Search" />
+      <input type="text" placeholder="Search or press Ctrl + K..." aria-label="Search" readonly (click)="openCommandPalette()" />
+      <span class="kbd-shortcut">Ctrl K</span>
     </div>
   </div>
 
@@ -104,3 +105,64 @@
     </div>
   </div>
 </header>
+
+<!-- Enterprise Command Palette (Ctrl + K) Modal -->
+@if (showCommandPalette) {
+  <div class="cmd-backdrop animate-fade" (click)="closeCommandPalette()">
+    <div class="cmd-dialog animate-scale-up" (click)="$event.stopPropagation()">
+      <div class="cmd-header">
+        <span class="material-symbols-outlined cmd-search-icon">search</span>
+        <input
+          type="text"
+          class="cmd-input"
+          placeholder="Type a command or jump to page... (or type 'theme', 'tasks', 'settings')"
+          [(ngModel)]="commandSearch"
+          autofocus
+        />
+        <button class="cmd-esc-btn" (click)="closeCommandPalette()" title="Press Escape to close">ESC</button>
+      </div>
+
+      <div class="cmd-body">
+        @if (filteredCommands.length === 0) {
+          <div class="cmd-empty">
+            <span class="material-symbols-outlined" style="font-size: 2.25rem; color: var(--text-muted);">search_off</span>
+            <p style="margin-top: 0.5rem; color: var(--text-secondary);">No matching commands found for "{{ commandSearch }}"</p>
+          </div>
+        } @else {
+          <div class="cmd-list">
+            @for (cmd of filteredCommands; track cmd.id; let idx = $index) {
+              <div
+                class="cmd-item"
+                [class.selected]="idx === selectedCommandIndex"
+                (mouseenter)="selectedCommandIndex = idx"
+                (click)="cmd.action()"
+              >
+                <div class="cmd-item-icon">
+                  <span class="material-symbols-outlined">{{ cmd.icon }}</span>
+                </div>
+                <div class="cmd-item-text">
+                  <div class="cmd-item-title">{{ cmd.title }}</div>
+                  @if (cmd.subtitle) {
+                    <div class="cmd-item-subtitle">{{ cmd.subtitle }}</div>
+                  }
+                </div>
+                <div class="cmd-item-meta">
+                  @if (cmd.badge) {
+                    <span class="cmd-badge">{{ cmd.badge }}</span>
+                  }
+                  <span class="material-symbols-outlined cmd-arrow-icon">arrow_forward</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="cmd-footer">
+        <span class="cmd-footer-tip"><kbd>&uarr;</kbd> <kbd>&darr;</kbd> navigate</span>
+        <span class="cmd-footer-tip"><kbd>&crarr;</kbd> select</span>
+        <span class="cmd-footer-tip"><kbd>esc</kbd> close</span>
+      </div>
+    </div>
+  </div>
+}

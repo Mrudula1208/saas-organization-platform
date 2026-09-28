@@ -242,6 +242,44 @@
           </button>
         </form>
       </div>
+
+      <!-- Data Portability / GDPR Compliance Export Card -->
+      <div class="card">
+        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined" style="color: var(--primary-color);">folder_zip</span>
+          Data Portability & Export
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.25rem;">
+          Download a complete snapshot of your organization workspace metadata, team settings, and configuration archive for compliance and backup.
+        </p>
+
+        @if (exportSuccess) {
+          <div class="alert alert-success" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">check_circle</span>
+            <span>Workspace archive downloaded successfully.</span>
+          </div>
+        }
+
+        @if (exportError) {
+          <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">error</span>
+            <span>{{ exportError }}</span>
+          </div>
+        }
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem;"
+          (click)="exportWorkspaceData()"
+          [disabled]="isExportingData"
+        >
+          <span class="material-symbols-outlined" [class.spin-icon]="isExportingData">
+            {{ isExportingData ? 'autorenew' : 'download' }}
+          </span>
+          {{ isExportingData ? 'Preparing Archive...' : 'Export Workspace JSON' }}
+        </button>
+      </div>
     </div>
 
   </div>

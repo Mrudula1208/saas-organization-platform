@@ -46,6 +46,11 @@ export class Settings implements OnInit {
   isUploadingLogo = false;
   logoUploadError = '';
 
+  // Data Portability & Export
+  isExportingData = false;
+  exportSuccess = false;
+  exportError = '';
+
   constructor(
     private auth: Auth,
     private userService: UserService,
@@ -361,6 +366,33 @@ export class Settings implements OnInit {
       error: (err) => {
         this.isUploadingLogo = false;
         this.logoUploadError = err?.message || 'Failed to upload logo. Please try again.';
+      }
+    });
+  }
+
+  exportWorkspaceData() {
+    this.isExportingData = true;
+    this.exportSuccess = false;
+    this.exportError = '';
+
+    this.tenantService.exportWorkspace().subscribe({
+      next: (blob: Blob) => {
+        this.isExportingData = false;
+        this.exportSuccess = true;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const domain = this.workspaceForm.domain || 'workspace';
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        a.download = `${domain}_workspace_export_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.isExportingData = false;
+        this.exportError = err?.error?.message || 'Failed to export workspace data. Please try again.';
       }
     });
   }

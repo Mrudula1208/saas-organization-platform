@@ -14,10 +14,12 @@ namespace SaaSPlatform.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ITaskService _taskService;
+        private readonly INotificationService? _notificationService;
 
-        public TasksController(ITaskService taskService)
+        public TasksController(ITaskService taskService, INotificationService? notificationService = null)
         {
             _taskService = taskService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -55,6 +57,16 @@ namespace SaaSPlatform.API.Controllers
             {
                 return NotFound(new { success = false, message = "Task not found." });
             }
+
+            if (_notificationService != null)
+            {
+                try
+                {
+                    await _notificationService.CreateAsync(tenantId.Value, $"Task '{existing.Name}' status updated to {dto.Status}.");
+                }
+                catch { /* Notification logging should not fail status update */ }
+            }
+
             return Ok(new { success = true, message = "Task status updated." });
         }
 
@@ -99,6 +111,15 @@ namespace SaaSPlatform.API.Controllers
             {
                 var task = await _taskService.CreateAsync(dto);
 
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(tenantId.Value, $"New task '{task.Name}' was created.");
+                    }
+                    catch { /* Safe catch */ }
+                }
+
                 // Clear navigation references to avoid a JSON reference cycle
                 // (the tracked Project will navigate back to this task).
                 task.Project = null;
@@ -130,6 +151,16 @@ namespace SaaSPlatform.API.Controllers
             try
             {
                 await _taskService.UpdateAsync(Id, dto);
+
+                if (_notificationService != null)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(tenantId.Value, $"Task '{existing.Name}' details were updated.");
+                    }
+                    catch { /* Safe catch */ }
+                }
+
                 return NoContent();
             }
             catch (Exception ex)
@@ -149,6 +180,16 @@ namespace SaaSPlatform.API.Controllers
                 return NotFound();
 
             await _taskService.DeleteAsync(Id);
+
+            if (_notificationService != null)
+            {
+                try
+                {
+                    await _notificationService.CreateAsync(tenantId.Value, $"Task '{existing.Name}' was deleted.");
+                }
+                catch { /* Safe catch */ }
+            }
+
             return NoContent();
         }
 
