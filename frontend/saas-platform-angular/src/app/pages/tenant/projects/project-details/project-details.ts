@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -52,7 +52,8 @@ export class ProjectDetails implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService,
-    private auth: Auth
+    private auth: Auth,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -74,11 +75,14 @@ export class ProjectDetails implements OnInit {
   loadProject(): void {
     this.loading = true;
     this.loadError = '';
+    this.cdr.markForCheck();
 
     this.projectService.getProject(this.projectId).subscribe({
       next: (project: Project) => {
         this.project = project;
         this.loading = false;
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.project = null;
@@ -87,6 +91,8 @@ export class ProjectDetails implements OnInit {
           err,
           'Unable to load this project. It may have been removed or you may not have access to it.'
         );
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
     });
   }

@@ -1,257 +1,373 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Workspace Dashboard</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Overview of team, projects velocity, and tasks completions</p>
-    </div>
-    
-    <button class="btn btn-primary" (click)="loadTenantDashboard()" [disabled]="isLoading">
-      <span class="material-symbols-outlined" [class.fa-spin]="isLoading">refresh</span>
-      Sync Workspace
-    </button>
+<div class="tenant-dash-container animate-fade">
+  <!-- Top Breadcrumb Bar -->
+  <div class="dash-breadcrumb-bar">
+    <span class="breadcrumb-role">Tenant Admin</span>
+    <span class="breadcrumb-slash">/</span>
+    <span class="breadcrumb-name">{{ tenantName }}</span>
+    <span class="breadcrumb-badge">Workspace Overview</span>
   </div>
 
-  @if (isLoading) {
-    <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
-      <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 2.5rem; height: 2.5rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
-    </div>
-  } @else {
-    <!-- KPI cards grid -->
-    <div class="dashboard-grid">
-      <!-- Users KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; border-color: rgba(79, 70, 229, 0.2);">
-          <span class="material-symbols-outlined">group</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TEAM SIZE</div>
-          <div class="kpi-value">{{ totalUsers }}</div>
-          <div style="color: var(--text-muted); font-size: 0.75rem;">Registered members</div>
-        </div>
+  <!-- 1. Top 4 KPI Cards Row (Total Users, Total Projects, Active Tasks, Completed Tasks) -->
+  <div class="kpi-grid-row">
+    <!-- Card 1: Total Users -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Total Users</span>
+        <span class="kpi-icon-badge cyan">
+          <span class="material-symbols-outlined">person</span>
+        </span>
       </div>
+      <div class="kpi-card-value">{{ totalUsers }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ totalUsersTrend }}</span>
+      </div>
+    </div>
 
-      <!-- Projects KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: #0EA5E9; border-color: rgba(14, 165, 233, 0.2);">
+    <!-- Card 2: Total Projects -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Total Projects</span>
+        <span class="kpi-icon-badge teal">
           <span class="material-symbols-outlined">folder</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL PROJECTS</div>
-          <div class="kpi-value">{{ totalProjects }}</div>
-          <div style="color: var(--text-muted); font-size: 0.75rem;">Workspace projects</div>
-        </div>
+        </span>
       </div>
-
-      <!-- Active Tasks KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: #D97706; border-color: rgba(245, 158, 11, 0.2);">
-          <span class="material-symbols-outlined">assignment_late</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ACTIVE TASKS</div>
-          <div class="kpi-value">{{ activeTasksCount }}</div>
-          <div style="color: var(--text-muted); font-size: 0.75rem;">Tasks in progress or to do</div>
-        </div>
-      </div>
-
-      <!-- Completed Tasks KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">
-          <span class="material-symbols-outlined">task_alt</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">COMPLETED TASKS</div>
-          <div class="kpi-value">{{ completedTasksCount }}</div>
-          <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 0.95rem;">check</span>
-            <span>Task execution high</span>
-          </div>
-        </div>
+      <div class="kpi-card-value">{{ totalProjects }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ totalProjectsTrend }}</span>
       </div>
     </div>
 
-    <!-- Subscription Plan & Quota Guardrails Widget -->
-    @if (currentPlan) {
-      <div class="glass-card" style="margin-bottom: 2rem; padding: 1.5rem; border-color: rgba(99, 102, 241, 0.25);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-color);">
-          <div style="display: flex; align-items: center; gap: 0.85rem;">
-            <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(99, 102, 241, 0.12); display: flex; align-items: center; justify-content: center; color: var(--primary-color);">
-              <span class="material-symbols-outlined" style="font-size: 1.5rem;">workspace_premium</span>
-            </div>
-            <div>
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.2rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-heading);">{{ currentPlan.planName }} Plan</span>
-                <span class="badge badge-success" style="font-size: 0.75rem;">Active</span>
-              </div>
-              <span style="font-size: 0.825rem; color: var(--text-secondary);">${{ currentPlan.price }}/month &middot; Renews {{ currentPlan.nextBillingDate ? (currentPlan.nextBillingDate | date:'mediumDate') : 'Monthly' }}</span>
-            </div>
-          </div>
-
-          <a routerLink="/tenant/billing" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.25rem;">tune</span>
-            Manage Plan & Quotas
-          </a>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-          <!-- Project Quota -->
-          <div class="stat-tile" style="padding: 1.1rem; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
-              <span style="font-weight: 600; color: var(--text-heading);">Project Workspace Capacity</span>
-              <span style="font-weight: 700; color: var(--primary-color);">{{ totalProjects }} / {{ currentPlan.maxProjects }} ({{ projectQuotaPercent }}%)</span>
-            </div>
-            <div style="width: 100%; height: 8px; background: var(--chart-track); border-radius: var(--radius-full); overflow: hidden;">
-              <div style="height: 100%; border-radius: var(--radius-full); transition: width 0.4s ease;"
-                   [style.width.%]="projectQuotaPercent"
-                   [style.background]="projectQuotaPercent >= 90 ? 'var(--danger-color)' : (projectQuotaPercent >= 70 ? 'var(--warning-color)' : 'var(--primary-color)')"></div>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.45rem;">
-              {{ currentPlan.maxProjects - totalProjects }} project slots available
-            </div>
-          </div>
-
-          <!-- Team Seats Quota -->
-          <div class="stat-tile" style="padding: 1.1rem; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
-              <span style="font-weight: 600; color: var(--text-heading);">Team Member Seats</span>
-              <span style="font-weight: 700; color: #0EA5E9;">{{ totalUsers }} / {{ currentPlan.maxUsers }} ({{ userQuotaPercent }}%)</span>
-            </div>
-            <div style="width: 100%; height: 8px; background: var(--chart-track); border-radius: var(--radius-full); overflow: hidden;">
-              <div style="height: 100%; border-radius: var(--radius-full); transition: width 0.4s ease;"
-                   [style.width.%]="userQuotaPercent"
-                   [style.background]="userQuotaPercent >= 90 ? 'var(--danger-color)' : (userQuotaPercent >= 70 ? 'var(--warning-color)' : '#0EA5E9')"></div>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.45rem;">
-              {{ currentPlan.maxUsers - totalUsers }} member seats available
-            </div>
-          </div>
-
-          <!-- Cloud Storage Tier -->
-          <div class="stat-tile" style="padding: 1.1rem; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
-              <span style="font-weight: 600; color: var(--text-heading);">Cloud Storage</span>
-              <span style="font-weight: 700; color: var(--success-color);">{{ storageLimitGB }} GB Limit</span>
-            </div>
-            <div style="width: 100%; height: 8px; background: var(--chart-track); border-radius: var(--radius-full); overflow: hidden;">
-              <div style="height: 100%; width: 12%; background: var(--success-color); border-radius: var(--radius-full);"></div>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.45rem;">
-              High-Speed Enterprise Document Storage
-            </div>
-          </div>
-        </div>
+    <!-- Card 3: Active Tasks -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Active Tasks</span>
+        <span class="kpi-icon-badge blue">
+          <span class="material-symbols-outlined">assignment</span>
+        </span>
       </div>
-    }
-
-    <!-- Charts and timeline -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;" class="chart-grid">
-      
-      <!-- Circular Progress KPI Card -->
-      <div class="glass-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem;">
-        <h3 style="font-family: var(--font-heading); margin-bottom: 1.5rem; font-size: 1.05rem; align-self: flex-start; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">donut_large</span>
-          Overall Tasks Completion Rate
-        </h3>
-        
-        <div class="donut-chart">
-          <svg class="donut-svg" width="160" height="160" viewBox="0 0 120 120">
-            <!-- Background circle -->
-            <circle class="donut-ring" cx="60" cy="60" r="54"></circle>
-            <!-- Foreground circle representing progress -->
-            <circle class="donut-segment" cx="60" cy="60" r="54" 
-                    [style.stroke-dasharray]="'339.29'" 
-                    [style.stroke-dashoffset]="strokeDashoffset"></circle>
-          </svg>
-          <div class="donut-center">
-            <div class="donut-percent">{{ completionRate }}%</div>
-            <div class="donut-label">Completed</div>
-          </div>
-        </div>
+      <div class="kpi-card-value">{{ activeTasksCount }}</div>
+      <div class="kpi-trend-pill neutral">
+        <span class="trend-bullet">●</span>
+        <span>{{ activeTasksTrend }}</span>
       </div>
+    </div>
 
-      <!-- Activity log list -->
-      <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-        <h3 style="font-family: var(--font-heading); margin-bottom: 1.25rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">history</span>
-          Recent Workspace Activity
-        </h3>
-        
-        <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;">
-          @for (act of recentActivities; track act.id) {
-            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-              <div style="padding: 0.35rem; border-radius: var(--radius-sm); display: grid; place-content: center; background: var(--bg-card-hover); border: 1px solid var(--border-color);" [style.color]="act.color">
-                <span class="material-symbols-outlined" style="font-size: 1.15rem;">{{ act.icon }}</span>
-              </div>
-              <div style="flex: 1;">
-                <div style="font-size: 0.875rem; line-height: 1.4; color: var(--text-heading);">{{ act.message }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">{{ act.time }}</div>
-              </div>
-            </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-              No recent workspace activity recorded yet.
+    <!-- Card 4: Completed Tasks -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Completed Tasks</span>
+        <span class="kpi-icon-badge green">
+          <span class="material-symbols-outlined">check_circle</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ completedTasksCount }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ completedTasksTrend }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Middle Row: 3 Console Cards (Kanban 48%, Completion Breakdown 26%, Activity Feed 26%) -->
+  <div class="tenant-middle-row">
+    <!-- Card 1: Project Overviews 4-Lane Sprint Board -->
+    <div class="console-card project-overviews-card">
+      <div class="widget-header-flex">
+        <div>
+          <h2 class="widget-card-title">Project Overviews</h2>
+          <p class="widget-card-subtitle">Active sprint lanes and deliverables</p>
+        </div>
+
+        <!-- Interactive Dropdown -->
+        <div class="dropdown-wrapper">
+          <button class="btn-interactive-pill" (click)="toggleInteractiveDropdown($event)" type="button">
+            <span class="material-symbols-outlined pill-icon">tune</span>
+            <span>{{ selectedInteractive }}</span>
+            <span class="material-symbols-outlined chevron-icon">expand_more</span>
+          </button>
+
+          @if (interactiveDropdownOpen) {
+            <div class="dropdown-menu-list">
+              @for (opt of interactiveOptions; track opt) {
+                <button class="dropdown-menu-item" (click)="selectInteractive(opt)" type="button">
+                  {{ opt }}
+                </button>
+              }
             </div>
           }
         </div>
       </div>
 
-    </div>
-
-    <!-- Workspace Projects Table Card -->
-    <div class="glass-card" style="padding: 0; overflow: hidden;">
-      <div style="padding: 1.25rem 1.5rem 0.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">folder</span>
-          Active Projects Velocity
-        </h3>
-        <a routerLink="/tenant/projects" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: none; font-weight: 600; display: flex; align-items: center;">
-          View Project Boards
-          <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
-        </a>
-      </div>
-
-      <div class="table-container" style="border: none; margin-top: 0;">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Task Progress</th>
-              <th style="width: 150px;">Percentage</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (project of recentProjects; track project.id) {
-              <tr>
-                <td style="font-weight: 600; color: var(--text-heading);">{{ project.name }}</td>
-                <td>
-                  <span class="badge" [class.badge-danger]="project.priority === 'High'" [class.badge-warning]="project.priority === 'Medium'" [class.badge-info]="project.priority === 'Low'">
-                    {{ project.priority }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge" [class.badge-success]="project.status === 'Completed'" [class.badge-info]="project.status === 'In Progress'" [class.badge-warning]="project.status === 'Pending'">
-                    {{ project.status }}
-                  </span>
-                </td>
-                <td>
-                  <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden; width: 100%;">
-                    <div [style.width.%]="project.progress" style="height: 100%; background: var(--primary-color); border-radius: var(--radius-full);"></div>
-                  </div>
-                </td>
-                <td style="font-weight: 600; color: var(--text-secondary);">
-                  {{ project.progress }}% Complete
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active projects in this workspace yet.</td>
-              </tr>
+      <!-- 4 Kanban Columns: Backlog, In Progress, Review, Done -->
+      <div class="kanban-lanes-row">
+        <!-- Lane 1: Backlog -->
+        <div class="kanban-lane-col">
+          <div class="lane-header-row lane-cyan">
+            <span class="lane-title">Backlog</span>
+            <span class="material-symbols-outlined lane-dots">more_horiz</span>
+          </div>
+          <div class="lane-cards-stack">
+            @for (task of backlogTasks; track task.id) {
+              <div class="mini-task-card" routerLink="/tenant/tasks">
+                <div class="mini-task-name">{{ task.name }}</div>
+                <div class="mini-task-meta">
+                  <span class="material-symbols-outlined meta-clock">schedule</span>
+                  <span class="meta-tag">{{ task.taskTag }}</span>
+                </div>
+              </div>
             }
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        <!-- Lane 2: In Progress -->
+        <div class="kanban-lane-col">
+          <div class="lane-header-row lane-amber">
+            <span class="lane-title">In Progress</span>
+            <span class="material-symbols-outlined lane-dots">more_horiz</span>
+          </div>
+          <div class="lane-cards-stack">
+            @for (task of inProgressTasks; track task.id) {
+              <div class="mini-task-card" routerLink="/tenant/tasks">
+                <div class="mini-task-name">{{ task.name }}</div>
+                <div class="mini-task-meta">
+                  <span class="material-symbols-outlined meta-clock">schedule</span>
+                  <span class="meta-tag">{{ task.taskTag }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Lane 3: Review -->
+        <div class="kanban-lane-col">
+          <div class="lane-header-row lane-purple">
+            <span class="lane-title">Review</span>
+            <span class="material-symbols-outlined lane-dots">more_horiz</span>
+          </div>
+          <div class="lane-cards-stack">
+            @for (task of reviewTasks; track task.id) {
+              <div class="mini-task-card" routerLink="/tenant/tasks">
+                <div class="mini-task-name">{{ task.name }}</div>
+                <div class="mini-task-meta">
+                  <span class="material-symbols-outlined meta-clock">schedule</span>
+                  <span class="meta-tag">{{ task.taskTag }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Lane 4: Done -->
+        <div class="kanban-lane-col">
+          <div class="lane-header-row lane-green">
+            <span class="lane-title">Done</span>
+            <span class="material-symbols-outlined lane-dots">more_horiz</span>
+          </div>
+          <div class="lane-cards-stack">
+            @for (task of doneTasks; track task.id) {
+              <div class="mini-task-card" routerLink="/tenant/tasks">
+                <div class="mini-task-name">{{ task.name }}</div>
+                <div class="mini-task-meta">
+                  <span class="material-symbols-outlined meta-clock">schedule</span>
+                  <span class="meta-tag">{{ task.taskTag }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
       </div>
     </div>
-  }
+
+    <!-- Card 2: Tasks Completion Breakdown & Velocity -->
+    <div class="console-card project-completion-card">
+      <div class="widget-header-flex">
+        <div>
+          <h2 class="widget-card-title">Tasks Completion Breakdown</h2>
+          <p class="widget-card-subtitle">Sprint distribution & progress status</p>
+        </div>
+      </div>
+
+      <!-- Donut Chart & Legend -->
+      <div class="donut-and-legend-row">
+        <div class="donut-svg-wrapper">
+          <svg width="78" height="78" viewBox="0 0 120 120" class="donut-chart-svg">
+            <!-- Track -->
+            <circle cx="60" cy="60" r="54" class="donut-track" />
+            <!-- Glowing Cyan Segment (e.g. 33%) -->
+            <circle cx="60" cy="60" r="54" class="donut-fill"
+                    [style.stroke-dasharray]="'339.29'"
+                    [style.stroke-dashoffset]="donutDashOffset" />
+          </svg>
+          <div class="donut-center-overlay">
+            <span class="donut-large-value">{{ completionRate }}%</span>
+            <span class="donut-label-sub">Done</span>
+          </div>
+        </div>
+
+        <div class="donut-legend-stack">
+          <div class="legend-item">
+            <span class="legend-dot dot-green"></span>
+            <span class="legend-name">Done: <strong>{{ completedTasksCount }} ({{ completionRate }}%)</strong></span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-amber"></span>
+            <span class="legend-name">In Progress: <strong>{{ inProgressTasksCount }} ({{ inProgressRate }}%)</strong></span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-purple"></span>
+            <span class="legend-name">Review: <strong>{{ reviewTasksCount }} ({{ reviewRate }}%)</strong></span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-blue"></span>
+            <span class="legend-name">Backlog: <strong>{{ backlogTasksCount }} ({{ backlogRate }}%)</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Delivery Velocity -->
+      <div class="dual-bar-chart-container">
+        <div class="bar-chart-header">
+          <span class="bar-chart-title">Monthly Delivery Velocity</span>
+          <div class="bar-chart-legend">
+            <span class="legend-pill-tag"><span class="legend-box cyan"></span> Created</span>
+            <span class="legend-pill-tag"><span class="legend-box amber"></span> Completed</span>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 290 85" class="dual-bar-svg" preserveAspectRatio="none">
+          <!-- Y Axis labels -->
+          <text x="5" y="15" class="bar-axis-text">40</text>
+          <text x="5" y="35" class="bar-axis-text">30</text>
+          <text x="5" y="55" class="bar-axis-text">20</text>
+          <text x="12" y="75" class="bar-axis-text">0</text>
+
+          <!-- Subtle Gridlines -->
+          <line x1="28" y1="13" x2="285" y2="13" class="bar-gridline" />
+          <line x1="28" y1="33" x2="285" y2="33" class="bar-gridline" />
+          <line x1="28" y1="53" x2="285" y2="53" class="bar-gridline" />
+          <line x1="28" y1="73" x2="285" y2="73" class="bar-gridline" />
+
+          <!-- Monthly Dual Bars -->
+          @for (bar of dualBars; track bar.month) {
+            <rect [attr.x]="bar.x" [attr.y]="bar.cyanY" width="10" [attr.height]="bar.cyanHeight" rx="2" class="bar-cyan" />
+            <rect [attr.x]="bar.x + 12" [attr.y]="bar.orangeY" width="10" [attr.height]="bar.orangeHeight" rx="2" class="bar-amber" />
+            <text [attr.x]="bar.x + 11" y="84" text-anchor="middle" class="bar-month-text">{{ bar.month }}</text>
+          }
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card 3: Recent Activity Feed -->
+    <div class="console-card recent-activity-card">
+      <h2 class="activity-feed-title">Recent Activity Feed</h2>
+
+      <div class="activity-items-stack">
+        @for (feed of recentActivities; track feed.id) {
+          <div class="feed-item-row">
+            <div class="feed-icon-circle" [style.background]="feed.iconBg" [style.color]="feed.iconColor">
+              <span class="material-symbols-outlined feed-icon">{{ feed.icon }}</span>
+            </div>
+            <div class="feed-content-block">
+              <div class="feed-title-line">{{ feed.title }}</div>
+              <div class="feed-desc-line">{{ feed.subtitle }}</div>
+              <div class="feed-time-line">{{ feed.timeAgo }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="feed-footer-row">
+        <button class="btn-show-all-feed" (click)="viewAllActivities()" type="button">
+          View All Notifications
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Bottom Row: Organization Projects Table (Full Width) -->
+  <div class="console-card tenant-management-card">
+    <div class="table-header-flex">
+      <div>
+        <h2 class="widget-card-title">Organization Projects</h2>
+        <p class="widget-card-subtitle">Active projects, sprint deliverables, and team progress</p>
+      </div>
+
+      <div class="table-actions-group">
+        <button class="btn-table-action" type="button" routerLink="/tenant/projects">
+          <span class="material-symbols-outlined action-icon">folder_open</span>
+          <span>View All Projects</span>
+        </button>
+        <button class="btn-add-cyan" type="button" (click)="openAddProjectModal()">
+          <span>+ New Project</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-scroll-container">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()" class="custom-checkbox" />
+            </th>
+            <th>Project Name</th>
+            <th>Priority</th>
+            <th>Task Progress</th>
+            <th>Last Activity</th>
+            <th>Status</th>
+            <th style="width: 40px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tableRows; track row.id) {
+            <tr class="table-data-row" (click)="onRowClick(row)">
+              <td (click)="$event.stopPropagation()">
+                <input type="checkbox" [checked]="row.isSelected" (change)="toggleRowSelection(row, $event)" class="custom-checkbox" />
+              </td>
+              <td>
+                <div class="tenant-identity-cell">
+                  <div class="tenant-avatar-badge">{{ row.initials }}</div>
+                  <div>
+                    <div class="tenant-display-name">{{ row.name }}</div>
+                    <div class="tenant-display-subtitle">{{ row.subtitle }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="stating-badge {{ row.priorityClass }}">
+                  {{ row.priority }}
+                </span>
+              </td>
+              <td>
+                <div class="progress-cell-wrapper">
+                  <div class="progress-text-line">
+                    <span>{{ row.completedTasksCount }} / {{ row.totalTasksCount }} Tasks</span>
+                    <span>{{ row.progressPercent }}%</span>
+                  </div>
+                  <div class="mini-progress-track">
+                    <div class="mini-progress-fill" [style.width.%]="row.progressPercent"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="cell-last-used">{{ row.lastUpdated }}</td>
+              <td>
+                <div class="status-indicator-flex">
+                  <span class="status-dot {{ row.statusDotClass }}"></span>
+                  <span class="status-label">{{ row.status }}</span>
+                </div>
+              </td>
+              <td (click)="$event.stopPropagation()">
+                <button class="btn-row-menu" type="button" routerLink="/tenant/projects">
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
+

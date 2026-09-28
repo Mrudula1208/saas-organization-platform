@@ -1,212 +1,409 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Projects Workspace</h1>
-        @if (currentPlan) {
-          <span class="badge" [class.badge-success]="!isAtProjectLimit" [class.badge-danger]="isAtProjectLimit" style="font-size: 0.75rem;">
-            {{ totalCount }} / {{ currentPlan.maxProjects }} Projects Used
-          </span>
-        }
-      </div>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization deliverables, timeline deadlines, project health, and owner allocations</p>
-    </div>
-
-    @if (canCreateProject) {
-      <button class="btn btn-primary" (click)="openCreateModal()" [class.btn-warning]="isAtProjectLimit">
-        <span class="material-symbols-outlined">{{ isAtProjectLimit ? 'lock' : 'create_new_folder' }}</span>
-        {{ isAtProjectLimit ? 'Capacity Reached' : 'Create Project' }}
-      </button>
-    }
+<div class="project-list-page animate-fade">
+  <!-- Top Breadcrumb Bar -->
+  <div class="dash-breadcrumb-bar">
+    <span class="breadcrumb-role">Tenant Admin</span>
+    <span class="breadcrumb-slash">/</span>
+    <span class="breadcrumb-path">src/pages/app/projects/ProjectList.tsx</span>
   </div>
 
-  <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+  <!-- Top Analytics & Controls Card Row -->
+  <div class="top-controls-card">
+    <!-- Left: Overall Project Progress Circular Gauge -->
+    <div class="progress-gauge-block">
+      <div class="gauge-svg-wrapper">
+        <svg width="68" height="68" viewBox="0 0 80 80" class="gauge-svg">
+          <circle cx="40" cy="40" r="34" class="gauge-track" />
+          <circle cx="40" cy="40" r="34" class="gauge-fill"
+                  [style.stroke-dasharray]="circleCircumference"
+                  [style.stroke-dashoffset]="overallProgressDashOffset" />
+        </svg>
+        <div class="gauge-center-text">
+          <span class="gauge-pct">{{ overallProgress }}%</span>
+        </div>
+      </div>
+      <div class="gauge-text-block">
+        <span class="gauge-title">Overall Project Progress</span>
+        <span class="gauge-big-stat">{{ overallProgress }}%</span>
+      </div>
+    </div>
+
+    <!-- Center/Right: Search, Filter, and Create Button -->
+    <div class="filters-and-action-block">
+      <!-- Search Input with Keyboard Chip -->
+      <div class="search-input-wrapper">
+        <span class="material-symbols-outlined search-icon">search</span>
         <input
+          id="project-search-input"
           type="text"
-          class="form-input"
-          placeholder="Search projects by name, description..."
+          class="project-search-input"
+          placeholder="Search Projects"
           [(ngModel)]="searchQuery"
           (input)="onSearch()"
         />
+        <span class="keyboard-chip">Ctrl+K</span>
       </div>
 
-      <div class="form-group" style="width: 200px; margin-bottom: 0;">
-        <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
-          <option value="">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
+      <!-- Filter by Status -->
+      <div class="filter-status-wrapper">
+        <span class="filter-label">Filter by Status</span>
+        <div class="custom-select-wrapper">
+          <select class="custom-status-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+            <option value="">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
       </div>
+
+      <!-- Create Project Button -->
+      @if (canCreateProject) {
+        <button class="btn-create-cyan" (click)="openCreateModal()" type="button" [class.btn-limited]="isAtProjectLimit">
+          <span class="material-symbols-outlined btn-plus-icon">{{ isAtProjectLimit ? 'lock' : 'add' }}</span>
+          <span>{{ isAtProjectLimit ? 'Quota Limit' : 'Create Project' }}</span>
+        </button>
+      }
     </div>
   </div>
 
-  <!-- Projects Table Card -->
-  <div class="glass-card" style="padding: 0; overflow: hidden;">
+  <!-- Project Directory Card -->
+  <div class="project-directory-card">
+    <div class="directory-card-header">
+      <div>
+        <h2 class="directory-card-title">Project Directory</h2>
+        <p class="directory-card-subtitle">Active projects, timelines, owners, and deliverables</p>
+      </div>
+
+      @if (currentPlan) {
+        <div class="quota-pill" [class.quota-warning]="isAtProjectLimit">
+          <span class="material-symbols-outlined quota-icon">folder</span>
+          <span>{{ totalCount }} / {{ currentPlan.maxProjects }} Projects Used</span>
+        </div>
+      }
+    </div>
+
+    <!-- Loading State -->
     @if (isLoading) {
-      <div class="members-state" style="border: none; border-radius: 0;">
-        <span class="spinner" aria-hidden="true"></span>
-        <span>Loading projects...</span>
+      <div class="table-state-box">
+        <div class="state-spinner"></div>
+        <span>Loading projects workspace...</span>
       </div>
     } @else if (loadError) {
-      <div class="members-state members-error" style="border: none; border-radius: 0;">
-        <span class="material-symbols-outlined">error</span>
+      <div class="table-state-box error">
+        <span class="material-symbols-outlined state-icon">error</span>
         <span>{{ loadError }}</span>
-        <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="loadProjects()">Retry</button>
+        <button class="btn-retry-cyan" (click)="loadProjects()" type="button">Retry</button>
       </div>
     } @else {
-    <div class="table-container" style="border: none; margin-top: 0;">
-      <table class="custom-table">
-        <thead>
-          <tr>
-            <th>Project Name</th>
-            <th>Owner</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Priority</th>
-            <th>Progress</th>
-            <th>Status</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (project of filteredProjects; track project.id) {
+      <!-- Table Container -->
+      <div class="table-wrapper">
+        <table class="project-table">
+          <thead>
             <tr>
-              <td style="font-weight: 600; color: var(--text-heading);">{{ project.name }}</td>
-              <td>
-                <span style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-heading);">
-                  <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--text-muted);">person</span>
-                  {{ project.ownerName || '—' }}
-                </span>
-              </td>
-              <td>{{ project.startDate | date:'mediumDate' }}</td>
-              <td>{{ project.endDate | date:'mediumDate' }}</td>
-              <td>
-                <span class="badge" [class.badge-danger]="project.priority === 'High'" [class.badge-warning]="project.priority === 'Medium'" [class.badge-info]="project.priority === 'Low'">
-                  {{ project.priority }}
-                </span>
-              </td>
-              <td>
-                <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 120px;">
-                  <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden; flex: 1;">
-                    <div [style.width.%]="project.progress" style="height: 100%; background: var(--primary-color); border-radius: var(--radius-full);"></div>
+              <th style="width: 44px;">
+                <input
+                  type="checkbox"
+                  class="custom-checkbox"
+                  [checked]="selectAll"
+                  (change)="toggleSelectAll()"
+                />
+              </th>
+              <th>Project Name</th>
+              <th>Owner</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th style="width: 170px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (project of filteredProjects; track project.id) {
+              <tr class="table-row" [class.row-selected]="isRowSelected(project.id)" (click)="viewProject(project.id)">
+                <!-- Checkbox -->
+                <td (click)="$event.stopPropagation()">
+                  <input
+                    type="checkbox"
+                    class="custom-checkbox"
+                    [checked]="isRowSelected(project.id)"
+                    (change)="toggleRowSelection(project.id, $event)"
+                  />
+                </td>
+
+                <!-- Project Name -->
+                <td>
+                  <div class="project-name-cell">
+                    <span class="project-name-text">{{ project.name }}</span>
+                    @if (project.description) {
+                      <span class="project-desc-sub">{{ project.description }}</span>
+                    }
                   </div>
-                  <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">{{ project.progress }}%</span>
-                </div>
-              </td>
-              <td>
-                <span class="badge" [class.badge-success]="project.status === 'Completed'" [class.badge-info]="project.status === 'In Progress'" [class.badge-warning]="project.status === 'Pending'">
-                  {{ project.status }}
-                </span>
-              </td>
-              <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="View details" (click)="viewProject(project.id)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">visibility</span>
-                </button>
-                @if (canManageMembers) {
-                  <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Manage members" (click)="openMembersModal(project)">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">group</span>
-                  </button>
-                }
-                @if (canDeleteProject) {
-                  <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="Delete project" (click)="deleteProject(project.id)">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                  </button>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">folder_off</span>
-                <div>No projects found in this workspace.</div>
-              </td>
-            </tr>
+                </td>
+
+                <!-- Owner -->
+                <td>
+                  <div class="owner-cell">
+                    <div class="owner-avatar" [style.background]="getOwnerColor(project.ownerName)">
+                      {{ getOwnerInitials(project.ownerName) }}
+                    </div>
+                    <span class="owner-name-text">{{ project.ownerName || 'Unassigned' }}</span>
+                  </div>
+                </td>
+
+                <!-- Start Date -->
+                <td class="date-cell">
+                  {{ project.startDate ? (project.startDate | date:'mediumDate') : '—' }}
+                </td>
+
+                <!-- End Date -->
+                <td class="date-cell">
+                  {{ project.endDate ? (project.endDate | date:'mediumDate') : '—' }}
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <span class="status-pill {{ getStatusBadgeClass(project.status) }}">
+                    {{ project.status }}
+                  </span>
+                </td>
+
+                <!-- Actions: View, Edit, Delete, Add Members, More -->
+                <td style="text-align: right;" (click)="$event.stopPropagation()">
+                  <div class="actions-flex-row">
+                    <!-- 1. View -->
+                    <button
+                      class="btn-action-icon"
+                      title="View Project Details"
+                      (click)="viewProject(project.id)"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined action-svg">visibility</span>
+                    </button>
+
+                    <!-- 2. Edit -->
+                    @if (canCreateProject) {
+                      <button
+                        class="btn-action-icon"
+                        title="Edit Project"
+                        (click)="openEditModal(project, $event)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">edit</span>
+                      </button>
+                    }
+
+                    <!-- 3. Delete -->
+                    @if (canDeleteProject) {
+                      <button
+                        class="btn-action-icon delete"
+                        title="Delete Project"
+                        (click)="openDeleteModal(project, $event)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">delete</span>
+                      </button>
+                    }
+
+                    <!-- 4. Add Members -->
+                    @if (canManageMembers) {
+                      <button
+                        class="btn-action-icon members"
+                        title="Manage Project Members"
+                        (click)="openMembersModal(project, $event)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">person_add</span>
+                      </button>
+                    }
+
+                    <!-- 5. More Menu Popover -->
+                    <div class="more-menu-wrapper">
+                      <button
+                        class="btn-action-icon more"
+                        title="More Actions"
+                        (click)="toggleMoreMenu(project.id, $event)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">more_horiz</span>
+                      </button>
+
+                      @if (activeMoreMenuId === project.id) {
+                        <div class="more-dropdown-panel" (click)="$event.stopPropagation()">
+                          <button class="more-dropdown-item" (click)="viewProject(project.id)" type="button">
+                            <span class="material-symbols-outlined item-icon">open_in_new</span>
+                            <span>Open Details</span>
+                          </button>
+                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Active', $event)" type="button">
+                            <span class="material-symbols-outlined item-icon active-green">play_arrow</span>
+                            <span>Mark as Active</span>
+                          </button>
+                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Completed', $event)" type="button">
+                            <span class="material-symbols-outlined item-icon check-teal">task_alt</span>
+                            <span>Mark Completed</span>
+                          </button>
+                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Pending', $event)" type="button">
+                            <span class="material-symbols-outlined item-icon pause-amber">pause</span>
+                            <span>Mark Pending</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty-table-cell">
+                  <div class="empty-state-content">
+                    <span class="material-symbols-outlined empty-icon">folder_off</span>
+                    <div class="empty-title">No projects found in this workspace</div>
+                    <p class="empty-subtitle">Try adjusting your search criteria or create your first project below.</p>
+                    @if (canCreateProject) {
+                      <button class="btn-create-cyan" (click)="openCreateModal()" type="button" style="margin-top: 0.75rem;">
+                        <span class="material-symbols-outlined btn-plus-icon">add</span>
+                        <span>Create Project</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="directory-footer">
+        <div class="footer-count-text">
+          Showing {{ pageStartItem }} to {{ pageEndItem }} of {{ totalCount }} projects
+        </div>
+
+        <div class="pagination-buttons-row">
+          <!-- First Page -->
+          <button
+            class="btn-page-step"
+            [disabled]="page <= 1 || isLoading"
+            (click)="setPage(1)"
+            type="button"
+            title="First Page"
+          >
+            &laquo;
+          </button>
+
+          <!-- Prev Page -->
+          <button
+            class="btn-page-step"
+            [disabled]="page <= 1 || isLoading"
+            (click)="prevPage()"
+            type="button"
+            title="Previous Page"
+          >
+            &lsaquo;
+          </button>
+
+          <!-- Numbered Pages -->
+          @for (p of pagesArray; track p) {
+            <button
+              class="btn-page-number"
+              [class.active]="p === page"
+              (click)="setPage(p)"
+              type="button"
+            >
+              {{ p }}
+            </button>
           }
-        </tbody>
-      </table>
-    </div>
+
+          <!-- Next Page -->
+          <button
+            class="btn-page-step"
+            [disabled]="page >= totalPages || isLoading"
+            (click)="nextPage()"
+            type="button"
+            title="Next Page"
+          >
+            &rsaquo;
+          </button>
+
+          <!-- Last Page -->
+          <button
+            class="btn-page-step"
+            [disabled]="page >= totalPages || isLoading"
+            (click)="setPage(totalPages)"
+            type="button"
+            title="Last Page"
+          >
+            &raquo;
+          </button>
+        </div>
+      </div>
     }
   </div>
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (isLoading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
-    </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="isLoading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="isLoading || page >= totalPages" (click)="nextPage()">Next</button>
-    </div>
-  </div>
-
-  <!-- Popup Modal: Create Project -->
+  <!-- Modal 1: Create Project (Matches Image 3) -->
   @if (isCreateModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container">
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3 class="modal-title">Create Workspace Project</h3>
-          <button class="modal-close" (click)="closeCreateModal()">&times;</button>
+          <h3 class="modal-title">Create Project</h3>
+          <button class="modal-close-btn" (click)="closeCreateModal()" type="button">&times;</button>
         </div>
+
         @if (createError) {
-          <div class="alert alert-error" style="margin: 1rem 1.5rem 0 1.5rem;">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">error</span>
+          <div class="modal-alert-error">
+            <span class="material-symbols-outlined alert-icon">error</span>
             <span>{{ createError }}</span>
           </div>
         }
-        <form (submit)="saveProject()">
-          <div class="form-group">
-            <label class="form-label" for="proj-name">Project Name *</label>
+
+        <form (submit)="saveProject()" class="modal-form">
+          <!-- Project Name -->
+          <div class="modal-form-group">
+            <label class="modal-label" for="proj-name">Project Name *</label>
             <input
               type="text"
               id="proj-name"
-              class="form-input"
-              placeholder="e.g. Website Overhaul"
+              class="modal-input cyan-focus"
+              placeholder="e.g. Online Booking System"
               [(ngModel)]="newProject.name"
               name="name"
               required
+              autofocus
             />
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="proj-desc">Project Description</label>
+          <!-- Description -->
+          <div class="modal-form-group">
+            <label class="modal-label" for="proj-desc">Description</label>
             <textarea
               id="proj-desc"
-              class="form-input"
+              class="modal-input modal-textarea"
               placeholder="Brief summary of project parameters and deliverables..."
               rows="3"
               [(ngModel)]="newProject.description"
               name="description"
-              style="resize: none;"
             ></textarea>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="proj-start">Start Date *</label>
+          <!-- Dates Row -->
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="proj-start">Start Date *</label>
               <input
                 type="date"
                 id="proj-start"
-                class="form-input"
+                class="modal-input"
                 [(ngModel)]="newProject.startDate"
                 name="startDate"
                 required
               />
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="proj-end">End Date *</label>
+            <div class="modal-form-group">
+              <label class="modal-label" for="proj-end">End Date *</label>
               <input
                 type="date"
                 id="proj-end"
-                class="form-input"
+                class="modal-input"
                 [(ngModel)]="newProject.endDate"
                 name="endDate"
                 required
@@ -214,92 +411,214 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="proj-priority">Project Priority</label>
-            <select id="proj-priority" class="form-select" [(ngModel)]="newProject.priority" name="priority">
-              <option value="Low">Low Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="High">High Priority</option>
-            </select>
+          <!-- Priority & Status Row -->
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="proj-priority">Priority</label>
+              <select id="proj-priority" class="modal-select" [(ngModel)]="newProject.priority" name="priority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="proj-status">Status</label>
+              <select id="proj-status" class="modal-select" [(ngModel)]="newProject.status" name="status">
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
           </div>
 
-          <div class="modal-actions" style="margin-top: 1.75rem;">
-            <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Project</button>
+          <!-- Actions -->
+          <div class="modal-actions-footer">
+            <button type="submit" class="btn-modal-submit cyan">
+              Create Project
+            </button>
+            <button type="button" class="btn-modal-cancel" (click)="closeCreateModal()">
+              Cancel
+            </button>
           </div>
         </form>
       </div>
     </div>
   }
 
-  <!-- Popup Modal: Manage Project Members -->
-  @if (membersProject) {
-    <div class="modal-backdrop">
-      <div class="modal-container" style="max-width: 640px;">
+  <!-- Modal 2: Edit Project -->
+  @if (isEditModalOpen) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3 class="modal-title">Project Members — {{ membersProject.name }}</h3>
-          <button class="modal-close" (click)="closeMembersModal()">&times;</button>
+          <h3 class="modal-title">Edit Project</h3>
+          <button class="modal-close-btn" (click)="closeEditModal()" type="button">&times;</button>
         </div>
 
-        <!-- Add member (managers only) -->
+        @if (editError) {
+          <div class="modal-alert-error">
+            <span class="material-symbols-outlined alert-icon">error</span>
+            <span>{{ editError }}</span>
+          </div>
+        }
+
+        <form (submit)="saveEditProject()" class="modal-form">
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-proj-name">Project Name *</label>
+            <input
+              type="text"
+              id="edit-proj-name"
+              class="modal-input cyan-focus"
+              [(ngModel)]="editProjectData.name"
+              name="editName"
+              required
+            />
+          </div>
+
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-proj-desc">Description</label>
+            <textarea
+              id="edit-proj-desc"
+              class="modal-input modal-textarea"
+              rows="3"
+              [(ngModel)]="editProjectData.description"
+              name="editDescription"
+            ></textarea>
+          </div>
+
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-proj-start">Start Date *</label>
+              <input
+                type="date"
+                id="edit-proj-start"
+                class="modal-input"
+                [(ngModel)]="editProjectData.startDate"
+                name="editStartDate"
+                required
+              />
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-proj-end">End Date *</label>
+              <input
+                type="date"
+                id="edit-proj-end"
+                class="modal-input"
+                [(ngModel)]="editProjectData.endDate"
+                name="editEndDate"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-proj-priority">Priority</label>
+              <select id="edit-proj-priority" class="modal-select" [(ngModel)]="editProjectData.priority" name="editPriority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-proj-status">Status</label>
+              <select id="edit-proj-status" class="modal-select" [(ngModel)]="editProjectData.status" name="editStatus">
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-actions-footer">
+            <button type="submit" class="btn-modal-submit cyan" [disabled]="editLoading">
+              {{ editLoading ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button type="button" class="btn-modal-cancel" (click)="closeEditModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal 3: Add / Manage Project Members -->
+  @if (membersProject) {
+    <div class="modal-backdrop" (click)="closeMembersModal()">
+      <div class="modal-card wide" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Project Members</h3>
+            <p class="modal-subtitle">{{ membersProject.name }}</p>
+          </div>
+          <button class="modal-close-btn" (click)="closeMembersModal()" type="button">&times;</button>
+        </div>
+
         @if (canManageMembers) {
-          <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
-            <div class="form-group" style="flex: 1; margin-bottom: 0;">
-              <label class="form-label" for="member-user">Add User</label>
-              <select id="member-user" class="form-select" [(ngModel)]="selectedMemberUserId" name="memberUserId">
+          <div class="add-member-bar">
+            <div class="member-select-block">
+              <label class="modal-label" for="member-user-select">Select User to Assign</label>
+              <select id="member-user-select" class="modal-select" [(ngModel)]="selectedMemberUserId">
                 @for (user of eligibleUsers; track user.id) {
-                  <option [value]="user.id">{{ user.fullName }} ({{ user.email }})</option>
+                  <option [value]="user.id">{{ user.fullName }} ({{ user.email }}) &mdash; {{ user.role }}</option>
                 } @empty {
-                  <option value="">No available users in your tenant</option>
+                  <option value="">All tenant users are already assigned</option>
                 }
               </select>
             </div>
-            <button class="btn btn-primary" [disabled]="!selectedMemberUserId || addMemberLoading" (click)="addMember()">
-              <span class="material-symbols-outlined" style="font-size: 1rem;">person_add</span>
-              {{ addMemberLoading ? 'Adding...' : 'Add Member' }}
+            <button
+              class="btn-add-member-cyan"
+              [disabled]="!selectedMemberUserId || addMemberLoading"
+              (click)="addMember()"
+              type="button"
+            >
+              <span class="material-symbols-outlined btn-plus-icon">person_add</span>
+              <span>{{ addMemberLoading ? 'Adding...' : 'Add Member' }}</span>
             </button>
           </div>
         }
 
-        <!-- Error state -->
         @if (membersError) {
-          <div class="members-state members-error">
-            <span class="material-symbols-outlined">error</span>
+          <div class="modal-alert-error">
+            <span class="material-symbols-outlined alert-icon">error</span>
             <span>{{ membersError }}</span>
-            <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="loadProjectMembers(membersProject.id)">
-              Retry
-            </button>
           </div>
         }
 
-        <!-- Loading state -->
         @if (membersLoading) {
-          <div class="members-state">
-            <span class="spinner" aria-hidden="true"></span>
+          <div class="table-state-box">
+            <div class="state-spinner"></div>
             <span>Loading members...</span>
           </div>
-        }
-
-        <!-- Loaded state -->
-        @if (membersLoaded && !membersLoading) {
+        } @else if (membersLoaded) {
           @if (members.length === 0) {
-            <div class="members-state">
-              <span class="material-symbols-outlined" style="font-size: 2.25rem; color: var(--text-muted);">group</span>
-              <span>No members assigned to this project yet.</span>
+            <div class="empty-members-box">
+              <span class="material-symbols-outlined empty-members-icon">group_off</span>
+              <p>No team members assigned to this project yet.</p>
             </div>
           } @else {
-            <div class="members-list">
+            <div class="members-list-stack">
               @for (member of members; track member.id) {
-                <div class="member-row">
-                  <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted);">account_circle</span>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 600; color: var(--text-heading);">{{ member.userFullName }}</div>
-                    <div style="color: var(--text-secondary); font-size: 0.85rem;">{{ member.userEmail }}</div>
+                <div class="member-item-row">
+                  <div class="member-avatar-circle" [style.background]="getOwnerColor(member.userFullName)">
+                    {{ getOwnerInitials(member.userFullName) }}
                   </div>
-                  <span class="badge badge-info">{{ member.userRole }}</span>
+                  <div class="member-info-col">
+                    <div class="member-name">{{ member.userFullName }}</div>
+                    <div class="member-email">{{ member.userEmail }}</div>
+                  </div>
+                  <span class="member-role-badge">{{ member.userRole }}</span>
                   @if (canManageMembers) {
-                    <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="removeMember(member.id, member.userFullName)">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">person_remove</span>
+                    <button
+                      class="btn-remove-member"
+                      title="Remove Member"
+                      (click)="removeMember(member.id, member.userFullName)"
+                      type="button"
+                    >
+                      <span class="material-symbols-outlined">person_remove</span>
                     </button>
                   }
                 </div>
@@ -307,54 +626,59 @@
             </div>
           }
         }
+
+        <div class="modal-actions-footer" style="margin-top: 1.25rem;">
+          <button type="button" class="btn-modal-cancel" (click)="closeMembersModal()">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   }
 
-  <!-- Modal: Plan Upgrade Guardrail -->
-  @if (isUpgradeModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container" style="max-width: 520px; text-align: center;">
-        <div style="width: 56px; height: 56px; border-radius: var(--radius-full); background: rgba(245, 158, 11, 0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
-          <span class="material-symbols-outlined" style="font-size: 2rem;">workspace_premium</span>
+  <!-- Modal 4: Delete Project Confirmation -->
+  @if (isDeleteModalOpen && deletingProject) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-card small-confirm" (click)="$event.stopPropagation()">
+        <div class="confirm-icon-circle danger">
+          <span class="material-symbols-outlined">delete_forever</span>
         </div>
-
-        <h3 style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 0.5rem;">
-          Project Capacity Reached
-        </h3>
-        <p style="color: var(--text-secondary); font-size: 0.925rem; line-height: 1.5; margin-bottom: 1.5rem;">
-          Your organization is currently on the <strong>{{ currentPlan?.planName || 'Current' }} Plan</strong>, which allows up to <strong>{{ currentPlan?.maxProjects || 'limited' }} active projects</strong>. Upgrade your subscription to unlock unlimited workspaces, team collaboration, and priority cloud storage.
+        <h3 class="confirm-title">Delete Project?</h3>
+        <p class="confirm-desc">
+          Are you sure you want to delete <strong>"{{ deletingProject.name }}"</strong>? This action cannot be undone and will permanently remove all sprint tasks associated with it.
         </p>
 
-        <div style="background: var(--table-header-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.75rem; text-align: left;">
-          <div style="font-weight: 700; color: var(--text-heading); font-size: 0.85rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
-            What you unlock on Enterprise Tier
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
-              <span>Unlimited Active Projects & Workspaces</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
-              <span>Up to 500 Team Member Seats</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
-              <span>100 GB Cloud Document Storage</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
-              <span>Dedicated 24/7 Enterprise SLA Support</span>
-            </div>
-          </div>
+        <div class="modal-actions-footer center">
+          <button type="button" class="btn-modal-cancel" (click)="closeDeleteModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-modal-danger" [disabled]="deleteLoading" (click)="confirmDeleteProject()">
+            {{ deleteLoading ? 'Deleting...' : 'Delete Project' }}
+          </button>
         </div>
+      </div>
+    </div>
+  }
 
-        <div style="display: flex; gap: 0.75rem; justify-content: center;">
-          <button type="button" class="btn btn-outline" (click)="isUpgradeModalOpen = false">Dismiss</button>
-          <a routerLink="/tenant/billing" class="btn btn-primary" (click)="isUpgradeModalOpen = false">
-            <span class="material-symbols-outlined">upgrade</span>
-            View Upgrade Plans
+  <!-- Modal 5: Plan Upgrade Quota Guardrail -->
+  @if (isUpgradeModalOpen) {
+    <div class="modal-backdrop" (click)="isUpgradeModalOpen = false">
+      <div class="modal-card small-confirm" (click)="$event.stopPropagation()">
+        <div class="confirm-icon-circle warning">
+          <span class="material-symbols-outlined">workspace_premium</span>
+        </div>
+        <h3 class="confirm-title">Project Capacity Reached</h3>
+        <p class="confirm-desc">
+          Your organization is on the <strong>{{ currentPlan?.planName || 'Current' }} Plan</strong>, which allows up to <strong>{{ currentPlan?.maxProjects || 'limited' }} active projects</strong>. Upgrade your subscription to unlock unlimited workspaces and priority collaboration.
+        </p>
+
+        <div class="modal-actions-footer center">
+          <button type="button" class="btn-modal-cancel" (click)="isUpgradeModalOpen = false">
+            Dismiss
+          </button>
+          <a routerLink="/tenant/billing" class="btn-modal-submit cyan" (click)="isUpgradeModalOpen = false">
+            <span class="material-symbols-outlined btn-plus-icon">upgrade</span>
+            <span>View Upgrade Plans</span>
           </a>
         </div>
       </div>
