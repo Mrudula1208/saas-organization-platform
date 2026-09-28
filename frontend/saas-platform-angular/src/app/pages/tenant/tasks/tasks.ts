@@ -28,8 +28,14 @@ export class Tasks implements OnInit {
   // Toggle & Filters
   activeView: 'board' | 'table' = 'board';
   selectedProjectId = '';
+  selectedPriority = 'All';
   searchQuery = '';
   errorMessage = '';
+
+  // Drag & Drop State Tracking
+  draggedTask: TaskItem | null = null;
+  draggedTaskId: string | null = null;
+  dragOverColumn: string | null = null;
 
   // Server-side pagination: the API filters, sorts and counts in the database.
   page = 1;
@@ -40,6 +46,12 @@ export class Tasks implements OnInit {
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+  }
+
+  get completionPercentage(): number {
+    const total = this.todoTasks.length + this.inProgressTasks.length + this.completedTasks.length;
+    if (total === 0) return 0;
+    return Math.round((this.completedTasks.length / total) * 100);
   }
 
   prevPage() {
@@ -62,10 +74,6 @@ export class Tasks implements OnInit {
 
   isEditModalOpen = false;
   editTask = { id: '', name: '', description: '', projectId: '', assignedUserId: '', priority: 'Medium', dueDate: '', status: 'To Do', isCompleted: false };
-
-  // Drag & Drop State
-  // Holds the reference to the task item that is currently being dragged by the user
-  draggedTask: TaskItem | null = null;
 
   constructor(
     private projectService: ProjectService,
@@ -126,11 +134,47 @@ export class Tasks implements OnInit {
     });
   }
 
-  // The server already filtered by project and search text; this only splits the current page into Kanban columns.
+  // Filter tasks based on selected priority and split into Kanban columns
   applyFilters() {
-    this.todoTasks = this.allTasks.filter((t: TaskItem) => t.status === 'To Do');
-    this.inProgressTasks = this.allTasks.filter((t: TaskItem) => t.status === 'In Progress');
-    this.completedTasks = this.allTasks.filter((t: TaskItem) => t.status === 'Completed');
+    let filtered = this.allTasks;
+    if (this.selectedPriority && this.selectedPriority !== 'All') {
+      filtered = filtered.filter(t => (t.priority || '').toLowerCase() === this.selectedPriority.toLowerCase());
+    }
+    this.todoTasks = filtered.filter((t: TaskItem) => t.status === 'To Do');
+    this.inProgressTasks = filtered.filter((t: TaskItem) => t.status === 'In Progress');
+    this.completedTasks = filtered.filter((t: TaskItem) => t.status === 'Completed');
+  }
+
+  setPriorityFilter(priority: string) {
+    this.selectedPriority = priority;
+    this.applyFilters();
+  }
+
+  getUserInitials(name?: string): string {
+    if (!name || !name.trim()) return 'UN';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  getUserColor(name?: string): string {
+    if (!name) return '#6366F1';
+    const colors = ['#6366F1', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#0EA5E9'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  isOverdue(dueDate?: string, status?: string): boolean {
+    if (!dueDate || status === 'Completed') return false;
+    const due = new Date(dueDate);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return due < now;
   }
 
   onFilterChange() {
@@ -163,6 +207,10 @@ export class Tasks implements OnInit {
       dueDate: today
     };
     this.isCreateModalOpen = true;
+  }
+
+  openCreateModalForColumn(columnStatus: string) {
+    this.openCreateModal();
   }
 
   closeCreateModal() {
@@ -240,34 +288,50 @@ export class Tasks implements OnInit {
     });
   }
 
-  // DRAG AND DROP HANDLERS
-
-  // This method triggers when the user starts dragging a task card.
-  // We store the task object reference in memory so we know which card is being moved.
+  // DRAG AND DROP HANDLERS WITH GLOW FEEDBACK
   onDragStart(event: DragEvent, task: TaskItem) {
     this.draggedTask = task;
-    // Set visual feedback (e.g., move effect)
+    this.draggedTaskId = task.id;
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', task.id);
     }
   }
 
-  // This method prevents default behavior when a card is dragged over a column.
-  // By default, browsers do not allow drop events on general container elements.
-  // Calling preventDefault() turns on the drop zone.
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
+  onDragEnd() {
+    this.draggedTask = null;
+    this.draggedTaskId = null;
+    this.dragOverColumn = null;
   }
 
-  // This method handles dropping the task card into a new status column.
-  // We extract the stored task, verify it exists, and call the service to update status.
+  onDragOver(event: DragEvent, columnStatus: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    if (this.dragOverColumn !== columnStatus) {
+      this.dragOverColumn = columnStatus;
+    }
+  }
+
+  onDragLeave(event: DragEvent, columnStatus: string) {
+    const related = event.relatedTarget as HTMLElement;
+    const current = event.currentTarget as HTMLElement;
+    if (!current || !current.contains(related)) {
+      if (this.dragOverColumn === columnStatus) {
+        this.dragOverColumn = null;
+      }
+    }
+  }
+
   onDrop(event: DragEvent, newStatus: string) {
     event.preventDefault();
+    this.dragOverColumn = null;
     if (this.draggedTask && this.draggedTask.status !== newStatus) {
       this.moveTask(this.draggedTask, newStatus);
     }
-    // Clear the reference once the operation is completed
     this.draggedTask = null;
+    this.draggedTaskId = null;
   }
 
   // ACTIONS

@@ -1,8 +1,8 @@
 <div class="animate-fade">
   <!-- Title & Top actions -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Task Management Board</h1>
+      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading); letter-spacing: -0.02em;">Task Management Board</h1>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Organize tasks, assign team members, track priorities, and manage deadlines</p>
     </div>
 
@@ -19,10 +19,43 @@
     </div>
   }
 
-  <!-- Filters & Toggle View Bar -->
+  <!-- Real-time Workspace Metrics Strip -->
+  <div class="tasks-metrics-bar">
+    <div class="metric-pill-card">
+      <div class="info">
+        <span class="label">Total Tasks</span>
+        <span class="value">{{ allTasks.length }}</span>
+      </div>
+      <div class="metric-icon-box" style="background: rgba(99, 102, 241, 0.12); color: var(--primary-color);">
+        <span class="material-symbols-outlined">task</span>
+      </div>
+    </div>
+
+    <div class="metric-pill-card">
+      <div class="info">
+        <span class="label">In Progress</span>
+        <span class="value">{{ inProgressTasks.length }}</span>
+      </div>
+      <div class="metric-icon-box" style="background: rgba(14, 165, 233, 0.12); color: #0EA5E9;">
+        <span class="material-symbols-outlined">pending_actions</span>
+      </div>
+    </div>
+
+    <div class="metric-pill-card">
+      <div class="info">
+        <span class="label">Completion Velocity</span>
+        <span class="value">{{ completionPercentage }}%</span>
+      </div>
+      <div class="metric-icon-box" style="background: rgba(16, 185, 129, 0.12); color: var(--success-color);">
+        <span class="material-symbols-outlined">verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & View Bar -->
   <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
-      <div style="display: flex; gap: 1rem; flex: 1; flex-wrap: wrap;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+      <div style="display: flex; gap: 1rem; flex: 1; flex-wrap: wrap; align-items: center;">
         <!-- Project Filter -->
         <div class="form-group" style="width: 220px; margin-bottom: 0;">
           <select class="form-select" [(ngModel)]="selectedProjectId" (change)="onFilterChange()">
@@ -34,193 +67,292 @@
         </div>
 
         <!-- Search Query -->
-        <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+        <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
           <input
             type="text"
             class="form-input"
-            placeholder="Search tasks..."
+            placeholder="Search tasks by name or description..."
             [(ngModel)]="searchQuery"
             (input)="onSearch()"
           />
         </div>
+
+        <!-- Priority Filter Pills -->
+        <div class="priority-pill-group">
+          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'All'" (click)="setPriorityFilter('All')">All</button>
+          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'High'" (click)="setPriorityFilter('High')">High</button>
+          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'Medium'" (click)="setPriorityFilter('Medium')">Medium</button>
+          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'Low'" (click)="setPriorityFilter('Low')">Low</button>
+        </div>
       </div>
 
       <!-- View Selector Buttons -->
-      <div style="display: flex; background: #F3F4F6; padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
+      <div style="display: flex; background: var(--table-header-bg); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <button class="btn" style="padding: 0.45rem 0.9rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
                 [class.btn-primary]="activeView === 'board'" [class.btn-outline]="activeView !== 'board'"
                 (click)="switchView('board')">
-          <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle; margin-right: 0.25rem;">grid_view</span>
-          Kanban Board
+          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.25rem;">grid_view</span>
+          Kanban
         </button>
-        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
+        <button class="btn" style="padding: 0.45rem 0.9rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
                 [class.btn-primary]="activeView === 'table'" [class.btn-outline]="activeView !== 'table'"
                 (click)="switchView('table')">
-          <span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: middle; margin-right: 0.25rem;">list</span>
-          Table View
+          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.25rem;">list</span>
+          Table
         </button>
       </div>
     </div>
   </div>
 
-  <!-- BOARD VIEW -->
+  <!-- KANBAN BOARD VIEW -->
   @if (activeView === 'board') {
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;" class="chart-grid">
+    <div class="kanban-grid">
       <!-- TO DO COLUMN -->
-      <div class="card" style="background: #F9FAFB; border: 1px solid var(--border-color); min-height: 500px; display: flex; flex-direction: column;">
-        <h3 style="font-size: 1rem; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 8px; height: 8px; background: var(--text-secondary); border-radius: var(--radius-full);"></span>
-            To Do
-          </span>
-          <span class="badge badge-info" style="font-size: 0.75rem;">{{ todoTasks.length }}</span>
-        </h3>
+      <div class="kanban-column"
+           [class.drag-over]="dragOverColumn === 'To Do'"
+           (dragover)="onDragOver($event, 'To Do')"
+           (dragleave)="onDragLeave($event, 'To Do')"
+           (drop)="onDrop($event, 'To Do')">
+        <div class="column-header">
+          <div class="column-title">
+            <span class="column-indicator indicator-todo"></span>
+            <span>To Do</span>
+          </div>
+          <span class="column-counter badge badge-info">{{ todoTasks.length }}</span>
+        </div>
 
-        <!-- Enable Drop zone on this column container -->
-        <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'To Do')">
+        <div class="cards-container">
           @for (task of todoTasks; track task.id) {
-            <!-- Enable dragging on this task card -->
-            <div draggable="true" (dragstart)="onDragStart($event, task)" class="card animate-slide-up" style="padding: 1.25rem; cursor: grab; background: #ffffff; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; min-height: 150px;">
+            <div draggable="true"
+                 (dragstart)="onDragStart($event, task)"
+                 (dragend)="onDragEnd()"
+                 class="kanban-card animate-slide-up"
+                 [class.is-dragging]="draggedTaskId === task.id">
               <div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <span style="font-size: 0.7rem; color: var(--primary-color); font-weight: 700; text-transform: uppercase;">{{ task.projectName }}</span>
-                  <div style="display: flex; gap: 0.25rem;">
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="openEditModal(task)" title="Edit Task">
+                <div class="card-top-row">
+                  <span class="project-tag" title="{{ task.projectName }}">
+                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
+                    {{ task.projectName }}
+                  </span>
+                  <div class="card-actions">
+                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
                     </button>
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="deleteTask(task.id)" title="Delete Task">
+                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                     </button>
                   </div>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: var(--text-heading); font-weight: 600;">{{ task.name }}</h4>
-                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                  {{ task.description }}
-                </p>
+
+                <div class="task-title">{{ task.name }}</div>
+                @if (task.description) {
+                  <div class="task-desc">{{ task.description }}</div>
+                }
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
-                <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
-                  <span class="material-symbols-outlined" style="font-size: 0.9rem;">calendar_month</span>
-                  {{ task.dueDate | date:'shortDate' }}
-                </span>
+              <div class="card-bottom-row">
+                <div class="card-badges">
+                  <!-- Priority badge -->
+                  <span class="priority-tag"
+                        [class.priority-high]="task.priority === 'High'"
+                        [class.priority-medium]="task.priority === 'Medium'"
+                        [class.priority-low]="task.priority === 'Low'">
+                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">
+                      {{ task.priority === 'High' ? 'local_fire_department' : (task.priority === 'Medium' ? 'flag' : 'info') }}
+                    </span>
+                    {{ task.priority || 'Medium' }}
+                  </span>
 
-                <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
-                </button>
+                  <!-- Due date -->
+                  @if (task.dueDate) {
+                    <span class="due-badge" [class.overdue]="isOverdue(task.dueDate, task.status)">
+                      <span class="material-symbols-outlined" style="font-size: 0.85rem;">calendar_month</span>
+                      {{ task.dueDate | date:'mediumDate' }}
+                    </span>
+                  }
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <!-- Assignee Avatar -->
+                  <div class="assignee-avatar"
+                       [style.background]="getUserColor(task.assignedUserName)"
+                       title="Assigned to {{ task.assignedUserName || 'Unassigned' }}">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+
+                  <!-- Quick Advance Button -->
+                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')" title="Move to In Progress">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
+                  </button>
+                </div>
               </div>
             </div>
           } @empty {
-            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 150px; color: var(--text-muted); font-size: 0.85rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
-              No tasks to do
+            <div class="column-empty-target">
+              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">inbox</span>
+              <span>No tasks to do</span>
             </div>
           }
         </div>
       </div>
 
       <!-- IN PROGRESS COLUMN -->
-      <div class="card" style="background: #F9FAFB; border: 1px solid var(--border-color); min-height: 500px; display: flex; flex-direction: column;">
-        <h3 style="font-size: 1rem; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 8px; height: 8px; background: var(--primary-color); border-radius: var(--radius-full);"></span>
-            In Progress
-          </span>
-          <span class="badge badge-info" style="font-size: 0.75rem;">{{ inProgressTasks.length }}</span>
-        </h3>
+      <div class="kanban-column"
+           [class.drag-over]="dragOverColumn === 'In Progress'"
+           (dragover)="onDragOver($event, 'In Progress')"
+           (dragleave)="onDragLeave($event, 'In Progress')"
+           (drop)="onDrop($event, 'In Progress')">
+        <div class="column-header">
+          <div class="column-title">
+            <span class="column-indicator indicator-progress"></span>
+            <span>In Progress</span>
+          </div>
+          <span class="column-counter badge badge-info">{{ inProgressTasks.length }}</span>
+        </div>
 
-        <!-- Enable Drop zone on this column container -->
-        <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'In Progress')">
+        <div class="cards-container">
           @for (task of inProgressTasks; track task.id) {
-            <!-- Enable dragging on this task card -->
-            <div draggable="true" (dragstart)="onDragStart($event, task)" class="card animate-slide-up" style="padding: 1.25rem; cursor: grab; background: #ffffff; border: 1px solid var(--border-color); border-left: 3px solid var(--primary-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; min-height: 150px;">
+            <div draggable="true"
+                 (dragstart)="onDragStart($event, task)"
+                 (dragend)="onDragEnd()"
+                 class="kanban-card border-accent-progress animate-slide-up"
+                 [class.is-dragging]="draggedTaskId === task.id">
               <div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <span style="font-size: 0.7rem; color: var(--primary-color); font-weight: 700; text-transform: uppercase;">{{ task.projectName }}</span>
-                  <div style="display: flex; gap: 0.25rem;">
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="openEditModal(task)" title="Edit Task">
+                <div class="card-top-row">
+                  <span class="project-tag" title="{{ task.projectName }}">
+                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
+                    {{ task.projectName }}
+                  </span>
+                  <div class="card-actions">
+                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
                     </button>
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="deleteTask(task.id)" title="Delete Task">
+                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                     </button>
                   </div>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: var(--text-heading); font-weight: 600;">{{ task.name }}</h4>
-                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                  {{ task.description }}
-                </p>
+
+                <div class="task-title">{{ task.name }}</div>
+                @if (task.description) {
+                  <div class="task-desc">{{ task.description }}</div>
+                }
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
-                <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'To Do')">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
-                </button>
+              <div class="card-bottom-row">
+                <div class="card-badges">
+                  <span class="priority-tag"
+                        [class.priority-high]="task.priority === 'High'"
+                        [class.priority-medium]="task.priority === 'Medium'"
+                        [class.priority-low]="task.priority === 'Low'">
+                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">
+                      {{ task.priority === 'High' ? 'local_fire_department' : (task.priority === 'Medium' ? 'flag' : 'info') }}
+                    </span>
+                    {{ task.priority || 'Medium' }}
+                  </span>
 
-                <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
-                  <span class="material-symbols-outlined" style="font-size: 0.9rem;">calendar_month</span>
-                  {{ task.dueDate | date:'shortDate' }}
-                </span>
+                  @if (task.dueDate) {
+                    <span class="due-badge" [class.overdue]="isOverdue(task.dueDate, task.status)">
+                      <span class="material-symbols-outlined" style="font-size: 0.85rem;">calendar_month</span>
+                      {{ task.dueDate | date:'mediumDate' }}
+                    </span>
+                  }
+                </div>
 
-                <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'Completed')">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'To Do')" title="Move to To Do">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
+                  </button>
+
+                  <div class="assignee-avatar"
+                       [style.background]="getUserColor(task.assignedUserName)"
+                       title="Assigned to {{ task.assignedUserName || 'Unassigned' }}">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+
+                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'Completed')" title="Move to Completed">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
+                  </button>
+                </div>
               </div>
             </div>
           } @empty {
-            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 150px; color: var(--text-muted); font-size: 0.85rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
-              No active tasks in progress
+            <div class="column-empty-target">
+              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">pending</span>
+              <span>No tasks in progress</span>
             </div>
           }
         </div>
       </div>
 
       <!-- COMPLETED COLUMN -->
-      <div class="card" style="background: #F9FAFB; border: 1px solid var(--border-color); min-height: 500px; display: flex; flex-direction: column;">
-        <h3 style="font-size: 1rem; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 8px; height: 8px; background: var(--success-color); border-radius: var(--radius-full);"></span>
-            Completed
-          </span>
-          <span class="badge badge-success" style="font-size: 0.75rem;">{{ completedTasks.length }}</span>
-        </h3>
+      <div class="kanban-column"
+           [class.drag-over]="dragOverColumn === 'Completed'"
+           (dragover)="onDragOver($event, 'Completed')"
+           (dragleave)="onDragLeave($event, 'Completed')"
+           (drop)="onDrop($event, 'Completed')">
+        <div class="column-header">
+          <div class="column-title">
+            <span class="column-indicator indicator-completed"></span>
+            <span>Completed</span>
+          </div>
+          <span class="column-counter badge badge-success">{{ completedTasks.length }}</span>
+        </div>
 
-        <!-- Enable Drop zone on this column container -->
-        <div style="display: flex; flex-direction: column; gap: 1rem; flex: 1;" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'Completed')">
+        <div class="cards-container">
           @for (task of completedTasks; track task.id) {
-            <!-- Enable dragging on this task card -->
-            <div draggable="true" (dragstart)="onDragStart($event, task)" class="card animate-slide-up" style="padding: 1.25rem; cursor: grab; background: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; min-height: 150px; opacity: 0.9; box-shadow: var(--shadow-sm);">
+            <div draggable="true"
+                 (dragstart)="onDragStart($event, task)"
+                 (dragend)="onDragEnd()"
+                 class="kanban-card border-accent-completed animate-slide-up"
+                 [class.is-dragging]="draggedTaskId === task.id">
               <div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <span style="font-size: 0.7rem; color: var(--success-color); font-weight: 700; text-transform: uppercase;">{{ task.projectName }}</span>
-                  <div style="display: flex; gap: 0.25rem;">
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="openEditModal(task)" title="Edit Task">
+                <div class="card-top-row">
+                  <span class="project-tag" style="color: var(--success-color); background: rgba(16, 185, 129, 0.08);" title="{{ task.projectName }}">
+                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
+                    {{ task.projectName }}
+                  </span>
+                  <div class="card-actions">
+                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
                     </button>
-                    <button style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;" (click)="deleteTask(task.id)" title="Delete Task">
+                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
                       <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
                     </button>
                   </div>
                 </div>
-                <h4 style="font-size: 0.95rem; margin-top: 0.35rem; color: var(--text-muted); font-weight: 600; text-decoration: line-through;">{{ task.name }}</h4>
-                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                  {{ task.description }}
-                </p>
+
+                <div class="task-title completed-strike">{{ task.name }}</div>
+                @if (task.description) {
+                  <div class="task-desc completed-text">{{ task.description }}</div>
+                }
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
-                <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
-                </button>
+              <div class="card-bottom-row">
+                <div class="card-badges">
+                  <span class="badge badge-success" style="font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">check_circle</span>
+                    Done
+                  </span>
+                </div>
 
-                <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.25rem;">
-                  <span class="material-symbols-outlined" style="font-size: 0.9rem; color: var(--success-color);">check</span>
-                  Finished
-                </span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')" title="Move to In Progress">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
+                  </button>
+
+                  <div class="assignee-avatar"
+                       [style.background]="getUserColor(task.assignedUserName)"
+                       title="Completed by {{ task.assignedUserName || 'User' }}">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+                </div>
               </div>
             </div>
           } @empty {
-            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 150px; color: var(--text-muted); font-size: 0.85rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
-              No completed tasks
+            <div class="column-empty-target">
+              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">task_alt</span>
+              <span>No completed tasks</span>
             </div>
           }
         </div>
@@ -253,17 +385,22 @@
                   </td>
                   <td>{{ task.projectName }}</td>
                   <td>
-                    <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-                      <span class="material-symbols-outlined" style="font-size: 1.15rem; color: var(--text-muted);">account_circle</span>
+                    <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                      <span class="assignee-avatar" [style.background]="getUserColor(task.assignedUserName)">
+                        {{ getUserInitials(task.assignedUserName) }}
+                      </span>
                       {{ task.assignedUserName || 'Unassigned' }}
                     </span>
                   </td>
                   <td>
-                    <span class="badge" [class.badge-danger]="task.priority === 'High'" [class.badge-warning]="task.priority === 'Medium'" [class.badge-info]="task.priority === 'Low'">
+                    <span class="priority-tag"
+                          [class.priority-high]="task.priority === 'High'"
+                          [class.priority-medium]="task.priority === 'Medium'"
+                          [class.priority-low]="task.priority === 'Low'">
                       {{ task.priority }}
                     </span>
                   </td>
-                  <td style="font-family: monospace; color: var(--text-secondary);">{{ task.dueDate | date:'mediumDate' }}</td>
+                  <td style="color: var(--text-secondary);">{{ task.dueDate | date:'mediumDate' }}</td>
                   <td>
                     <span class="badge" [class.badge-success]="task.status === 'Completed'" [class.badge-info]="task.status === 'In Progress' || task.status === 'To Do'">
                       {{ task.status }}
