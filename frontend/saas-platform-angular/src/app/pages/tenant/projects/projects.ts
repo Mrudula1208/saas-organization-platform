@@ -1,17 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ProjectService } from '../../../core/services/project';
 import { UserService } from '../../../core/services/user';
 import { Auth } from '../../../core/services/auth';
+import { BillingService } from '../../../core/services/billing';
+import { CurrentPlan } from '../../../models/payment.model';
 import { Project, ProjectMember } from '../../../models/project.model';
 import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './projects.html',
   styleUrl: './projects.css',
 })
@@ -52,6 +54,15 @@ export class Projects implements OnInit {
   isCreateModalOpen = false;
   newProject = { name: '', description: '', startDate: '', endDate: '', priority: 'Medium' };
 
+  // Subscription plan & quota guardrail state
+  currentPlan: CurrentPlan | null = null;
+  isUpgradeModalOpen = false;
+
+  get isAtProjectLimit(): boolean {
+    if (!this.currentPlan || !this.currentPlan.maxProjects) return false;
+    return this.totalCount >= this.currentPlan.maxProjects;
+  }
+
   // Members modal state
   membersProject: Project | null = null;
   members: ProjectMember[] = [];
@@ -66,12 +77,23 @@ export class Projects implements OnInit {
   constructor(
     private projectService: ProjectService,
     private userService: UserService,
+    private billingService: BillingService,
     private auth: Auth,
     private router: Router
   ) {}
 
   ngOnInit() {
+    this.loadCurrentPlan();
     this.loadProjects();
+  }
+
+  loadCurrentPlan() {
+    this.billingService.getCurrentPlan().subscribe({
+      next: (plan) => {
+        this.currentPlan = plan;
+      },
+      error: () => {}
+    });
   }
 
   get canManageMembers(): boolean {
@@ -128,6 +150,10 @@ export class Projects implements OnInit {
   }
 
   openCreateModal() {
+    if (this.isAtProjectLimit) {
+      this.isUpgradeModalOpen = true;
+      return;
+    }
     this.createError = '';
     const today = new Date().toISOString().split('T')[0];
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -150,7 +176,13 @@ export class Projects implements OnInit {
         this.closeCreateModal();
       },
       error: (err) => {
-        this.createError = this.extractErrorMessage(err, 'Failed to create project. Please verify organization subscription limits.');
+        const errorMsg = this.extractErrorMessage(err, 'Failed to create project. Please verify organization subscription limits.');
+        if (errorMsg.toLowerCase().includes('reached the limit') || errorMsg.toLowerCase().includes('upgrade your subscription')) {
+          this.closeCreateModal();
+          this.isUpgradeModalOpen = true;
+        } else {
+          this.createError = errorMsg;
+        }
       }
     });
   }

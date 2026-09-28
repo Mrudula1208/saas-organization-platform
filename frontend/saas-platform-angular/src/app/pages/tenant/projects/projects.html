@@ -1,14 +1,21 @@
 <div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Projects Workspace</h1>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Projects Workspace</h1>
+        @if (currentPlan) {
+          <span class="badge" [class.badge-success]="!isAtProjectLimit" [class.badge-danger]="isAtProjectLimit" style="font-size: 0.75rem;">
+            {{ totalCount }} / {{ currentPlan.maxProjects }} Projects Used
+          </span>
+        }
+      </div>
       <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization deliverables, timeline deadlines, project health, and owner allocations</p>
     </div>
 
     @if (canCreateProject) {
-      <button class="btn btn-primary" (click)="openCreateModal()">
-        <span class="material-symbols-outlined">create_new_folder</span>
-        Create Project
+      <button class="btn btn-primary" (click)="openCreateModal()" [class.btn-warning]="isAtProjectLimit">
+        <span class="material-symbols-outlined">{{ isAtProjectLimit ? 'lock' : 'create_new_folder' }}</span>
+        {{ isAtProjectLimit ? 'Capacity Reached' : 'Create Project' }}
       </button>
     }
   </div>
@@ -300,6 +307,56 @@
             </div>
           }
         }
+      </div>
+    </div>
+  }
+
+  <!-- Modal: Plan Upgrade Guardrail -->
+  @if (isUpgradeModalOpen) {
+    <div class="modal-backdrop">
+      <div class="modal-container" style="max-width: 520px; text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: var(--radius-full); background: rgba(245, 158, 11, 0.15); color: #F59E0B; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+          <span class="material-symbols-outlined" style="font-size: 2rem;">workspace_premium</span>
+        </div>
+
+        <h3 style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 0.5rem;">
+          Project Capacity Reached
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.925rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          Your organization is currently on the <strong>{{ currentPlan?.planName || 'Current' }} Plan</strong>, which allows up to <strong>{{ currentPlan?.maxProjects || 'limited' }} active projects</strong>. Upgrade your subscription to unlock unlimited workspaces, team collaboration, and priority cloud storage.
+        </p>
+
+        <div style="background: var(--table-header-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.75rem; text-align: left;">
+          <div style="font-weight: 700; color: var(--text-heading); font-size: 0.85rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            What you unlock on Enterprise Tier
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
+              <span>Unlimited Active Projects & Workspaces</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
+              <span>Up to 500 Team Member Seats</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
+              <span>100 GB Cloud Document Storage</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--success-color);">check_circle</span>
+              <span>Dedicated 24/7 Enterprise SLA Support</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button type="button" class="btn btn-outline" (click)="isUpgradeModalOpen = false">Dismiss</button>
+          <a routerLink="/tenant/billing" class="btn btn-primary" (click)="isUpgradeModalOpen = false">
+            <span class="material-symbols-outlined">upgrade</span>
+            View Upgrade Plans
+          </a>
+        </div>
       </div>
     </div>
   }

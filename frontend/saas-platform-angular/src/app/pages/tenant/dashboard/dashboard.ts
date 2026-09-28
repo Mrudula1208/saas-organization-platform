@@ -7,6 +7,8 @@ import { TaskItem } from '../../../models/task.model';
 import { UserService } from '../../../core/services/user';
 import { SystemLogService } from '../../../core/services/system-log';
 import { SystemLog } from '../../../models/system-log.model';
+import { BillingService } from '../../../core/services/billing';
+import { CurrentPlan } from '../../../models/payment.model';
 
 interface Activity {
   id: string;
@@ -34,12 +36,31 @@ export class Dashboard implements OnInit {
   recentProjects: Project[] = [];
   recentActivities: Activity[] = [];
 
+  // Subscription plan & quota guardrail state
+  currentPlan: CurrentPlan | null = null;
+
+  get projectQuotaPercent(): number {
+    if (!this.currentPlan || !this.currentPlan.maxProjects) return 0;
+    return Math.min(100, Math.round((this.totalProjects / this.currentPlan.maxProjects) * 100));
+  }
+
+  get userQuotaPercent(): number {
+    if (!this.currentPlan || !this.currentPlan.maxUsers) return 0;
+    return Math.min(100, Math.round((this.totalUsers / this.currentPlan.maxUsers) * 100));
+  }
+
+  get storageLimitGB(): number {
+    if (!this.currentPlan || !this.currentPlan.storageLimitMB) return 10;
+    return Math.round(this.currentPlan.storageLimitMB / 1024);
+  }
+
   isLoading = true;
 
   constructor(
     private projectService: ProjectService,
     private userService: UserService,
-    private systemLogService: SystemLogService
+    private systemLogService: SystemLogService,
+    private billingService: BillingService
   ) {}
 
   ngOnInit() {
@@ -48,6 +69,16 @@ export class Dashboard implements OnInit {
 
   loadTenantDashboard() {
     this.isLoading = true;
+
+    // Fetch subscription plan & quotas
+    this.billingService.getCurrentPlan().subscribe({
+      next: (plan) => {
+        this.currentPlan = plan;
+      },
+      error: () => {
+        // Fallback default tier
+      }
+    });
 
     // Fetch projects for statistics and recent project boards
     this.projectService.getProjects(1, 200).subscribe({
