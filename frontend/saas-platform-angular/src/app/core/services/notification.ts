@@ -16,6 +16,16 @@ export class NotificationService {
 
   constructor(private http: HttpClient) {}
 
+  getNotifications(): Observable<AppNotification[]> {
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => ((res && res.data) ? res.data : res) as AppNotification[]),
+      catchError((err) => {
+        console.error('Error loading notifications:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+
   loadNotifications(): void {
     this.http.get<any>(this.apiUrl).pipe(
       map(res => res.data || res),

@@ -1,121 +1,562 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Tenants Directory</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor organization workspaces, plan quotas, monthly billings, and status states</p>
-    </div>
+<div class="dashboard-container animate-fade">
+  <!-- Top Header Area: Tenants Title & Filter -->
+  <div class="dash-header">
+    <h1 class="dash-title">Tenants</h1>
 
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      <span class="material-symbols-outlined">add_business</span>
-      Create Tenant
-    </button>
+    <div class="filter-dropdown-container">
+      <button class="dash-filter-btn" type="button" (click)="showFilterMenu = !showFilterMenu" title="Toggle Filters">
+        <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--primary-color);">tune</span>
+        <span>{{ timeFilter }}</span>
+        <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--text-muted);">keyboard_arrow_down</span>
+      </button>
+
+      @if (showFilterMenu) {
+        <div class="dropdown-menu-pane animate-fade">
+          <button class="dropdown-item" (click)="setTimeFilter('All Filters')">All Filters</button>
+          <button class="dropdown-item" (click)="setTimeFilter('Last 30 Days')">Last 30 Days</button>
+          <button class="dropdown-item" (click)="setTimeFilter('Last 90 Days')">Last 90 Days</button>
+          <button class="dropdown-item" (click)="setTimeFilter('This Year')">This Year</button>
+        </div>
+      }
+    </div>
   </div>
 
   @if (errorMessage) {
-    <div class="api-error-alert animate-fade">
+    <div class="api-error-alert animate-fade" style="margin-bottom: 1.25rem;">
       <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Search by name, domain, admin email..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
-        />
+  <!-- Master 2-Column Grid: Left Content + Right Activity Feed -->
+  <div class="dash-page-layout">
+    <!-- LEFT MAIN COLUMN -->
+    <div class="dash-main-col">
+      <!-- 5 Top KPI Metric Cards Row -->
+      <div class="kpi-row">
+        <!-- 1. Total Tenants -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Tenants</span>
+            <div class="kpi-icon-badge cyan">
+              <span class="material-symbols-outlined">corporate_fare</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ displayTotalCount | number }}</div>
+            <div class="kpi-trend">
+              <span class="trend-icon">↗</span>
+              <span>{{ displayTotalCount | number }} Trends</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Active Tenants -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Active Tenants</span>
+            <div class="kpi-icon-badge blue">
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ activeCount | number }}</div>
+            <div class="kpi-trend">
+              <span class="trend-icon">↗</span>
+              <span>{{ activeCount | number }} Expected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. New Tenants (30d) -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">New Tenants (30d)</span>
+            <div class="kpi-icon-badge teal">
+              <span class="material-symbols-outlined">person_add</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ newTenants30d | number }}</div>
+            <div class="kpi-trend">
+              <span class="trend-icon">↗</span>
+              <span>{{ newTenants30d | number }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Pending Approvals -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Pending Approvals</span>
+            <div class="kpi-icon-badge amber">
+              <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ pendingCount | number }}</div>
+            <div class="kpi-trend">
+              <span class="trend-icon">↗</span>
+              <span>{{ pendingCount }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Average Projects per Tenant -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Average Projects per Tenant</span>
+            <div class="kpi-icon-badge purple">
+              <span class="material-symbols-outlined">folder</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ avgProjectsPerTenant }}</div>
+            <div class="kpi-trend" style="color: var(--text-muted);">
+              <span>1.0</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group" style="width: 200px; margin-bottom: 0;">
-        <select class="form-select" [(ngModel)]="planFilter" (change)="onFilterChange()">
-          <option value="">All Subscription Plans</option>
-          <option value="Basic">Basic Plan</option>
-          <option value="Pro">Pro Plan</option>
-          <option value="Enterprise">Enterprise Plan</option>
-        </select>
+      <!-- 2 Charts Row: Tenants Growth (left) + User Registrations Donut/Bar (right) -->
+      <div class="charts-row">
+        <!-- Chart 1: Tenants Growth Over Time -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <div class="card-title">Tenants Growth Over Time</div>
+              <div class="card-subtitle">Tenants and subscriptions over time</div>
+            </div>
+            <div class="filter-dropdown-container">
+              <button class="card-action-pill" type="button" (click)="showChartModeMenu = !showChartModeMenu" title="Toggle Chart View">
+                <span>{{ chartMode }}</span>
+                <span>▾</span>
+              </button>
+              @if (showChartModeMenu) {
+                <div class="dropdown-menu-pane animate-fade" style="top: 100%; right: 0;">
+                  <button class="dropdown-item" (click)="setChartMode('Interactive')">Interactive</button>
+                  <button class="dropdown-item" (click)="setChartMode('Monthly')">Monthly</button>
+                  <button class="dropdown-item" (click)="setChartMode('Cumulative')">Cumulative</button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="growth-chart-wrap">
+            <svg class="chart-svg" viewBox="0 0 540 230" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tenantsCyanArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="tenantsCyanStroke" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#3B82F6"/>
+                  <stop offset="70%" stop-color="#60A5FA"/>
+                  <stop offset="100%" stop-color="#2563EB"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Horizontal Grid Lines -->
+              <line x1="45" y1="28" x2="520" y2="28" class="chart-grid-line"/>
+              <line x1="45" y1="58" x2="520" y2="58" class="chart-grid-line"/>
+              <line x1="45" y1="88" x2="520" y2="88" class="chart-grid-line"/>
+              <line x1="45" y1="118" x2="520" y2="118" class="chart-grid-line"/>
+              <line x1="45" y1="148" x2="520" y2="148" class="chart-grid-line"/>
+              <line x1="45" y1="178" x2="520" y2="178" class="chart-grid-line"/>
+              <line x1="45" y1="190" x2="520" y2="190" class="chart-grid-line"/>
+
+              <!-- Y-Axis Labels matching mockup (1,200 to 0) -->
+              <text x="35" y="32" text-anchor="end" class="chart-axis-text">1,200</text>
+              <text x="35" y="62" text-anchor="end" class="chart-axis-text">1,000</text>
+              <text x="35" y="92" text-anchor="end" class="chart-axis-text">800</text>
+              <text x="35" y="122" text-anchor="end" class="chart-axis-text">600</text>
+              <text x="35" y="152" text-anchor="end" class="chart-axis-text">400</text>
+              <text x="35" y="182" text-anchor="end" class="chart-axis-text">200</text>
+              <text x="35" y="194" text-anchor="end" class="chart-axis-text">0</text>
+
+              <!-- Glowing Area under Cyan Curve -->
+              <path [attr.d]="growthSvgAreaCyan" fill="url(#tenantsCyanArea)"/>
+
+              <!-- Line 1: Vibrant Cyan Curve (Top) -->
+              <path [attr.d]="growthSvgPathCyan" fill="none" stroke="url(#tenantsCyanStroke)" stroke-width="2.5" style="filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.5));"/>
+
+              <!-- Line 2: Purple / Indigo Curve (Middle) -->
+              <path [attr.d]="growthSvgPathPurple" fill="none" stroke="#8B5CF6" stroke-width="2" opacity="0.85" style="filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.4));"/>
+
+              <!-- Line 3: Amber / Gold Curve (Lower) -->
+              <path [attr.d]="growthSvgPathAmber" fill="none" stroke="#F59E0B" stroke-width="1.8" opacity="0.8" style="filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.35));"/>
+
+              <!-- X-Axis Labels matching mockup -->
+              <text x="55" y="215" text-anchor="middle" class="chart-axis-text">Jan</text>
+              <text x="132" y="215" text-anchor="middle" class="chart-axis-text">Feb</text>
+              <text x="210" y="215" text-anchor="middle" class="chart-axis-text">Mar</text>
+              <text x="288" y="215" text-anchor="middle" class="chart-axis-text">Apr</text>
+              <text x="365" y="215" text-anchor="middle" class="chart-axis-text">May</text>
+              <text x="442" y="215" text-anchor="middle" class="chart-axis-text">Jun</text>
+              <text x="515" y="215" text-anchor="middle" class="chart-axis-text">July</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Chart 2: User Registrations & Plan Tier Donut + Bar Chart -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <div class="card-title">User Registrations</div>
+              <div class="card-subtitle">User registrations &amp; analytics</div>
+            </div>
+          </div>
+
+          <!-- Top: Multi-segment Donut Chart + Legend -->
+          <div class="donut-chart-container">
+            <svg width="125" height="125" viewBox="0 0 42 42" class="donut">
+              <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="transparent"></circle>
+              <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1E293B" stroke-width="6"></circle>
+              <!-- Segment 1: Royal Blue (User Corp) -->
+              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#2563EB" stroke-width="6.5" stroke-dasharray="35 65" stroke-dashoffset="25"></circle>
+              <!-- Segment 2: Sky Blue (Customer) -->
+              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#38BDF8" stroke-width="6.5" stroke-dasharray="25 75" stroke-dashoffset="90"></circle>
+              <!-- Segment 3: Purple (Rootimes) -->
+              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#8B5CF6" stroke-width="6.5" stroke-dasharray="20 80" stroke-dashoffset="65"></circle>
+              <!-- Segment 4: Amber (Others) -->
+              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#F59E0B" stroke-width="6.5" stroke-dasharray="20 80" stroke-dashoffset="45"></circle>
+            </svg>
+
+            <!-- Legend Items matching mockup -->
+            <div class="donut-legend">
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #2563EB;"></span>
+                <span>User Corp</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #38BDF8;"></span>
+                <span>Customer</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #8B5CF6;"></span>
+                <span>Rootimes</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #10B981;"></span>
+                <span>Customer</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot" style="background: #F59E0B;"></span>
+                <span>Others</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom: Dual Monthly Bar Chart matching mockup -->
+          <div class="bar-chart-container">
+            <svg class="bar-chart-svg" viewBox="0 0 280 80" preserveAspectRatio="none">
+              <!-- Y-Axis Ticks -->
+              <text x="32" y="16" text-anchor="end" class="chart-axis-text" style="font-size: 8px;">$60K</text>
+              <text x="32" y="38" text-anchor="end" class="chart-axis-text" style="font-size: 8px;">$40K</text>
+              <text x="32" y="60" text-anchor="end" class="chart-axis-text" style="font-size: 8px;">$20K</text>
+              <text x="32" y="76" text-anchor="end" class="chart-axis-text" style="font-size: 8px;">0</text>
+
+              <!-- Horizontal base line -->
+              <line x1="38" y1="74" x2="275" y2="74" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
+
+              <!-- Month 1: Jan -->
+              <rect x="52" y="52" width="6" height="22" rx="1.5" fill="#1E293B"/>
+              <rect x="60" y="38" width="6" height="36" rx="1.5" fill="#3B82F6"/>
+              <text x="59" y="86" text-anchor="middle" class="chart-axis-text" style="font-size: 8px;">Jan</text>
+
+              <!-- Month 2: Feb -->
+              <rect x="98" y="44" width="6" height="30" rx="1.5" fill="#1E293B"/>
+              <rect x="106" y="24" width="6" height="50" rx="1.5" fill="#3B82F6"/>
+              <text x="105" y="86" text-anchor="middle" class="chart-axis-text" style="font-size: 8px;">Feb</text>
+
+              <!-- Month 3: Mar -->
+              <rect x="144" y="48" width="6" height="26" rx="1.5" fill="#1E293B"/>
+              <rect x="152" y="18" width="6" height="56" rx="1.5" fill="#3B82F6"/>
+              <text x="151" y="86" text-anchor="middle" class="chart-axis-text" style="font-size: 8px;">Mar</text>
+
+              <!-- Month 4: Apr -->
+              <rect x="190" y="36" width="6" height="38" rx="1.5" fill="#1E293B"/>
+              <rect x="198" y="28" width="6" height="46" rx="1.5" fill="#3B82F6"/>
+              <text x="197" y="86" text-anchor="middle" class="chart-axis-text" style="font-size: 8px;">Apr</text>
+
+              <!-- Month 5: May -->
+              <rect x="236" y="40" width="6" height="34" rx="1.5" fill="#1E293B"/>
+              <rect x="244" y="12" width="6" height="62" rx="1.5" fill="#3B82F6"/>
+              <text x="243" y="86" text-anchor="middle" class="chart-axis-text" style="font-size: 8px;">May</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tenant Management Table Card -->
+      <div class="tenant-bottom-card">
+        <div class="tenant-card-header">
+          <div>
+            <div class="card-title" style="font-size: 1.15rem;">Tenant Management</div>
+            <div class="card-subtitle">Optimized for multi-tenant organizations.</div>
+          </div>
+
+          <!-- Controls: Search, Filter, View Data, Create Tenant Button -->
+          <div class="tenant-controls">
+            <!-- Search tenant -->
+            <div class="search-input-wrap">
+              <span class="material-symbols-outlined search-icon-inside">search</span>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="Search tenant..."
+                [(ngModel)]="searchQuery"
+                (input)="onSearch()"
+              />
+            </div>
+
+            <!-- Filter by plan -->
+            <select class="form-select plan-filter-select" [(ngModel)]="planFilter" (change)="onFilterChange()">
+              <option value="">All Plans</option>
+              <option value="Basic">Basic Plan</option>
+              <option value="Pro">Pro Plan</option>
+              <option value="Enterprise">Enterprise Plan</option>
+            </select>
+
+            <!-- View Data Button -->
+            <button class="btn-view-data" type="button" (click)="loadTenants()" title="Refresh view data">
+              <span class="material-symbols-outlined" style="font-size: 1.05rem;">grid_view</span>
+              <span>View Data</span>
+            </button>
+
+            <!-- Create Tenant Button (Vibrant Cyan Gradient) -->
+            <button class="btn-create-tenant-cyan" type="button" (click)="openCreateModal()">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; font-weight: 700;">add</span>
+              <span>Create Tenant</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Columns: Organization Name, Domain, Plan, Created Date, Status, Actions -->
+        <div style="overflow-x: auto;">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Organization Name</th>
+                <th>Domain</th>
+                <th>Plan</th>
+                <th>Created Date &darr;</th>
+                <th>Status</th>
+                <th style="text-align: right; width: 140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tenant of filteredTenants; track tenant.id) {
+                <tr (click)="openViewModal(tenant)" class="tenant-table-row" style="cursor: pointer;" title="Click to view organization details">
+                  <td>
+                    <div class="tenant-cell">
+                      <div class="tenant-avatar-circle">{{ getInitials(tenant.name) }}</div>
+                      <div>
+                        <div class="tenant-name-text">{{ tenant.name }}</div>
+                        <div class="tenant-subtext">Tenant Created</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="tenant-domain-text">
+                    {{ tenant.domain }}
+                  </td>
+                  <td>
+                    <span [ngClass]="{
+                      'badge-enterprise': tenant.plan === 'Enterprise',
+                      'badge-pro': tenant.plan === 'Pro',
+                      'badge-basic': tenant.plan === 'Basic'
+                    }">
+                      {{ tenant.plan }}
+                    </span>
+                  </td>
+                  <td style="color: var(--text-muted); font-size: 0.82rem;">
+                    {{ formatRelativeTime(tenant.createdAt) }}
+                  </td>
+                  <td>
+                    <div class="status-dot-cell">
+                      <span
+                        class="status-dot"
+                        [ngClass]="{
+                          'dot-awaited': tenant.status === 'Awaited',
+                          'dot-upgraded': tenant.status === 'Upgraded',
+                          'dot-active': tenant.status === 'Active',
+                          'dot-suspended': tenant.status === 'Suspended'
+                        }"
+                      ></span>
+                      <span class="status-text">{{ tenant.status }}</span>
+                    </div>
+                  </td>
+                  <!-- Actions: Edit, View, Lock/Unlock, Delete -->
+                  <td style="text-align: right;" (click)="$event.stopPropagation()">
+                    <div class="table-actions-cell">
+                      <button class="action-icon-btn" (click)="openEditModal(tenant)" title="Edit Tenant">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
+                      </button>
+                      <button class="action-icon-btn" (click)="openViewModal(tenant)" title="View Organization Details">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">visibility</span>
+                      </button>
+                      <button
+                        class="action-icon-btn"
+                        [title]="tenant.status === 'Suspended' ? 'Activate Tenant' : 'Deactivate Tenant'"
+                        (click)="toggleStatus(tenant)"
+                      >
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">
+                          {{ tenant.status === 'Suspended' ? 'lock_open' : 'lock' }}
+                        </span>
+                      </button>
+                      <button class="action-icon-btn btn-danger" (click)="deleteTenant(tenant.id)" title="Delete Tenant">
+                        <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                    No organizations match your filters.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+          <span style="color: var(--text-secondary); font-size: 0.82rem;">
+            @if (loading) {
+              Loading records...
+            } @else {
+              Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
+            }
+          </span>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
+            <button class="btn btn-outline" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Tenants Table Card -->
-  <div class="glass-card" style="padding: 0; overflow: hidden;">
-    <div class="table-container" style="border: none; margin-top: 0;">
-      <table class="custom-table">
-        <thead>
-          <tr>
-            <th>Tenant Name</th>
-            <th>Domain</th>
-            <th>Email Address</th>
-            <th>Plan Tier</th>
-            <th>Monthly Rev.</th>
-            <th>Status</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (tenant of filteredTenants; track tenant.id) {
-            <tr>
-              <td style="font-weight: 600; color: var(--text-heading);">{{ tenant.name }}</td>
-              <td style="color: var(--primary-color); font-family: monospace;">{{ tenant.domain }}</td>
-              <td>{{ tenant.contactEmail }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="tenant.plan === 'Enterprise'" [class.badge-info]="tenant.plan === 'Pro' || tenant.plan === 'Basic'">
-                  {{ tenant.plan }}
-                </span>
-              </td>
-              <td style="font-weight: 600;">${{ tenant.monthlyRevenue || 0 }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="tenant.status?.includes('Upgrad') || tenant.status === 'Active'" [class.badge-danger]="tenant.status?.includes('Deactiv') || tenant.status === 'Suspended'">
-                  {{ tenant.status }}
-                </span>
-              </td>
-              <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openViewModal(tenant)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">visibility</span>
-                </button>
-                <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openEditModal(tenant)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                </button>
-                <button class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" [class.btn-outline]="tenant.status === 'Suspended'" [class.btn-danger]="tenant.status !== 'Suspended'" (click)="toggleStatus(tenant)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">{{ tenant.status === 'Suspended' ? 'lock_open' : 'lock' }}</span>
-                </button>
-                <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteTenant(tenant.id)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                </button>
-              </td>
-            </tr>
+    <!-- RIGHT SIDE COLUMN: Recent Activity Feed (Matching Mockup) -->
+    <aside class="dash-activity-col">
+      <div class="dash-card activity-feed-card">
+        <div class="dash-card-header" style="margin-bottom: 1rem;">
+          <div class="card-title">Recent Activity Feed</div>
+        </div>
+
+        <div class="activity-list">
+          @for (item of activityFeed; track item.id) {
+            <div class="activity-item">
+              <div class="activity-icon-wrap" [style.background]="item.iconBg" [style.color]="item.iconColor">
+                <span class="material-symbols-outlined">{{ item.icon }}</span>
+              </div>
+              <div class="activity-details">
+                <div class="activity-title">{{ item.title }}</div>
+                <div class="activity-sub">{{ item.subtitle }}</div>
+                <div class="activity-time">{{ item.timeAgo }}</div>
+              </div>
+            </div>
           } @empty {
-            <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">search_off</span>
-                <div>No tenant organizations match your search filters.</div>
-              </td>
-            </tr>
+            <div style="text-align: center; color: var(--text-muted); padding: 3rem 0; font-size: 0.85rem;">
+              No recent activity recorded
+            </div>
           }
-        </tbody>
-      </table>
-    </div>
+        </div>
+
+        <button class="show-all-btn" type="button" routerLink="/admin/system-logs">Show all</button>
+      </div>
+    </aside>
   </div>
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (loading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
-    </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+  <!-- Popup Modal: View Tenant Details (Tenant info, Admin info, Users count, Projects count, Subscription plan) -->
+  @if (isViewModalOpen && selectedTenant) {
+    <div class="modal-backdrop">
+      <div class="modal-container" style="max-width: 580px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="tenant-avatar-circle" style="width: 38px; height: 38px; font-size: 0.9rem;">
+              {{ getInitials(selectedTenant.name) }}
+            </div>
+            <div>
+              <h3 class="modal-title" style="margin: 0;">{{ selectedTenant.name }}</h3>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">Tenant Workspace Details</div>
+            </div>
+          </div>
+          <button class="modal-close" (click)="closeViewModal()">&times;</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+          <!-- 1. Tenant Info -->
+          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Tenant Info</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Organization Domain</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">{{ selectedTenant.domain }}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Created Date</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.createdAt | date:'mediumDate' }}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Status</div>
+                <div>
+                  <span class="badge" [class.badge-success]="selectedTenant.status === 'Active' || selectedTenant.status === 'Upgraded'" [class.badge-danger]="selectedTenant.status === 'Suspended'">
+                    {{ selectedTenant.status }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Monthly Revenue</div>
+                <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-heading);">${{ selectedTenant.monthlyRevenue || 0 }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Admin Info -->
+          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Admin Info</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Contact Email</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.contactEmail }}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Contact Phone</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.contactPhone || '—' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Subscription Plan Quota & Counts -->
+          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Subscription Plan &amp; Quotas</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; text-align: center;">
+              <div style="padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">{{ selectedTenant.usersCount || 0 }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">Users Count</div>
+              </div>
+              <div style="padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-heading);">{{ selectedTenant.projectsCount || 0 }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">Projects Count</div>
+              </div>
+              <div style="padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="font-size: 1.25rem; font-weight: 800; color: #10B981; margin-top: 0.2rem;">{{ selectedTenant.plan }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">Subscription Plan</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 1.5rem;">
+          <button class="btn btn-outline" (click)="closeViewModal()">Close</button>
+          <button class="btn btn-primary" (click)="closeViewModal(); openEditModal(selectedTenant)">Edit Tenant</button>
+        </div>
+      </div>
     </div>
-  </div>
+  }
 
   <!-- Popup Modal: Create Tenant -->
   @if (isCreateModalOpen) {
@@ -132,7 +573,7 @@
               type="text"
               id="new-name"
               class="form-input"
-              placeholder="e.g. Initech Inc"
+              placeholder="e.g. Acme Corporation"
               [(ngModel)]="newTenant.name"
               name="name"
               (input)="onNewTenantNameChange()"
@@ -151,7 +592,7 @@
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="new-email">Admin Email Address</label>
+            <label class="form-label" for="new-email">Admin Contact Email</label>
             <input
               type="email"
               id="new-email"
@@ -172,7 +613,7 @@
           </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Tenant</button>
+            <button type="submit" class="btn-create-tenant-cyan" style="padding: 0.6rem 1.25rem;">Create Tenant</button>
           </div>
         </form>
       </div>
@@ -184,7 +625,7 @@
     <div class="modal-backdrop">
       <div class="modal-container">
         <div class="modal-header">
-          <h3 class="modal-title">Edit Tenant</h3>
+          <h3 class="modal-title">Edit Tenant Organization</h3>
           <button class="modal-close" (click)="closeEditModal()">&times;</button>
         </div>
         <form (submit)="saveEditTenant()">
@@ -211,7 +652,7 @@
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="edit-email">Admin Email Address</label>
+            <label class="form-label" for="edit-email">Admin Contact Email</label>
             <input
               type="email"
               id="edit-email"
@@ -233,85 +674,16 @@
             <label class="form-label" for="edit-status">Status</label>
             <select id="edit-status" class="form-select" [(ngModel)]="editTenantForm.status" name="status">
               <option value="Active">Active</option>
+              <option value="Awaited">Awaited</option>
               <option value="Upgraded">Upgraded</option>
               <option value="Suspended">Suspended</option>
             </select>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" class="btn-create-tenant-cyan" style="padding: 0.6rem 1.25rem;">Save Changes</button>
           </div>
         </form>
-      </div>
-    </div>
-  }
-
-  <!-- Popup Modal: View Tenant Details -->
-  @if (isViewModalOpen && selectedTenant) {
-    <div class="modal-backdrop">
-      <div class="modal-container" style="max-width: 550px;">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ selectedTenant.name }} Details</h3>
-          <button class="modal-close" (click)="closeViewModal()">&times;</button>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Organization Info</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
-              <div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">Domain Name</div>
-                <div style="font-size: 0.95rem; font-weight: 600; color: var(--primary-color);">{{ selectedTenant.domain }}</div>
-              </div>
-              <div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">Subscription Plan</div>
-                <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.plan }}</div>
-              </div>
-              <div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">Created On</div>
-                <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.createdAt | date:'mediumDate' }}</div>
-              </div>
-              <div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">Status</div>
-                <div>
-                  <span class="badge" [class.badge-success]="selectedTenant.status?.includes('Upgrad') || selectedTenant.status === 'Active'" [class.badge-danger]="selectedTenant.status === 'Suspended'">
-                    {{ selectedTenant.status }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Admin Account Details</div>
-            <div style="margin-top: 0.5rem;">
-              <div style="font-size: 0.85rem; color: var(--text-secondary);">Admin Contact Email</div>
-              <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-heading);">{{ selectedTenant.contactEmail }}</div>
-            </div>
-          </div>
-
-          <div style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Workspace Quotas & Metrics</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; text-align: center;">
-              <div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">{{ selectedTenant.usersCount || 0 }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Active Users</div>
-              </div>
-              <div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-heading);">{{ selectedTenant.projectsCount || 0 }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Projects</div>
-              </div>
-              <div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">${{ selectedTenant.monthlyRevenue || 0 }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">Monthly Rev.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions" style="margin-top: 1.5rem;">
-          <button class="btn btn-primary" (click)="closeViewModal()">Close Details</button>
-        </div>
       </div>
     </div>
   }

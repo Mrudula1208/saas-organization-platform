@@ -57,18 +57,23 @@
         </div>
 
         <!-- Domain -->
+        <!-- Domain -->
         <div class="form-group">
           <label class="form-label" for="domain-slug">Domain Name *</label>
-          <input
-            type="text"
-            id="domain-slug"
-            class="form-input"
-            placeholder="acme.saasapp.com"
-            name="domain"
-            [(ngModel)]="domain"
-            required
-            #domainInput="ngModel"
-          />
+          <div style="display: flex; align-items: center;">
+            <input
+              type="text"
+              id="domain-slug"
+              class="form-input"
+              placeholder="acme"
+              name="domain"
+              [(ngModel)]="domain"
+              required
+              #domainInput="ngModel"
+              style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+            />
+            <span style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-left: none; padding: 0.65rem 0.85rem; border-top-right-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.85rem; font-family: monospace; white-space: nowrap;">.saasapp.com</span>
+          </div>
           @if (domainInput.invalid && domainInput.touched) {
             <span class="validation-error">Domain name is required</span>
           }
@@ -122,17 +127,44 @@
         <!-- Password -->
         <div class="form-group">
           <label class="form-label" for="pass">Password *</label>
-          <input
-            type="password"
-            id="pass"
-            class="form-input"
-            placeholder="••••••••••••"
-            name="password"
-            [(ngModel)]="password"
-            required
-            minlength="6"
-            #passInput="ngModel"
-          />
+          <div style="position: relative; display: flex; align-items: center;">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="pass"
+              class="form-input"
+              placeholder="••••••••••••"
+              name="password"
+              [(ngModel)]="password"
+              required
+              minlength="6"
+              #passInput="ngModel"
+              style="padding-right: 2.75rem;"
+            />
+            <button
+              type="button"
+              (click)="showPassword = !showPassword"
+              style="position: absolute; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 0.25rem;"
+              [title]="showPassword ? 'Hide password' : 'Show password'"
+              aria-label="Toggle password visibility"
+            >
+              <span class="material-symbols-outlined" style="font-size: 1.2rem;">
+                {{ showPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Strength Indicator matching Image 1 -->
+          @if (password) {
+            <div style="margin-top: 0.4rem;">
+              <div style="height: 3px; background: var(--bg-card-hover); border-radius: 2px; overflow: hidden; margin-bottom: 0.25rem;">
+                <div [style.width.%]="passwordStrength.percent" [style.background]="passwordStrength.color" style="height: 100%; transition: width 0.3s ease;"></div>
+              </div>
+              <span [style.color]="passwordStrength.color" style="font-size: 0.75rem; font-weight: 600;">
+                {{ passwordStrength.label }}
+              </span>
+            </div>
+          }
+
           @if (passInput.invalid && passInput.touched) {
             @if (passInput.errors?.['required']) {
               <span class="validation-error">Password is required</span>
@@ -145,20 +177,50 @@
         <!-- Confirm Password -->
         <div class="form-group">
           <label class="form-label" for="confirm-pass">Confirm Password *</label>
-          <input
-            type="password"
-            id="confirm-pass"
-            class="form-input"
-            placeholder="••••••••••••"
-            name="confirmPassword"
-            [(ngModel)]="confirmPassword"
-            required
-            #confirmPassInput="ngModel"
-          />
+          <div style="position: relative; display: flex; align-items: center;">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="confirm-pass"
+              class="form-input"
+              placeholder="••••••••••••"
+              name="confirmPassword"
+              [(ngModel)]="confirmPassword"
+              required
+              #confirmPassInput="ngModel"
+              style="padding-right: 2.75rem;"
+            />
+            <button
+              type="button"
+              (click)="showConfirmPassword = !showConfirmPassword"
+              style="position: absolute; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 0.25rem;"
+              [title]="showConfirmPassword ? 'Hide password' : 'Show password'"
+              aria-label="Toggle confirm password visibility"
+            >
+              <span class="material-symbols-outlined" style="font-size: 1.2rem;">
+                {{ showConfirmPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Match Indicator matching Image 1 -->
+          @if (confirmPassword) {
+            <div style="margin-top: 0.4rem;">
+              @if (isPasswordMatch) {
+                <span style="color: var(--success-color); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;">
+                  <span class="material-symbols-outlined" style="font-size: 0.95rem;">check</span>
+                  Looks good!
+                </span>
+              } @else {
+                <span style="color: var(--danger-color); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem;">
+                  <span class="material-symbols-outlined" style="font-size: 0.95rem;">close</span>
+                  Passwords do not match
+                </span>
+              }
+            </div>
+          }
+
           @if (confirmPassInput.invalid && confirmPassInput.touched) {
             <span class="validation-error">Please confirm your password</span>
-          } @else if (confirmPassInput.dirty && confirmPassword && password !== confirmPassword) {
-            <span class="validation-error">Passwords do not match</span>
           }
         </div>
       </div>

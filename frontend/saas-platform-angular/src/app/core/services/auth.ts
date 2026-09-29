@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface UserClaims {
+  id?: string;
   email: string;
   role: string;
   tenantId?: string;
@@ -33,6 +34,7 @@ export class Auth {
 
       // Map standard JWT claims or custom claims
       return {
+        id: payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || payload.id || payload.Id || undefined,
         email: payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || payload.Email || '',
         role: payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.Role || 'Member',
         tenantId: payload.tenantId || payload.TenantId || undefined,

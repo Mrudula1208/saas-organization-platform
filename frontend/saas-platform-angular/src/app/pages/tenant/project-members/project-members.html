@@ -1,0 +1,361 @@
+<div class="project-members-page animate-fade">
+  <!-- Top Breadcrumb Bar -->
+  <div class="dash-breadcrumb-bar">
+    <span class="breadcrumb-role">{{ roleLabel }}</span>
+    <span class="breadcrumb-slash">/</span>
+    <span class="breadcrumb-path">Project Members & Assignments</span>
+  </div>
+
+  <!-- Feedback Alerts -->
+  @if (successMessage) {
+    <div class="alert-banner alert-success">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+  @if (errorMessage) {
+    <div class="alert-banner alert-error">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- KPI Row: 4 Metric Cards -->
+  <div class="kpi-grid-row">
+    <!-- Card 1: Total Project Members -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Total Assigned Members</span>
+        <span class="kpi-icon-badge cyan">
+          <span class="material-symbols-outlined">group</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ totalMembersCount }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>Active across projects</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Active Projects with Teams -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Active Projects</span>
+        <span class="kpi-icon-badge teal">
+          <span class="material-symbols-outlined">folder</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ activeProjectsWithTeamCount }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>Staffed workspaces</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Project Managers -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Project Managers</span>
+        <span class="kpi-icon-badge purple">
+          <span class="material-symbols-outlined">manage_accounts</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ managerCount }}</div>
+      <div class="kpi-trend-pill neutral">
+        <span class="trend-bullet">●</span>
+        <span>Delivery leads</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Contributors -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Contributors & Engineers</span>
+        <span class="kpi-icon-badge green">
+          <span class="material-symbols-outlined">engineering</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ contributorCount }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>Sprint executors</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Filters & Actions Bar -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <!-- Search Input -->
+      <div class="search-input-wrapper">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          class="members-search-input"
+          placeholder="Search by member name, email or project..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
+
+      <!-- Filter by Project -->
+      <div class="filter-group">
+        <label class="filter-label" for="member-proj-filter">Project</label>
+        <div class="custom-select-wrapper">
+          <select id="member-proj-filter" class="custom-filter-select" [(ngModel)]="selectedProjectId" (change)="onProjectFilterChange()">
+            <option value="">All Projects</option>
+            @for (p of projects; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- Filter by Role -->
+      <div class="filter-group">
+        <label class="filter-label" for="member-role-filter">Role</label>
+        <div class="custom-select-wrapper">
+          <select id="member-role-filter" class="custom-filter-select" [(ngModel)]="roleFilter" (change)="onRoleFilterChange()">
+            <option value="">All Roles</option>
+            <option value="TenantAdmin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Member">Member</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- Add Member Action Button -->
+      @if (canManageMembers) {
+        <button class="btn-add-member-cyan" (click)="openAddModal()" type="button">
+          <span class="material-symbols-outlined btn-icon">person_add</span>
+          <span>Add Team Member</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Members Directory Card -->
+  <div class="members-directory-card">
+    <div class="directory-card-header">
+      <div>
+        <h2 class="directory-card-title">Project Members Directory</h2>
+        <p class="directory-card-subtitle">Manage project assignments, team roles, and collaboration permissions</p>
+      </div>
+
+      <div class="count-pill">
+        <span class="material-symbols-outlined pill-icon">badge</span>
+        <span>{{ filteredMembers.length }} Assignments</span>
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="table-state-box">
+        <div class="state-spinner"></div>
+        <span>Loading project members...</span>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Team Member</th>
+              <th>Assigned Project</th>
+              <th>Organization Role</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th style="width: 120px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of filteredMembers; track m.id) {
+              <tr class="table-row">
+                <!-- Team Member (Avatar + Name) -->
+                <td>
+                  <div class="member-identity-cell">
+                    <div class="member-avatar" [style.background]="getAvatarColor(m.userFullName)">
+                      {{ getUserInitials(m.userFullName) }}
+                    </div>
+                    <div class="member-name-block">
+                      <span class="member-display-name">{{ m.userFullName }}</span>
+                      <span class="member-role-sub">{{ m.userRole }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Assigned Project -->
+                <td>
+                  <span class="project-pill-tag">
+                    <span class="material-symbols-outlined project-icon">folder</span>
+                    <span>{{ m.projectName }}</span>
+                  </span>
+                </td>
+
+                <!-- Organization Role -->
+                <td>
+                  <span class="role-badge {{ getRoleBadgeClass(m.userRole) }}">
+                    {{ m.userRole }}
+                  </span>
+                </td>
+
+                <!-- Email -->
+                <td class="email-cell">{{ m.userEmail }}</td>
+
+                <!-- Status -->
+                <td>
+                  <span class="status-pill active">
+                    Active
+                  </span>
+                </td>
+
+                <!-- Actions: Remove -->
+                <td style="text-align: right;">
+                  <div class="actions-flex-row">
+                    @if (canManageMembers) {
+                      <button
+                        class="btn-action-icon delete"
+                        title="Remove from Project"
+                        (click)="openRemoveModal(m)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">person_remove</span>
+                      </button>
+                    } @else {
+                      <span class="readonly-pill">Read Only</span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty-table-cell">
+                  <div class="empty-state-content">
+                    <span class="material-symbols-outlined empty-icon">group_off</span>
+                    <div class="empty-title">No project members found</div>
+                    <p class="empty-subtitle">Try selecting a different project or assign a team member to a project.</p>
+                    @if (canManageMembers) {
+                      <button class="btn-add-member-cyan" (click)="openAddModal()" type="button" style="margin-top: 0.75rem;">
+                        <span class="material-symbols-outlined btn-icon">person_add</span>
+                        <span>Add Team Member</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Add Member Modal -->
+  @if (isAddModalOpen) {
+    <div class="modal-backdrop" (click)="closeAddModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <span class="material-symbols-outlined modal-icon">person_add</span>
+            <h3 class="modal-title">Assign Member to Project</h3>
+          </div>
+          <button class="btn-close" (click)="closeAddModal()" type="button">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          @if (addMemberError) {
+            <div class="alert-banner alert-error" style="margin-bottom: 1rem;">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ addMemberError }}</span>
+            </div>
+          }
+
+          <!-- Project Select -->
+          <div class="form-group">
+            <label class="form-label" for="add-proj-select">Select Project *</label>
+            <div class="custom-select-wrapper">
+              <select
+                id="add-proj-select"
+                class="form-select"
+                [(ngModel)]="selectedAddProjectId"
+                (change)="onAddProjectSelectChange()"
+              >
+                @for (p of projects; track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Team Member Select -->
+          <div class="form-group">
+            <label class="form-label" for="add-user-select">Select Workspace Member *</label>
+            <div class="custom-select-wrapper">
+              <select
+                id="add-user-select"
+                class="form-select"
+                [(ngModel)]="selectedAddUserId"
+              >
+                <option value="">Choose an eligible team member...</option>
+                @for (u of eligibleUsersForAdd; track u.id) {
+                  <option [value]="u.id">{{ u.fullName }} ({{ u.email }}) — {{ u.role }}</option>
+                }
+              </select>
+            </div>
+            @if (eligibleUsersForAdd.length === 0) {
+              <div class="form-hint-info">All users are already assigned to this project.</div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeAddModal()" type="button" [disabled]="addMemberLoading">Cancel</button>
+          <button
+            class="btn-submit-cyan"
+            (click)="confirmAddMember()"
+            type="button"
+            [disabled]="addMemberLoading || !selectedAddProjectId || !selectedAddUserId"
+          >
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">check</span>
+            <span>{{ addMemberLoading ? 'Assigning...' : 'Assign Member' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Remove Member Confirmation Modal -->
+  @if (isRemoveModalOpen && removingMember) {
+    <div class="modal-backdrop" (click)="closeRemoveModal()">
+      <div class="modal-box modal-box-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <span class="material-symbols-outlined modal-icon-warn">warning</span>
+            <h3 class="modal-title">Remove Project Member</h3>
+          </div>
+          <button class="btn-close" (click)="closeRemoveModal()" type="button">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="confirm-text">
+            Are you sure you want to remove <strong>{{ removingMember.userFullName }}</strong> from <strong>{{ removingMember.projectName }}</strong>?
+          </p>
+          <p class="confirm-subtext">The member will no longer have access to tasks or discussions within this project.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeRemoveModal()" type="button" [disabled]="removeLoading">Cancel</button>
+          <button
+            class="btn-danger"
+            (click)="confirmRemoveMember()"
+            type="button"
+            [disabled]="removeLoading"
+          >
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">person_remove</span>
+            <span>{{ removeLoading ? 'Removing...' : 'Confirm Remove' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

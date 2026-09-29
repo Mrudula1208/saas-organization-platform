@@ -25,13 +25,13 @@
   width: 2.35rem;
   height: 2.35rem;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: var(--primary-gradient);
   display: grid;
   place-content: center;
   color: #FFFFFF;
   font-weight: 800;
   font-size: 1.25rem;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.28);
 }
 
 .logo-text {
@@ -56,12 +56,13 @@
   align-items: center;
   gap: 0.85rem;
   padding: 0.65rem 0.95rem;
-  color: #64748B;
+  color: var(--text-secondary);
   text-decoration: none;
   font-family: var(--font-heading);
   font-weight: 500;
   font-size: 0.875rem;
   border-radius: 8px;
+  border: 1px solid transparent;
   position: relative;
   transition: all var(--transition-fast);
 }
@@ -73,23 +74,14 @@
 
 .nav-link.active {
   background: var(--primary-light);
+  border: 1px solid var(--primary-border);
   color: var(--primary-color);
   font-weight: 700;
 }
 
-.nav-link.active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 15%;
-  bottom: 15%;
-  width: 3.5px;
-  background: var(--primary-color);
-  border-radius: 0 4px 4px 0;
-}
-
 .nav-link .nav-icon {
   font-size: 1.25rem;
+  color: inherit;
   transition: transform var(--transition-fast);
 }
 
@@ -129,7 +121,8 @@
     transform: translateX(-100%);
   }
   
-  body.sidebar-open .sidebar {
+  :host-context(body.sidebar-open) .sidebar,
+  .sidebar.open {
     transform: translateX(0);
     box-shadow: var(--shadow-lg);
   }

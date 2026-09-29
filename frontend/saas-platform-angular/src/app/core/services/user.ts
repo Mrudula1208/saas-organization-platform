@@ -57,12 +57,13 @@ export class UserService {
   // Errors are passed on to the calling page so real API failures are shown to the user.
 
   // One page of users, filtered and counted on the server.
-  getUsers(page = 1, pageSize = 20, search = '', role = ''): Observable<PagedResult<User>> {
+  getUsers(page = 1, pageSize = 20, search = '', role = '', isActive?: boolean): Observable<PagedResult<User>> {
     let params = new HttpParams()
       .set('page', page)
       .set('pageSize', pageSize);
     if (search) params = params.set('search', search);
     if (role) params = params.set('role', role);
+    if (isActive !== undefined && isActive !== null) params = params.set('isActive', isActive.toString());
 
     return this.http.get<PagedResult<User>>(this.apiUrl, { headers: this.getHeaders(), params });
   }

@@ -1,620 +1,788 @@
-<div class="animate-fade">
-  <!-- Title & Top actions -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading); letter-spacing: -0.02em;">Task Management Board</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Organize tasks, assign team members, track priorities, and manage deadlines</p>
+<div class="task-manager-page animate-fade">
+  <!-- Top Breadcrumb Bar with View Switchers -->
+  <div class="dash-top-bar">
+    <div class="dash-breadcrumb-bar">
+      <span class="breadcrumb-role">{{ roleLabel }}</span>
+      <span class="breadcrumb-slash">/</span>
+      <span class="breadcrumb-path">Task Board & Workflows</span>
     </div>
 
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      <span class="material-symbols-outlined">add_task</span>
-      Create Task
-    </button>
+    <!-- View & Scope Toggle Buttons -->
+    <div class="view-switch-group">
+      <!-- Role Scope Toggle (All vs My Tasks) -->
+      <div class="scope-toggle-group">
+        <button
+          type="button"
+          class="btn-scope-pill"
+          [class.active]="filterScope === 'all'"
+          (click)="setFilterScope('all')"
+        >
+          All Tasks ({{ totalCount }})
+        </button>
+        <button
+          type="button"
+          class="btn-scope-pill"
+          [class.active]="filterScope === 'my'"
+          (click)="setFilterScope('my')"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1rem;">person</span>
+          My Tasks ({{ myTasksCount }})
+        </button>
+      </div>
+
+      <!-- View Toggle Buttons (Table View / Kanban Board View) -->
+      <button
+        class="btn-view-toggle"
+        [class.active]="activeView === 'both' || activeView === 'table'"
+        (click)="switchView(activeView === 'table' ? 'both' : 'table')"
+        type="button"
+        title="Show Table View"
+      >
+        <span class="material-symbols-outlined view-icon">table_chart</span>
+        <span>Table View</span>
+      </button>
+
+      <button
+        class="btn-view-toggle"
+        [class.active]="activeView === 'both' || activeView === 'board'"
+        (click)="switchView(activeView === 'board' ? 'both' : 'board')"
+        type="button"
+        title="Show Kanban Board View"
+      >
+        <span class="material-symbols-outlined view-icon">view_kanban</span>
+        <span>Kanban Board View</span>
+      </button>
+
+      @if (canCreateTask) {
+        <button
+          class="btn-create-task-cyan"
+          (click)="openCreateModal()"
+          type="button"
+        >
+          <span class="material-symbols-outlined btn-plus-icon">add</span>
+          <span>Create Task</span>
+        </button>
+      }
+    </div>
   </div>
 
-  @if (errorMessage) {
-    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
-      <span>{{ errorMessage }}</span>
-    </div>
-  }
-
-  <!-- Real-time Workspace Metrics Strip -->
-  <div class="tasks-metrics-bar">
-    <div class="metric-pill-card">
-      <div class="info">
-        <span class="label">Total Tasks</span>
-        <span class="value">{{ allTasks.length }}</span>
-      </div>
-      <div class="metric-icon-box" style="background: rgba(99, 102, 241, 0.12); color: var(--primary-color);">
-        <span class="material-symbols-outlined">task</span>
-      </div>
-    </div>
-
-    <div class="metric-pill-card">
-      <div class="info">
-        <span class="label">In Progress</span>
-        <span class="value">{{ inProgressTasks.length }}</span>
-      </div>
-      <div class="metric-icon-box" style="background: rgba(14, 165, 233, 0.12); color: #0EA5E9;">
-        <span class="material-symbols-outlined">pending_actions</span>
-      </div>
-    </div>
-
-    <div class="metric-pill-card">
-      <div class="info">
-        <span class="label">Completion Velocity</span>
-        <span class="value">{{ completionPercentage }}%</span>
-      </div>
-      <div class="metric-icon-box" style="background: rgba(16, 185, 129, 0.12); color: var(--success-color);">
-        <span class="material-symbols-outlined">verified</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filters & View Bar -->
-  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
-      <div style="display: flex; gap: 1rem; flex: 1; flex-wrap: wrap; align-items: center;">
-        <!-- Project Filter -->
-        <div class="form-group" style="width: 220px; margin-bottom: 0;">
-          <select class="form-select" [(ngModel)]="selectedProjectId" (change)="onFilterChange()">
+  <!-- Top Filters Bar (Matches Image 2) -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <!-- 1. Filter by Project -->
+      <div class="filter-group">
+        <label class="filter-label" for="proj-filter">Filter by Project</label>
+        <div class="custom-select-wrapper">
+          <select id="proj-filter" class="custom-filter-select" [(ngModel)]="selectedProjectId" (change)="onFilterChange()">
             <option value="">All Projects</option>
             @for (proj of projects; track proj.id) {
               <option [value]="proj.id">{{ proj.name }}</option>
             }
           </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
         </div>
+      </div>
 
-        <!-- Search Query -->
-        <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
+      <!-- 2. Status Filter -->
+      <div class="filter-group">
+        <label class="filter-label" for="status-filter">Status</label>
+        <div class="custom-select-wrapper">
+          <select id="status-filter" class="custom-filter-select" [(ngModel)]="selectedStatus" (change)="applyFilters()">
+            <option value="">All Statuses</option>
+            <option value="To Do">To Do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- 3. Priority Filter -->
+      <div class="filter-group">
+        <label class="filter-label" for="priority-filter">Priority</label>
+        <div class="custom-select-wrapper">
+          <select id="priority-filter" class="custom-filter-select" [(ngModel)]="selectedPriority" (change)="applyFilters()">
+            <option value="All">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- 4. Due Date Filter -->
+      <div class="filter-group">
+        <label class="filter-label" for="due-filter">Due Date</label>
+        <div class="custom-select-wrapper date-wrapper">
           <input
+            id="due-filter"
+            type="date"
+            class="custom-filter-select date-input"
+            [(ngModel)]="selectedDueDate"
+            (change)="applyFilters()"
+          />
+        </div>
+      </div>
+
+      <!-- 5. All Search Input -->
+      <div class="filter-group search-group">
+        <label class="filter-label" for="task-search-input">All Search</label>
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input
+            id="task-search-input"
             type="text"
-            class="form-input"
-            placeholder="Search tasks by name or description..."
+            class="task-search-input"
+            placeholder="Search tasks..."
             [(ngModel)]="searchQuery"
             (input)="onSearch()"
           />
+          <span class="keyboard-chip">Ctrl+K</span>
         </div>
-
-        <!-- Priority Filter Pills -->
-        <div class="priority-pill-group">
-          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'All'" (click)="setPriorityFilter('All')">All</button>
-          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'High'" (click)="setPriorityFilter('High')">High</button>
-          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'Medium'" (click)="setPriorityFilter('Medium')">Medium</button>
-          <button type="button" class="priority-pill-btn" [class.active]="selectedPriority === 'Low'" (click)="setPriorityFilter('Low')">Low</button>
-        </div>
-      </div>
-
-      <!-- View Selector Buttons -->
-      <div style="display: flex; background: var(--table-header-bg); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-        <button class="btn" style="padding: 0.45rem 0.9rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
-                [class.btn-primary]="activeView === 'board'" [class.btn-outline]="activeView !== 'board'"
-                (click)="switchView('board')">
-          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.25rem;">grid_view</span>
-          Kanban
-        </button>
-        <button class="btn" style="padding: 0.45rem 0.9rem; font-size: 0.85rem; border-radius: var(--radius-sm);"
-                [class.btn-primary]="activeView === 'table'" [class.btn-outline]="activeView !== 'table'"
-                (click)="switchView('table')">
-          <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; margin-right: 0.25rem;">list</span>
-          Table
-        </button>
       </div>
     </div>
   </div>
 
-  <!-- KANBAN BOARD VIEW -->
-  @if (activeView === 'board') {
-    <div class="kanban-grid">
-      <!-- TO DO COLUMN -->
-      <div class="kanban-column"
-           [class.drag-over]="dragOverColumn === 'To Do'"
-           (dragover)="onDragOver($event, 'To Do')"
-           (dragleave)="onDragLeave($event, 'To Do')"
-           (drop)="onDrop($event, 'To Do')">
-        <div class="column-header">
-          <div class="column-title">
-            <span class="column-indicator indicator-todo"></span>
-            <span>To Do</span>
-          </div>
-          <span class="column-counter badge badge-info">{{ todoTasks.length }}</span>
-        </div>
-
-        <div class="cards-container">
-          @for (task of todoTasks; track task.id) {
-            <div draggable="true"
-                 (dragstart)="onDragStart($event, task)"
-                 (dragend)="onDragEnd()"
-                 class="kanban-card animate-slide-up"
-                 [class.is-dragging]="draggedTaskId === task.id">
-              <div>
-                <div class="card-top-row">
-                  <span class="project-tag" title="{{ task.projectName }}">
-                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
-                    {{ task.projectName }}
-                  </span>
-                  <div class="card-actions">
-                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                    </button>
-                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="task-title">{{ task.name }}</div>
-                @if (task.description) {
-                  <div class="task-desc">{{ task.description }}</div>
-                }
-              </div>
-
-              <div class="card-bottom-row">
-                <div class="card-badges">
-                  <!-- Priority badge -->
-                  <span class="priority-tag"
-                        [class.priority-high]="task.priority === 'High'"
-                        [class.priority-medium]="task.priority === 'Medium'"
-                        [class.priority-low]="task.priority === 'Low'">
-                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">
-                      {{ task.priority === 'High' ? 'local_fire_department' : (task.priority === 'Medium' ? 'flag' : 'info') }}
-                    </span>
-                    {{ task.priority || 'Medium' }}
-                  </span>
-
-                  <!-- Due date -->
-                  @if (task.dueDate) {
-                    <span class="due-badge" [class.overdue]="isOverdue(task.dueDate, task.status)">
-                      <span class="material-symbols-outlined" style="font-size: 0.85rem;">calendar_month</span>
-                      {{ task.dueDate | date:'mediumDate' }}
-                    </span>
-                  }
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <!-- Assignee Avatar -->
-                  <div class="assignee-avatar"
-                       [style.background]="getUserColor(task.assignedUserName)"
-                       title="Assigned to {{ task.assignedUserName || 'Unassigned' }}">
-                    {{ getUserInitials(task.assignedUserName) }}
-                  </div>
-
-                  <!-- Quick Advance Button -->
-                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')" title="Move to In Progress">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          } @empty {
-            <div class="column-empty-target">
-              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">inbox</span>
-              <span>No tasks to do</span>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- IN PROGRESS COLUMN -->
-      <div class="kanban-column"
-           [class.drag-over]="dragOverColumn === 'In Progress'"
-           (dragover)="onDragOver($event, 'In Progress')"
-           (dragleave)="onDragLeave($event, 'In Progress')"
-           (drop)="onDrop($event, 'In Progress')">
-        <div class="column-header">
-          <div class="column-title">
-            <span class="column-indicator indicator-progress"></span>
-            <span>In Progress</span>
-          </div>
-          <span class="column-counter badge badge-info">{{ inProgressTasks.length }}</span>
-        </div>
-
-        <div class="cards-container">
-          @for (task of inProgressTasks; track task.id) {
-            <div draggable="true"
-                 (dragstart)="onDragStart($event, task)"
-                 (dragend)="onDragEnd()"
-                 class="kanban-card border-accent-progress animate-slide-up"
-                 [class.is-dragging]="draggedTaskId === task.id">
-              <div>
-                <div class="card-top-row">
-                  <span class="project-tag" title="{{ task.projectName }}">
-                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
-                    {{ task.projectName }}
-                  </span>
-                  <div class="card-actions">
-                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                    </button>
-                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="task-title">{{ task.name }}</div>
-                @if (task.description) {
-                  <div class="task-desc">{{ task.description }}</div>
-                }
-              </div>
-
-              <div class="card-bottom-row">
-                <div class="card-badges">
-                  <span class="priority-tag"
-                        [class.priority-high]="task.priority === 'High'"
-                        [class.priority-medium]="task.priority === 'Medium'"
-                        [class.priority-low]="task.priority === 'Low'">
-                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">
-                      {{ task.priority === 'High' ? 'local_fire_department' : (task.priority === 'Medium' ? 'flag' : 'info') }}
-                    </span>
-                    {{ task.priority || 'Medium' }}
-                  </span>
-
-                  @if (task.dueDate) {
-                    <span class="due-badge" [class.overdue]="isOverdue(task.dueDate, task.status)">
-                      <span class="material-symbols-outlined" style="font-size: 0.85rem;">calendar_month</span>
-                      {{ task.dueDate | date:'mediumDate' }}
-                    </span>
-                  }
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 0.35rem;">
-                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'To Do')" title="Move to To Do">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
-                  </button>
-
-                  <div class="assignee-avatar"
-                       [style.background]="getUserColor(task.assignedUserName)"
-                       title="Assigned to {{ task.assignedUserName || 'Unassigned' }}">
-                    {{ getUserInitials(task.assignedUserName) }}
-                  </div>
-
-                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'Completed')" title="Move to Completed">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          } @empty {
-            <div class="column-empty-target">
-              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">pending</span>
-              <span>No tasks in progress</span>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- COMPLETED COLUMN -->
-      <div class="kanban-column"
-           [class.drag-over]="dragOverColumn === 'Completed'"
-           (dragover)="onDragOver($event, 'Completed')"
-           (dragleave)="onDragLeave($event, 'Completed')"
-           (drop)="onDrop($event, 'Completed')">
-        <div class="column-header">
-          <div class="column-title">
-            <span class="column-indicator indicator-completed"></span>
-            <span>Completed</span>
-          </div>
-          <span class="column-counter badge badge-success">{{ completedTasks.length }}</span>
-        </div>
-
-        <div class="cards-container">
-          @for (task of completedTasks; track task.id) {
-            <div draggable="true"
-                 (dragstart)="onDragStart($event, task)"
-                 (dragend)="onDragEnd()"
-                 class="kanban-card border-accent-completed animate-slide-up"
-                 [class.is-dragging]="draggedTaskId === task.id">
-              <div>
-                <div class="card-top-row">
-                  <span class="project-tag" style="color: var(--success-color); background: rgba(16, 185, 129, 0.08);" title="{{ task.projectName }}">
-                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">folder</span>
-                    {{ task.projectName }}
-                  </span>
-                  <div class="card-actions">
-                    <button class="card-action-btn" (click)="openEditModal(task)" title="Edit Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                    </button>
-                    <button class="card-action-btn delete-btn" (click)="deleteTask(task.id)" title="Delete Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="task-title completed-strike">{{ task.name }}</div>
-                @if (task.description) {
-                  <div class="task-desc completed-text">{{ task.description }}</div>
-                }
-              </div>
-
-              <div class="card-bottom-row">
-                <div class="card-badges">
-                  <span class="badge badge-success" style="font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;">
-                    <span class="material-symbols-outlined" style="font-size: 0.85rem;">check_circle</span>
-                    Done
-                  </span>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <button class="btn btn-outline btn-icon" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-sm);" (click)="moveTask(task, 'In Progress')" title="Move to In Progress">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span>
-                  </button>
-
-                  <div class="assignee-avatar"
-                       [style.background]="getUserColor(task.assignedUserName)"
-                       title="Completed by {{ task.assignedUserName || 'User' }}">
-                    {{ getUserInitials(task.assignedUserName) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          } @empty {
-            <div class="column-empty-target">
-              <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--text-muted); opacity: 0.5;">task_alt</span>
-              <span>No completed tasks</span>
-            </div>
-          }
-        </div>
-      </div>
+  @if (errorMessage) {
+    <div class="alert-box-error">
+      <span class="material-symbols-outlined alert-icon">error</span>
+      <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <!-- GRID TABLE VIEW -->
-  @if (activeView === 'table') {
-    <div class="card" style="padding: 0; overflow: hidden;">
-      <div class="table-container" style="border: none; margin-top: 0;">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>Task Name</th>
-              <th>Project</th>
-              <th>Assigned User</th>
-              <th>Priority</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th style="text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (task of allTasks; track task.id) {
-              @if (!selectedProjectId || task.projectId === selectedProjectId) {
-                <tr>
-                  <td style="font-weight: 600;" [style.text-decoration]="task.status === 'Completed' ? 'line-through' : ''" [style.color]="task.status === 'Completed' ? 'var(--text-muted)' : 'var(--text-heading)'">
-                    {{ task.name }}
-                  </td>
-                  <td>{{ task.projectName }}</td>
+  <!-- SECTION 1: TASK MANAGEMENT TABLE VIEW (Matches Image 2) -->
+  @if (activeView === 'both' || activeView === 'table') {
+    <div class="section-card table-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Task Management</h2>
+          <p class="section-subtitle">Track team assignments, sprint deliverables, and execution deadlines</p>
+        </div>
+
+        <div class="status-count-pills">
+          <span class="metric-chip cyan">Total: <strong>{{ filteredTasks.length }}</strong></span>
+          <span class="metric-chip amber">In Progress: <strong>{{ inProgressTasks.length }}</strong></span>
+          <span class="metric-chip green">Completed: <strong>{{ completedTasks.length }}</strong></span>
+        </div>
+      </div>
+
+      @if (loading) {
+        <div class="table-state-box">
+          <div class="state-spinner"></div>
+          <span>Loading tasks...</span>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>Task Name</th>
+                <th>Project</th>
+                <th>Assigned User</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th style="width: 140px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (task of filteredTasks; track task.id) {
+                <tr class="table-row">
+                  <!-- Task Name -->
                   <td>
-                    <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                      <span class="assignee-avatar" [style.background]="getUserColor(task.assignedUserName)">
+                    <div class="task-title-cell">
+                      <span class="task-name-text">{{ task.name }}</span>
+                      @if (task.description) {
+                        <span class="task-desc-sub">{{ task.description }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Project -->
+                  <td>
+                    <span class="project-pill-tag">
+                      <span class="material-symbols-outlined project-icon">folder</span>
+                      <span>{{ task.projectName || 'General' }}</span>
+                    </span>
+                  </td>
+
+                  <!-- Assigned User -->
+                  <td>
+                    <div class="user-avatar-cell">
+                      <div class="user-avatar-circle" [style.background]="getUserColor(task.assignedUserName)">
                         {{ getUserInitials(task.assignedUserName) }}
-                      </span>
-                      {{ task.assignedUserName || 'Unassigned' }}
+                      </div>
+                      <span class="user-name-text">{{ task.assignedUserName || 'Unassigned' }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Priority -->
+                  <td>
+                    <span class="priority-pill {{ getPriorityBadgeClass(task.priority) }}">
+                      {{ task.priority || 'Medium' }}
                     </span>
                   </td>
-                  <td>
-                    <span class="priority-tag"
-                          [class.priority-high]="task.priority === 'High'"
-                          [class.priority-medium]="task.priority === 'Medium'"
-                          [class.priority-low]="task.priority === 'Low'">
-                      {{ task.priority }}
-                    </span>
+
+                  <!-- Due Date -->
+                  <td class="date-cell">
+                    {{ task.dueDate ? (task.dueDate | date:'yyyy-MM-dd') : '—' }}
                   </td>
-                  <td style="color: var(--text-secondary);">{{ task.dueDate | date:'mediumDate' }}</td>
+
+                  <!-- Status -->
                   <td>
-                    <span class="badge" [class.badge-success]="task.status === 'Completed'" [class.badge-info]="task.status === 'In Progress' || task.status === 'To Do'">
+                    <span class="status-pill {{ getStatusBadgeClass(task.status) }}">
                       {{ task.status }}
                     </span>
                   </td>
-                  <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    @if (task.status !== 'Completed') {
-                      <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="markComplete(task)" title="Mark Complete">
-                        <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--success-color);">check</span>
+
+                  <!-- Actions: Edit, Delete, Mark Complete, More -->
+                  <td style="text-align: right;" (click)="$event.stopPropagation()">
+                    <div class="actions-flex-row">
+                      <!-- Edit -->
+                      @if (canEditTask) {
+                        <button
+                          class="btn-action-icon edit"
+                          title="Edit Task"
+                          (click)="openEditModal(task, $event)"
+                          type="button"
+                        >
+                          <span class="material-symbols-outlined action-svg">edit</span>
+                        </button>
+                      }
+
+                      <!-- Delete -->
+                      @if (canDeleteTask) {
+                        <button
+                          class="btn-action-icon delete"
+                          title="Delete Task"
+                          (click)="openDeleteModal(task, $event)"
+                          type="button"
+                        >
+                          <span class="material-symbols-outlined action-svg">delete</span>
+                        </button>
+                      }
+
+                      <!-- Mark Complete -->
+                      <button
+                        class="btn-action-icon complete"
+                        [class.is-done]="task.status === 'Completed'"
+                        title="Mark Complete"
+                        (click)="markComplete(task, $event)"
+                        type="button"
+                      >
+                        <span class="material-symbols-outlined action-svg">check_circle</span>
                       </button>
-                    }
-                    <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openEditModal(task)" title="Edit Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                    </button>
-                    <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteTask(task.id)" title="Delete Task">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                    </button>
+
+                      <!-- More Menu -->
+                      <div class="more-menu-wrapper">
+                        <button
+                          class="btn-action-icon more"
+                          title="More Options"
+                          (click)="toggleMoreMenu(task.id, $event)"
+                          type="button"
+                        >
+                          <span class="material-symbols-outlined action-svg">more_horiz</span>
+                        </button>
+
+                        @if (activeMoreMenuTaskId === task.id) {
+                          <div class="more-dropdown-panel" (click)="$event.stopPropagation()">
+                            <button class="more-dropdown-item" (click)="moveTask(task, 'To Do', $event)" type="button">
+                              <span class="material-symbols-outlined item-icon">schedule</span>
+                              <span>Move to To Do</span>
+                            </button>
+                            <button class="more-dropdown-item" (click)="moveTask(task, 'In Progress', $event)" type="button">
+                              <span class="material-symbols-outlined item-icon cyan">play_arrow</span>
+                              <span>Move to In Progress</span>
+                            </button>
+                            <button class="more-dropdown-item" (click)="moveTask(task, 'Completed', $event)" type="button">
+                              <span class="material-symbols-outlined item-icon green">task_alt</span>
+                              <span>Move to Completed</span>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="empty-table-cell">
+                    <div class="empty-state-content">
+                      <span class="material-symbols-outlined empty-icon">assignment_late</span>
+                      <div class="empty-title">No tasks found</div>
+                      @if (canCreateTask) {
+                        <button class="btn-create-task-cyan" (click)="openCreateModal()" type="button" style="margin-top: 0.65rem;">
+                          <span class="material-symbols-outlined btn-plus-icon">add</span>
+                          <span>Create Task</span>
+                        </button>
+                      }
+                    </div>
                   </td>
                 </tr>
               }
-            } @empty {
-              <tr>
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No tasks logged.</td>
-              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Pagination -->
+        <div class="table-pagination-footer">
+          <span class="footer-count-text">
+            Showing {{ pageStartItem }} to {{ pageEndItem }} of {{ displayTotalCount }} tasks
+          </span>
+
+          <div class="pagination-buttons-row">
+            <button class="btn-page-step" [disabled]="page <= 1 || loading" (click)="setPage(1)" type="button">&laquo;</button>
+            <button class="btn-page-step" [disabled]="page <= 1 || loading" (click)="prevPage()" type="button">&lsaquo;</button>
+            @for (p of pagesArray; track p) {
+              <button class="btn-page-number" [class.active]="p === page" (click)="setPage(p)" type="button">{{ p }}</button>
             }
-          </tbody>
-        </table>
+            <button class="btn-page-step" [disabled]="page >= totalPages || loading" (click)="nextPage()" type="button">&rsaquo;</button>
+            <button class="btn-page-step" [disabled]="page >= totalPages || loading" (click)="setPage(totalPages)" type="button">&raquo;</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- SECTION 2: KANBAN BOARD VIEW (Matches Image 2 Bottom Half) -->
+  @if (activeView === 'both' || activeView === 'board') {
+    <div class="section-card kanban-section">
+      <div class="section-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="material-symbols-outlined board-header-icon">view_kanban</span>
+          <h2 class="section-title">Kanban Board View</h2>
+        </div>
+        <p class="section-subtitle">Drag and drop sprint tasks between columns to update execution state</p>
+      </div>
+
+      <!-- 3 Kanban Columns: To Do, In Progress, Completed -->
+      <div class="kanban-columns-row">
+        <!-- COLUMN 1: TO DO -->
+        <div
+          class="kanban-lane-card lane-todo"
+          [class.drag-target-over]="dragOverColumn === 'To Do'"
+          (dragover)="onDragOver($event, 'To Do')"
+          (dragleave)="onDragLeave($event, 'To Do')"
+          (drop)="onDrop($event, 'To Do')"
+        >
+          <div class="lane-header">
+            <div class="lane-title-flex">
+              <span class="lane-bullet cyan"></span>
+              <span class="lane-title-text">To Do</span>
+              <span class="lane-count-pill">{{ todoTasks.length }}</span>
+            </div>
+            @if (canCreateTask) {
+              <button class="btn-lane-add" (click)="openCreateModal('To Do')" type="button" title="Add To Do Task">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+
+          <div class="lane-cards-scroll">
+            @for (task of todoTasks; track task.id) {
+              <div
+                class="kanban-task-card"
+                [class.card-is-dragging]="draggedTaskId === task.id"
+                draggable="true"
+                (dragstart)="onDragStart($event, task)"
+                (dragend)="onDragEnd()"
+                (click)="canEditTask ? openEditModal(task) : null"
+              >
+                <div class="card-name-title">{{ task.name }}</div>
+
+                <div class="card-mid-meta">
+                  <div class="card-avatar" [style.background]="getUserColor(task.assignedUserName)" [title]="task.assignedUserName || 'Unassigned'">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+                  <span class="priority-pill small {{ getPriorityBadgeClass(task.priority) }}">
+                    {{ task.priority || 'Medium' }}
+                  </span>
+                </div>
+
+                <!-- Glowing Cyan Progress Bar -->
+                <div class="task-progress-track">
+                  <div class="task-progress-fill todo" [style.width.%]="getTaskProgressPercent(task.status)"></div>
+                </div>
+
+                <div class="card-footer-flex">
+                  <span class="task-date-tag">
+                    <span class="material-symbols-outlined clock-icon">schedule</span>
+                    {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No deadline' }}
+                  </span>
+                  <button class="btn-card-advance" (click)="moveTask(task, 'In Progress', $event)" type="button" title="Move to In Progress">
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="lane-empty-placeholder">
+                <span class="material-symbols-outlined empty-icon">assignment</span>
+                <span>No tasks in To Do</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- COLUMN 2: IN PROGRESS -->
+        <div
+          class="kanban-lane-card lane-progress"
+          [class.drag-target-over]="dragOverColumn === 'In Progress'"
+          (dragover)="onDragOver($event, 'In Progress')"
+          (dragleave)="onDragLeave($event, 'In Progress')"
+          (drop)="onDrop($event, 'In Progress')"
+        >
+          <div class="lane-header">
+            <div class="lane-title-flex">
+              <span class="lane-bullet amber"></span>
+              <span class="lane-title-text">In Progress</span>
+              <span class="lane-count-pill">{{ inProgressTasks.length }}</span>
+            </div>
+            @if (canCreateTask) {
+              <button class="btn-lane-add" (click)="openCreateModal('In Progress')" type="button" title="Add In Progress Task">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+
+          <div class="lane-cards-scroll">
+            @for (task of inProgressTasks; track task.id) {
+              <div
+                class="kanban-task-card in-progress"
+                [class.card-is-dragging]="draggedTaskId === task.id"
+                draggable="true"
+                (dragstart)="onDragStart($event, task)"
+                (dragend)="onDragEnd()"
+                (click)="canEditTask ? openEditModal(task) : null"
+              >
+                <div class="card-name-title">{{ task.name }}</div>
+
+                <div class="card-mid-meta">
+                  <div class="card-avatar" [style.background]="getUserColor(task.assignedUserName)" [title]="task.assignedUserName || 'Unassigned'">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+                  <span class="priority-pill small {{ getPriorityBadgeClass(task.priority) }}">
+                    {{ task.priority || 'Medium' }}
+                  </span>
+                </div>
+
+                <!-- Glowing Amber Progress Bar -->
+                <div class="task-progress-track">
+                  <div class="task-progress-fill progress" [style.width.%]="getTaskProgressPercent(task.status)"></div>
+                </div>
+
+                <div class="card-footer-flex">
+                  <span class="task-date-tag">
+                    <span class="material-symbols-outlined clock-icon">schedule</span>
+                    {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'In progress' }}
+                  </span>
+                  <div class="card-advance-pair">
+                    <button class="btn-card-advance" (click)="moveTask(task, 'To Do', $event)" type="button" title="Move back to To Do">
+                      <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <button class="btn-card-advance cyan" (click)="moveTask(task, 'Completed', $event)" type="button" title="Mark Completed">
+                      <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="lane-empty-placeholder">
+                <span class="material-symbols-outlined empty-icon">play_circle</span>
+                <span>No tasks in progress</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- COLUMN 3: COMPLETED -->
+        <div
+          class="kanban-lane-card lane-completed"
+          [class.drag-target-over]="dragOverColumn === 'Completed'"
+          (dragover)="onDragOver($event, 'Completed')"
+          (dragleave)="onDragLeave($event, 'Completed')"
+          (drop)="onDrop($event, 'Completed')"
+        >
+          <div class="lane-header">
+            <div class="lane-title-flex">
+              <span class="lane-bullet green"></span>
+              <span class="lane-title-text">Completed</span>
+              <span class="lane-count-pill">{{ completedTasks.length }}</span>
+            </div>
+            @if (canCreateTask) {
+              <button class="btn-lane-add" (click)="openCreateModal('Completed')" type="button" title="Add Completed Task">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            }
+          </div>
+
+          <div class="lane-cards-scroll">
+            @for (task of completedTasks; track task.id) {
+              <div
+                class="kanban-task-card completed"
+                [class.card-is-dragging]="draggedTaskId === task.id"
+                draggable="true"
+                (dragstart)="onDragStart($event, task)"
+                (dragend)="onDragEnd()"
+                (click)="canEditTask ? openEditModal(task) : null"
+              >
+                <div class="card-name-title is-complete">{{ task.name }}</div>
+
+                <div class="card-mid-meta">
+                  <div class="card-avatar" [style.background]="getUserColor(task.assignedUserName)" [title]="task.assignedUserName || 'Unassigned'">
+                    {{ getUserInitials(task.assignedUserName) }}
+                  </div>
+                  <span class="priority-pill small {{ getPriorityBadgeClass(task.priority) }}">
+                    {{ task.priority || 'Medium' }}
+                  </span>
+                </div>
+
+                <!-- 100% Green Progress Bar -->
+                <div class="task-progress-track">
+                  <div class="task-progress-fill complete" style="width: 100%;"></div>
+                </div>
+
+                <div class="card-footer-flex">
+                  <span class="task-date-tag completed">
+                    <span class="material-symbols-outlined check-icon">done_all</span>
+                    Completed
+                  </span>
+                  <button class="btn-card-advance" (click)="moveTask(task, 'In Progress', $event)" type="button" title="Reopen Task">
+                    <span class="material-symbols-outlined">replay</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="lane-empty-placeholder">
+                <span class="material-symbols-outlined empty-icon">check_circle</span>
+                <span>No completed tasks</span>
+              </div>
+            }
+          </div>
+        </div>
       </div>
     </div>
   }
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (loading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
-    </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
-    </div>
-  </div>
-
-  <!-- Popup Modal: Create Task -->
+  <!-- MODAL: CREATE TASK -->
   @if (isCreateModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container">
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3 class="modal-title">Create Workspace Task</h3>
-          <button class="modal-close" (click)="closeCreateModal()">&times;</button>
+          <h3 class="modal-title">Create Task</h3>
+          <button class="modal-close-btn" (click)="closeCreateModal()" type="button">&times;</button>
         </div>
-        <form (submit)="saveTask()">
-          <div class="form-group">
-            <label class="form-label" for="task-title">Task Title *</label>
+
+        <form (submit)="saveTask()" class="modal-form">
+          <div class="modal-form-group">
+            <label class="modal-label" for="task-name">Task Name *</label>
             <input
               type="text"
-              id="task-title"
-              class="form-input"
-              placeholder="e.g. Design Settings Grid"
+              id="task-name"
+              class="modal-input cyan-focus"
+              placeholder="e.g. Design user table"
               [(ngModel)]="newTask.name"
               name="name"
               required
+              autofocus
             />
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="task-desc">Task Description</label>
+          <div class="modal-form-group">
+            <label class="modal-label" for="task-desc">Description</label>
             <textarea
               id="task-desc"
-              class="form-input"
-              placeholder="Write a brief explanation of task details..."
+              class="modal-input modal-textarea"
+              placeholder="Provide actionable sprint details..."
               rows="3"
               [(ngModel)]="newTask.description"
               name="description"
-              style="resize: none;"
             ></textarea>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="task-project">Project Workspace *</label>
-            <select id="task-project" class="form-select" [(ngModel)]="newTask.projectId" name="projectId">
-              @for (proj of projects; track proj.id) {
-                <option [value]="proj.id">{{ proj.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="task-user">Assigned User</label>
-              <select id="task-user" class="form-select" [(ngModel)]="newTask.assignedUserId" name="assignedUserId">
-                @for (usr of users; track usr.id) {
-                  <option [value]="usr.id">{{ usr.fullName }}</option>
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="task-project">Project *</label>
+              <select id="task-project" class="modal-select" [(ngModel)]="newTask.projectId" name="projectId" required>
+                @for (proj of projects; track proj.id) {
+                  <option [value]="proj.id">{{ proj.name }}</option>
                 }
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="task-due">Due Date</label>
-              <input
-                type="date"
-                id="task-due"
-                class="form-input"
-                [(ngModel)]="newTask.dueDate"
-                name="dueDate"
-                required
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="task-priority">Task Priority</label>
-            <select id="task-priority" class="form-select" [(ngModel)]="newTask.priority" name="priority">
-              <option value="Low">Low Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="High">High Priority</option>
-            </select>
-          </div>
-
-          <div class="modal-actions" style="margin-top: 1.75rem;">
-            <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Task</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-
-  <!-- Popup Modal: Edit Task -->
-  @if (isEditModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Edit Task Details</h3>
-          <button class="modal-close" (click)="closeEditModal()">&times;</button>
-        </div>
-        <form (submit)="saveEditTask()">
-          <div class="form-group">
-            <label class="form-label" for="edit-task-title">Task Title *</label>
-            <input
-              type="text"
-              id="edit-task-title"
-              class="form-input"
-              placeholder="e.g. Design Settings Grid"
-              [(ngModel)]="editTask.name"
-              name="name"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="edit-task-desc">Task Description</label>
-            <textarea
-              id="edit-task-desc"
-              class="form-input"
-              placeholder="Write a brief explanation of task details..."
-              rows="3"
-              [(ngModel)]="editTask.description"
-              name="description"
-              style="resize: none;"
-            ></textarea>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="edit-task-user">Assigned User</label>
-              <select id="edit-task-user" class="form-select" [(ngModel)]="editTask.assignedUserId" name="assignedUserId">
-                @for (usr of users; track usr.id) {
-                  <option [value]="usr.id">{{ usr.fullName }}</option>
+            <div class="modal-form-group">
+              <label class="modal-label" for="task-assignee">Assigned User</label>
+              <select id="task-assignee" class="modal-select" [(ngModel)]="newTask.assignedUserId" name="assignedUserId">
+                <option value="">Unassigned</option>
+                @for (u of users; track u.id) {
+                  <option [value]="u.id">{{ u.fullName }}</option>
                 }
               </select>
             </div>
-
-            <div class="form-group">
-              <label class="form-label" for="edit-task-due">Due Date</label>
-              <input
-                type="date"
-                id="edit-task-due"
-                class="form-input"
-                [(ngModel)]="editTask.dueDate"
-                name="dueDate"
-                required
-              />
-            </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="edit-task-priority">Priority</label>
-              <select id="edit-task-priority" class="form-select" [(ngModel)]="editTask.priority" name="priority">
-                <option value="Low">Low Priority</option>
-                <option value="Medium">Medium Priority</option>
-                <option value="High">High Priority</option>
+          <div class="modal-grid-3">
+            <div class="modal-form-group">
+              <label class="modal-label" for="task-priority">Priority</label>
+              <select id="task-priority" class="modal-select" [(ngModel)]="newTask.priority" name="priority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="edit-task-status">Status</label>
-              <select id="edit-task-status" class="form-select" [(ngModel)]="editTask.status" name="status">
+            <div class="modal-form-group">
+              <label class="modal-label" for="task-status">Status</label>
+              <select id="task-status" class="modal-select" [(ngModel)]="newTask.status" name="status">
                 <option value="To Do">To Do</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
               </select>
             </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="task-due">Due Date</label>
+              <input
+                type="date"
+                id="task-due"
+                class="modal-input"
+                [(ngModel)]="newTask.dueDate"
+                name="dueDate"
+              />
+            </div>
           </div>
 
-          <div class="modal-actions" style="margin-top: 1.75rem;">
-            <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+          <div class="modal-actions-footer">
+            <button type="submit" class="btn-modal-submit cyan">
+              Create Task
+            </button>
+            <button type="button" class="btn-modal-cancel" (click)="closeCreateModal()">
+              Cancel
+            </button>
           </div>
         </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: EDIT TASK -->
+  @if (isEditModalOpen) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Task</h3>
+          <button class="modal-close-btn" (click)="closeEditModal()" type="button">&times;</button>
+        </div>
+
+        <form (submit)="saveEditTask()" class="modal-form">
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-task-name">Task Name *</label>
+            <input
+              type="text"
+              id="edit-task-name"
+              class="modal-input cyan-focus"
+              [(ngModel)]="editTask.name"
+              name="editName"
+              required
+            />
+          </div>
+
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-task-desc">Description</label>
+            <textarea
+              id="edit-task-desc"
+              class="modal-input modal-textarea"
+              rows="3"
+              [(ngModel)]="editTask.description"
+              name="editDescription"
+            ></textarea>
+          </div>
+
+          <div class="modal-grid-2">
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-task-project">Project</label>
+              <select id="edit-task-project" class="modal-select" [(ngModel)]="editTask.projectId" name="editProjectId">
+                @for (proj of projects; track proj.id) {
+                  <option [value]="proj.id">{{ proj.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-task-assignee">Assigned User</label>
+              <select id="edit-task-assignee" class="modal-select" [(ngModel)]="editTask.assignedUserId" name="editAssignedUserId">
+                <option value="">Unassigned</option>
+                @for (u of users; track u.id) {
+                  <option [value]="u.id">{{ u.fullName }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-grid-3">
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-task-priority">Priority</label>
+              <select id="edit-task-priority" class="modal-select" [(ngModel)]="editTask.priority" name="editPriority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-task-status">Status</label>
+              <select id="edit-task-status" class="modal-select" [(ngModel)]="editTask.status" name="editStatus">
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+
+            <div class="modal-form-group">
+              <label class="modal-label" for="edit-task-due">Due Date</label>
+              <input
+                type="date"
+                id="edit-task-due"
+                class="modal-input"
+                [(ngModel)]="editTask.dueDate"
+                name="editDueDate"
+              />
+            </div>
+          </div>
+
+          <div class="modal-actions-footer">
+            <button type="submit" class="btn-modal-submit cyan">
+              Save Changes
+            </button>
+            <button type="button" class="btn-modal-cancel" (click)="closeEditModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: DELETE TASK CONFIRMATION -->
+  @if (isDeleteModalOpen && deletingTask) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-card small-confirm" (click)="$event.stopPropagation()">
+        <div class="confirm-icon-circle danger">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </div>
+        <h3 class="confirm-title">Delete Task?</h3>
+        <p class="confirm-desc">
+          Are you sure you want to delete <strong>"{{ deletingTask.name }}"</strong>? This sprint item will be permanently removed.
+        </p>
+
+        <div class="modal-actions-footer center">
+          <button type="button" class="btn-modal-cancel" (click)="closeDeleteModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-modal-danger" [disabled]="deleteLoading" (click)="confirmDeleteTask()">
+            {{ deleteLoading ? 'Deleting...' : 'Delete Task' }}
+          </button>
+        </div>
       </div>
     </div>
   }

@@ -9,11 +9,13 @@ import { UserService } from '../../../core/services/user';
 import { SystemLogService } from '../../../core/services/system-log';
 import { BillingService } from '../../../core/services/billing';
 import { TenantService } from '../../../core/services/tenant';
+import { NotificationService } from '../../../core/services/notification';
 import { Auth } from '../../../core/services/auth';
 import { Project } from '../../../models/project.model';
 import { TaskItem } from '../../../models/task.model';
 import { CurrentPlan } from '../../../models/payment.model';
 import { SystemLog } from '../../../models/system-log.model';
+import { AppNotification } from '../../../models/notification.model';
 
 export interface SprintTaskCard {
   id: string;
@@ -68,7 +70,7 @@ export class Dashboard implements OnInit {
   // Top breadcrumb / tenant metadata
   tenantName = 'TechNova Solutions';
 
-  // 1. Top 4 KPI Metrics (Exact 4 Cards as Specified: Total Users, Total Projects, Active Tasks, Completed Tasks)
+  // Top 4 KPI Metrics
   totalUsers = 5;
   totalUsersTrend = 'Active team members';
   totalProjects = 3;
@@ -77,6 +79,43 @@ export class Dashboard implements OnInit {
   activeTasksTrend = 'In progress & review';
   completedTasksCount = 4;
   completedTasksTrend = '33% completion rate';
+
+  // Role Scoping Metrics (Member & Manager)
+  myAssignedTasksCount = 0;
+  myCompletedTasksCount = 0;
+  myInProgressTasksCount = 0;
+
+  get roleLabel(): string {
+    const role = this.auth.currentUser()?.role;
+    if (role === 'Member') return 'Tenant Member';
+    if (role === 'Manager') return 'Tenant Manager';
+    if (role === 'TenantAdmin') return 'Tenant Admin';
+    return role || 'Tenant Member';
+  }
+
+  get userRole(): string {
+    return this.auth.currentUser()?.role || 'Member';
+  }
+
+  get isMember(): boolean {
+    return this.userRole === 'Member';
+  }
+
+  get isManager(): boolean {
+    return this.userRole === 'Manager';
+  }
+
+  get isTenantAdmin(): boolean {
+    return this.userRole === 'TenantAdmin' || this.userRole === 'SuperAdmin';
+  }
+
+  get canCreateProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get currentUserId(): string | null {
+    return this.auth.currentUser()?.id || null;
+  }
 
   // 2. Middle Left: Project Overviews 4-Lane Sprint Board
   backlogTasks: SprintTaskCard[] = [];
@@ -90,14 +129,14 @@ export class Dashboard implements OnInit {
   interactiveOptions = ['Interactive', 'Weekly Milestones', 'Deliverables Only', 'All Tasks'];
 
   // 3. Middle Right: Tasks Completion Breakdown & Progress
-  completionRate = 33;
-  inProgressTasksCount = 4;
-  inProgressRate = 33;
-  reviewTasksCount = 1;
-  reviewRate = 8;
-  backlogTasksCount = 4;
-  backlogRate = 26;
-  donutDashOffset = 227.32; // Circumference 339.29 * (1 - 0.33)
+  completionRate = 0;
+  inProgressTasksCount = 0;
+  inProgressRate = 0;
+  reviewTasksCount = 0;
+  reviewRate = 0;
+  backlogTasksCount = 0;
+  backlogRate = 0;
+  donutDashOffset = 339.29;
   dualBars: DualBarItem[] = [];
 
   // 4. Right Column: Recent Activity Feed
@@ -117,13 +156,13 @@ export class Dashboard implements OnInit {
     private systemLogService: SystemLogService,
     private billingService: BillingService,
     private tenantService: TenantService,
+    private notifService: NotificationService,
     public auth: Auth,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.buildDualBarChart();
     this.loadTenantDashboard();
   }
 
@@ -137,9 +176,10 @@ export class Dashboard implements OnInit {
       tasksRes: this.projectService.getTasks(1, 200).pipe(catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 200 }))),
       usersRes: this.userService.getUsers(1, 200).pipe(catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 200 } as any))),
       logsRes: this.systemLogService.getLogs('', '', '', '', 1, 15).pipe(catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 15 }))),
+      notifsRes: this.notifService.getNotifications().pipe(catchError(() => of([]))),
       settingsRes: this.tenantService.getSettings().pipe(catchError(() => of(null)))
     }).subscribe({
-      next: ({ plan, projectsRes, tasksRes, usersRes, logsRes, settingsRes }) => {
+      next: ({ plan, projectsRes, tasksRes, usersRes, logsRes, notifsRes, settingsRes }) => {
         try {
           this.currentPlan = plan;
 
@@ -151,40 +191,60 @@ export class Dashboard implements OnInit {
           const rawTasks: TaskItem[] = Array.isArray(tasksRes?.data) ? tasksRes.data : [];
           const rawUsers: any[] = Array.isArray((usersRes as any)?.data) ? (usersRes as any).data : (Array.isArray(usersRes) ? usersRes : []);
           const rawLogs: SystemLog[] = Array.isArray(logsRes?.data) ? logsRes.data : [];
+          const rawNotifs: AppNotification[] = Array.isArray(notifsRes) ? notifsRes : [];
 
-          // 1. Top 4 KPI Metrics
-          this.totalUsers = rawUsers.length > 0 ? rawUsers.length : 5;
-          this.totalProjects = rawProjects.length > 0 ? rawProjects.length : 3;
+          const uid = this.currentUserId;
 
-          const completed = rawTasks.filter(t => t.status === 'Completed' || t.isCompleted);
-          const inProgress = rawTasks.filter(t => t.status === 'In Progress');
-          const review = rawTasks.filter(t => t.status === 'Pending' || t.status === 'Review');
-          const backlog = rawTasks.filter(t => t.status === 'To Do' || t.status === 'Backlog');
-          const active = rawTasks.filter(t => t.status !== 'Completed' && !t.isCompleted);
+          // Scope tasks according to role
+          const effectiveTasks = (this.isMember && uid)
+            ? rawTasks.filter(t => t.assignedUserId === uid)
+            : rawTasks;
 
-          this.completedTasksCount = completed.length > 0 ? completed.length : 4;
-          this.activeTasksCount = active.length > 0 ? active.length : 8;
+          const memberProjectIds = new Set(effectiveTasks.map(t => t.projectId));
+          const effectiveProjects = (this.isMember && uid && memberProjectIds.size > 0)
+            ? rawProjects.filter(p => memberProjectIds.has(p.id))
+            : rawProjects;
 
-          const totalTaskCount = rawTasks.length > 0 ? rawTasks.length : 12;
-          this.completionRate = Math.round((this.completedTasksCount / totalTaskCount) * 100);
-          this.inProgressTasksCount = inProgress.length > 0 ? inProgress.length : 4;
-          this.inProgressRate = Math.round((this.inProgressTasksCount / totalTaskCount) * 100);
-          this.reviewTasksCount = review.length > 0 ? review.length : 1;
-          this.reviewRate = Math.round((this.reviewTasksCount / totalTaskCount) * 100);
-          this.backlogTasksCount = backlog.length > 0 ? backlog.length : (totalTaskCount - this.completedTasksCount - this.inProgressTasksCount - this.reviewTasksCount);
-          this.backlogRate = Math.max(0, 100 - (this.completionRate + this.inProgressRate + this.reviewRate));
+          // 1. Top 4 KPI Metrics - Accurate Real Data
+          this.totalUsers = rawUsers.length;
+          this.totalProjects = effectiveProjects.length;
+
+          const myCompleted = effectiveTasks.filter(t => t.status === 'Completed' || t.isCompleted);
+          const myInProgress = effectiveTasks.filter(t => t.status === 'In Progress');
+          const myReview = effectiveTasks.filter(t => t.status === 'Pending' || t.status === 'Review');
+          const myBacklog = effectiveTasks.filter(t => t.status === 'To Do' || t.status === 'Backlog');
+          const myActive = effectiveTasks.filter(t => t.status !== 'Completed' && !t.isCompleted);
+
+          this.myAssignedTasksCount = effectiveTasks.length;
+          this.myCompletedTasksCount = myCompleted.length;
+          this.myInProgressTasksCount = myInProgress.length;
+
+          this.completedTasksCount = myCompleted.length;
+          this.inProgressTasksCount = myInProgress.length;
+          this.activeTasksCount = myActive.length;
+
+          const totalTaskCount = effectiveTasks.length;
+          this.completionRate = totalTaskCount > 0 ? Math.round((myCompleted.length / totalTaskCount) * 100) : 0;
+          this.inProgressRate = totalTaskCount > 0 ? Math.round((myInProgress.length / totalTaskCount) * 100) : 0;
+          this.reviewTasksCount = myReview.length;
+          this.reviewRate = totalTaskCount > 0 ? Math.round((myReview.length / totalTaskCount) * 100) : 0;
+          this.backlogTasksCount = myBacklog.length;
+          this.backlogRate = totalTaskCount > 0 ? Math.max(0, 100 - (this.completionRate + this.inProgressRate + this.reviewRate)) : 0;
 
           const circumference = 339.29;
           this.donutDashOffset = circumference * (1 - this.completionRate / 100);
 
           // 2. Project Overviews 4-Lane Sprint Board
-          this.populateKanbanLanes(rawTasks);
+          this.populateKanbanLanes(effectiveTasks);
 
           // 3. Activity Feed: User joined project, Task completed, Project created, User logged in
-          this.buildRecentActivities(rawLogs);
+          this.buildRecentActivities(rawLogs, rawNotifs);
 
-          // 4. Bottom Table: Organization Projects
-          this.populateTableRows(rawProjects, rawTasks);
+          // 4. Monthly Delivery Velocity chart
+          this.buildDualBarChart(effectiveTasks);
+
+          // 5. Bottom Table: Organization Projects
+          this.populateTableRows(effectiveProjects, effectiveTasks);
         } catch (e) {
           console.error('Error computing tenant dashboard data:', e);
         } finally {
@@ -196,6 +256,7 @@ export class Dashboard implements OnInit {
       error: () => {
         this.isLoading = false;
         this.buildRecentActivities([]);
+        this.buildDualBarChart([]);
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       }
@@ -203,75 +264,63 @@ export class Dashboard implements OnInit {
   }
 
   private populateKanbanLanes(tasks: TaskItem[]) {
-    const defaultBacklog: SprintTaskCard[] = [
-      { id: 'b1', name: 'Test user registration', taskTag: 'Tasks #1', status: 'Backlog' },
-      { id: 'b2', name: 'Configure SMS booking alerts', taskTag: 'Tasks #2', status: 'Backlog' },
-      { id: 'b3', name: 'Add project validation', taskTag: 'Tasks #3', status: 'Backlog' }
-    ];
-
-    const defaultInProgress: SprintTaskCard[] = [
-      { id: 'p1', name: 'Fix task status update', taskTag: 'Tasks #1', status: 'In Progress' },
-      { id: 'p2', name: 'Create dashboard UI', taskTag: 'Tasks #2', status: 'In Progress' },
-      { id: 'p3', name: 'Design booking calendar view', taskTag: 'Tasks #3', status: 'In Progress' }
-    ];
-
-    const defaultReview: SprintTaskCard[] = [
-      { id: 'r1', name: 'Fix task status update', taskTag: 'Tasks #1', status: 'Review' },
-      { id: 'r2', name: 'Create login API', taskTag: 'Tasks #2', status: 'Review' },
-      { id: 'r3', name: 'Create dashboard UI', taskTag: 'Tasks #3', status: 'Review' }
-    ];
-
-    const defaultDone: SprintTaskCard[] = [
-      { id: 'd1', name: 'Design user table', taskTag: 'Tasks #1', status: 'Done' },
-      { id: 'd2', name: 'Setup database migrations', taskTag: 'Tasks #2', status: 'Done' },
-      { id: 'd3', name: 'Vendor invoice export to Excel', taskTag: 'Tasks #3', status: 'Done' }
-    ];
-
-    if (tasks.length === 0) {
-      this.backlogTasks = defaultBacklog;
-      this.inProgressTasks = defaultInProgress;
-      this.reviewTasks = defaultReview;
-      this.doneTasks = defaultDone;
-      return;
-    }
-
-    const realBacklog = tasks
+    this.backlogTasks = tasks
       .filter(t => t.status === 'To Do' || t.status === 'Backlog')
       .map((t, idx) => ({ id: t.id, name: t.name, taskTag: `Tasks #${idx + 1}`, status: 'Backlog' as const }));
 
-    const realInProgress = tasks
+    this.inProgressTasks = tasks
       .filter(t => t.status === 'In Progress')
       .map((t, idx) => ({ id: t.id, name: t.name, taskTag: `Tasks #${idx + 1}`, status: 'In Progress' as const }));
 
-    const realReview = tasks
+    this.reviewTasks = tasks
       .filter(t => t.status === 'Pending' || t.status === 'Review')
       .map((t, idx) => ({ id: t.id, name: t.name, taskTag: `Tasks #${idx + 1}`, status: 'Review' as const }));
 
-    const realDone = tasks
+    this.doneTasks = tasks
       .filter(t => t.status === 'Completed' || t.isCompleted)
       .map((t, idx) => ({ id: t.id, name: t.name, taskTag: `Tasks #${idx + 1}`, status: 'Done' as const }));
-
-    this.backlogTasks = realBacklog.length > 0 ? realBacklog : defaultBacklog;
-    this.inProgressTasks = realInProgress.length > 0 ? realInProgress : defaultInProgress;
-    this.reviewTasks = realReview.length > 0 ? realReview : defaultReview;
-    this.doneTasks = realDone.length > 0 ? realDone : defaultDone;
   }
 
-  private buildDualBarChart() {
-    // 5 months task delivery velocity: Tasks Created (Cyan) vs Tasks Completed (Orange)
+  private buildDualBarChart(tasks: TaskItem[] = []) {
+    // 5 months task delivery velocity calculated from real database tasks
     const chartHeight = 70;
-    const baseScales = [
-      { month: 'Jan', createdCount: 22, completedCount: 14 },
-      { month: 'Feb', createdCount: 30, completedCount: 20 },
-      { month: 'Mar', createdCount: 36, completedCount: 28 },
-      { month: 'Apr', createdCount: 28, completedCount: 32 },
-      { month: 'May', createdCount: 38, completedCount: 24 },
-    ];
+    const now = new Date();
+    const months: { month: string; monthIdx: number; year: number }[] = [];
+    for (let i = 4; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        month: d.toLocaleString('en-US', { month: 'short' }),
+        monthIdx: d.getMonth(),
+        year: d.getFullYear()
+      });
+    }
 
-    const maxScale = 40;
+    const baseScales = months.map(m => {
+      const createdCount = tasks.filter(t => {
+        if (!t.createdAt) return false;
+        const cd = new Date(t.createdAt);
+        return cd.getMonth() === m.monthIdx && cd.getFullYear() === m.year;
+      }).length;
+
+      const completedCount = tasks.filter(t => {
+        if (!t.isCompleted && t.status !== 'Completed') return false;
+        const cd = t.completedAt ? new Date(t.completedAt) : (t.createdAt ? new Date(t.createdAt) : null);
+        return cd ? (cd.getMonth() === m.monthIdx && cd.getFullYear() === m.year) : false;
+      }).length;
+
+      return {
+        month: m.month,
+        createdCount,
+        completedCount
+      };
+    });
+
+    const maxCount = Math.max(1, ...baseScales.map(s => Math.max(s.createdCount, s.completedCount)));
+    const maxScale = Math.max(5, Math.ceil(maxCount / 5) * 5);
+
     this.dualBars = baseScales.map((item, idx) => {
-      const cyanH = Math.round((item.createdCount / maxScale) * chartHeight);
-      const orangeH = Math.round((item.completedCount / maxScale) * chartHeight);
+      const cyanH = item.createdCount > 0 ? Math.max(4, Math.round((item.createdCount / maxScale) * chartHeight)) : 0;
+      const orangeH = item.completedCount > 0 ? Math.max(4, Math.round((item.completedCount / maxScale) * chartHeight)) : 0;
       return {
         month: item.month,
         cyanHeight: cyanH,
@@ -283,66 +332,43 @@ export class Dashboard implements OnInit {
     });
   }
 
-  private buildRecentActivities(rawLogs: SystemLog[]) {
-    // Curated organization events matching: User joined project, Task completed, Project created, User logged in
-    const defaultActivities: ActivityFeedItem[] = [
-      {
-        id: 'act-1',
-        icon: 'person_add',
+  private buildRecentActivities(rawLogs: SystemLog[], notifications: AppNotification[] = []) {
+    // If user is Member and has notifications, display real member notifications
+    if (this.isMember && notifications.length > 0) {
+      this.recentActivities = notifications.slice(0, 5).map((n, idx) => ({
+        id: `notif-${idx}`,
+        icon: 'notifications',
         iconColor: '#3B82F6',
-        iconBg: 'rgba(59, 130, 246, 0.12)',
-        title: 'User joined project',
-        subtitle: 'Sneha More assigned to Online Booking System',
-        timeAgo: 'Just now'
-      },
-      {
-        id: 'act-2',
-        icon: 'check_circle',
-        iconColor: '#10B981',
-        iconBg: 'rgba(16, 185, 129, 0.12)',
-        title: 'Task completed',
-        subtitle: 'Design user table marked as Completed',
-        timeAgo: '2 hours ago'
-      },
-      {
-        id: 'act-3',
-        icon: 'folder',
-        iconColor: '#06B6D4',
-        iconBg: 'rgba(6, 182, 212, 0.12)',
-        title: 'Project created',
-        subtitle: 'Inventory Management workspace initialized',
-        timeAgo: '1 day ago'
-      },
-      {
-        id: 'act-4',
-        icon: 'login',
-        iconColor: '#8B5CF6',
-        iconBg: 'rgba(139, 92, 246, 0.12)',
-        title: 'User logged in',
-        subtitle: 'Rahul Patil authenticated to TechNova Solutions',
-        timeAgo: '1 day ago'
-      },
-      {
-        id: 'act-5',
-        icon: 'trending_up',
-        iconColor: '#F59E0B',
-        iconBg: 'rgba(245, 158, 11, 0.12)',
-        title: 'Sprint milestone reached',
-        subtitle: '4 deliverables submitted for QA review',
-        timeAgo: '2 days ago'
-      }
-    ];
-
-    if (rawLogs.length === 0) {
-      this.recentActivities = defaultActivities;
+        iconBg: 'rgba(59, 130, 246, 0.15)',
+        title: n.message,
+        subtitle: 'Activity notification',
+        timeAgo: n.createdAt ? this.formatRelativeTime(n.createdAt) : 'Recently'
+      }));
       return;
     }
 
-    const parsedLogs: ActivityFeedItem[] = rawLogs.slice(0, 5).map(log => {
+    if (rawLogs.length === 0) {
+      if (notifications.length > 0) {
+        this.recentActivities = notifications.slice(0, 5).map((n, idx) => ({
+          id: `notif-${idx}`,
+          icon: 'notifications',
+          iconColor: '#3B82F6',
+          iconBg: 'rgba(59, 130, 246, 0.15)',
+          title: n.message,
+          subtitle: 'Workspace notification',
+          timeAgo: n.createdAt ? this.formatRelativeTime(n.createdAt) : 'Recently'
+        }));
+      } else {
+        this.recentActivities = [];
+      }
+      return;
+    }
+
+    this.recentActivities = rawLogs.slice(0, 5).map(log => {
       const act = (log.action || '').toUpperCase();
       let icon = 'notifications';
-      let iconColor = '#06B6D4';
-      let iconBg = 'rgba(6, 182, 212, 0.12)';
+      let iconColor = '#3B82F6';
+      let iconBg = 'rgba(59, 130, 246, 0.15)';
       let title = 'Workspace activity';
 
       if (act.includes('LOGIN') && !act.includes('FAIL')) {
@@ -357,8 +383,8 @@ export class Dashboard implements OnInit {
         title = 'Failed login attempt';
       } else if (act.includes('PROJECT') && act.includes('CREATE')) {
         icon = 'folder';
-        iconColor = '#06B6D4';
-        iconBg = 'rgba(6, 182, 212, 0.12)';
+        iconColor = '#2563EB';
+        iconBg = 'rgba(37, 99, 235, 0.15)';
         title = 'Project created';
       } else if (act.includes('TASK') && act.includes('COMPLETE')) {
         icon = 'check_circle';
@@ -372,8 +398,8 @@ export class Dashboard implements OnInit {
         title = 'User joined project';
       } else {
         icon = 'corporate_fare';
-        iconColor = '#06B6D4';
-        iconBg = 'rgba(6, 182, 212, 0.12)';
+        iconColor = '#3B82F6';
+        iconBg = 'rgba(59, 130, 246, 0.15)';
         title = log.action ? log.action.replace(/_/g, ' ') : 'Workspace Activity';
       }
 
@@ -387,83 +413,22 @@ export class Dashboard implements OnInit {
         timeAgo: this.formatRelativeTime(log.createdAt),
       };
     });
-
-    // If only logins are in the database, blend with standard prompt activity types
-    const hasProjectOrTask = parsedLogs.some(l => l.title.includes('project') || l.title.includes('Task'));
-    if (!hasProjectOrTask) {
-      this.recentActivities = [
-        defaultActivities[0], // User joined project
-        defaultActivities[1], // Task completed
-        defaultActivities[2], // Project created
-        ...parsedLogs.slice(0, 2)
-      ];
-    } else {
-      this.recentActivities = parsedLogs;
-    }
   }
 
   private populateTableRows(projects: Project[], tasks: TaskItem[]) {
-    const defaultRows: ProjectTableRow[] = [
-      {
-        id: 'p-1',
-        name: 'Employee Management System',
-        subtitle: 'Core Organization Workspace',
-        initials: 'EM',
-        priority: 'High',
-        priorityClass: 'priority-high',
-        progressPercent: 67,
-        completedTasksCount: 4,
-        totalTasksCount: 6,
-        lastUpdated: 'Today',
-        status: 'In Progress',
-        statusDotClass: 'status-active',
-        isSelected: false,
-      },
-      {
-        id: 'p-2',
-        name: 'Online Booking System',
-        subtitle: 'Client Scheduling Portal',
-        initials: 'OB',
-        priority: 'Medium',
-        priorityClass: 'priority-medium',
-        progressPercent: 40,
-        completedTasksCount: 2,
-        totalTasksCount: 5,
-        lastUpdated: '1 day ago',
-        status: 'In Progress',
-        statusDotClass: 'status-active',
-        isSelected: false,
-      },
-      {
-        id: 'p-3',
-        name: 'Inventory Management',
-        subtitle: 'Stock & Warehouse Tracking',
-        initials: 'IM',
-        priority: 'High',
-        priorityClass: 'priority-high',
-        progressPercent: 100,
-        completedTasksCount: 4,
-        totalTasksCount: 4,
-        lastUpdated: '3 days ago',
-        status: 'Completed',
-        statusDotClass: 'status-completed',
-        isSelected: false,
-      },
-    ];
-
     if (projects.length === 0) {
-      this.tableRows = defaultRows;
+      this.tableRows = [];
       return;
     }
 
     this.tableRows = projects.map((p, idx) => {
       const projectTasks = tasks.filter(t => t.projectId === p.id);
       const completed = projectTasks.filter(t => t.status === 'Completed' || t.isCompleted).length;
-      const total = projectTasks.length || (idx === 0 ? 6 : (idx === 1 ? 5 : 4));
-      const effectiveCompleted = projectTasks.length > 0 ? completed : (idx === 0 ? 4 : (idx === 1 ? 2 : 4));
-      const pct = Math.round((effectiveCompleted / total) * 100);
+      const total = projectTasks.length;
+      const effectiveCompleted = completed;
+      const pct = total > 0 ? Math.round((effectiveCompleted / total) * 100) : (p.progress || 0);
 
-      const priority = p.priority || (idx % 2 === 0 ? 'High' : 'Medium');
+      const priority = p.priority || 'Medium';
       const priorityClass = priority.toLowerCase() === 'high' ? 'priority-high' : (priority.toLowerCase() === 'medium' ? 'priority-medium' : 'priority-low');
 
       let cleanSubtitle = 'Active Workspace';
@@ -483,7 +448,7 @@ export class Dashboard implements OnInit {
         completedTasksCount: effectiveCompleted,
         totalTasksCount: total,
         lastUpdated: this.formatRelativeTime(p.startDate),
-        status: p.status || (pct === 100 ? 'Completed' : 'In Progress'),
+        status: p.status || (pct === 100 ? 'Completed' : 'Active'),
         statusDotClass: (p.status === 'Completed' || pct === 100) ? 'status-completed' : 'status-active',
         isSelected: false,
       };

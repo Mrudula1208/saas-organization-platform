@@ -10,6 +10,7 @@ import { Navbar } from '../navbar/navbar';
   template: `
     <div class="app-container">
       <app-sidebar></app-sidebar>
+      <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
       <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
         <app-navbar></app-navbar>
         <main class="main-content">
@@ -19,4 +20,10 @@ import { Navbar } from '../navbar/navbar';
     </div>
   `
 })
-export class DashboardLayout {}
+export class DashboardLayout {
+  closeSidebar() {
+    if (typeof window !== 'undefined') {
+      document.body.classList.remove('sidebar-open');
+    }
+  }
+}

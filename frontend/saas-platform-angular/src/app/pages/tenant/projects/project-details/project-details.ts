@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../../../core/services/project';
-import { Project, UpdateProjectPayload } from '../../../../models/project.model';
+import { UserService } from '../../../../core/services/user';
+import { Project, ProjectMember, UpdateProjectPayload } from '../../../../models/project.model';
+import { User } from '../../../../models/user.model';
 import { Auth } from '../../../../core/services/auth';
 
 @Component({
@@ -19,6 +21,15 @@ export class ProjectDetails implements OnInit {
 
   loading = true;
   loadError = '';
+
+  // Project Members
+  members: ProjectMember[] = [];
+  membersLoading = false;
+  eligibleUsers: User[] = [];
+  tenantUsers: User[] = [];
+  selectedMemberUserId = '';
+  addMemberLoading = false;
+  memberError = '';
 
   // Edit modal state
   isEditModalOpen = false;
@@ -52,6 +63,7 @@ export class ProjectDetails implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService,
+    private userService: UserService,
     private auth: Auth,
     private cdr: ChangeDetectorRef
   ) {}
@@ -66,10 +78,84 @@ export class ProjectDetails implements OnInit {
     }
 
     this.loadProject();
+    this.loadMembers();
+    this.loadTenantUsers();
   }
 
-  get canManageProject(): boolean {
+  get canEditProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get canDeleteProject(): boolean {
     return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
+  }
+
+  get canManageMembers(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  loadMembers(): void {
+    if (!this.projectId) return;
+    this.membersLoading = true;
+    this.projectService.getProjectMembers(this.projectId).subscribe({
+      next: (members) => {
+        this.members = members;
+        this.membersLoading = false;
+        this.updateEligibleUsers();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.membersLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadTenantUsers(): void {
+    if (!this.canManageMembers) return;
+    this.userService.getUsers(1, 200).subscribe({
+      next: (res) => {
+        this.tenantUsers = res.data;
+        this.updateEligibleUsers();
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  updateEligibleUsers(): void {
+    const existingIds = new Set(this.members.map(m => m.userId));
+    this.eligibleUsers = this.tenantUsers.filter(u => !existingIds.has(u.id));
+  }
+
+  addMember(): void {
+    if (!this.selectedMemberUserId || !this.projectId) return;
+    this.addMemberLoading = true;
+    this.memberError = '';
+    this.projectService.addProjectMember(this.projectId, this.selectedMemberUserId).subscribe({
+      next: () => {
+        this.addMemberLoading = false;
+        this.selectedMemberUserId = '';
+        this.loadMembers();
+      },
+      error: (err: any) => {
+        this.addMemberLoading = false;
+        this.memberError = this.extractErrorMessage(err, 'Failed to add project member.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  removeMember(memberId: string): void {
+    if (!confirm('Are you sure you want to remove this member from the project?')) return;
+    this.projectService.removeProjectMember(memberId).subscribe({
+      next: () => {
+        this.loadMembers();
+      },
+      error: (err: any) => {
+        alert(this.extractErrorMessage(err, 'Failed to remove member.'));
+      }
+    });
   }
 
   loadProject(): void {

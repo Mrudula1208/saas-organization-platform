@@ -1,13 +1,23 @@
-<div class="logout-page-container">
-  <div class="glass-card logout-box glow-secondary animate-slide-up">
-    <div class="logout-icon">
-      <span class="material-symbols-outlined">logout</span>
-    </div>
-    <h2>Confirm Logout</h2>
-    <p>Are you sure you want to end your session? You will need to enter your credentials again to log back in.</p>
-    <div class="logout-actions">
-      <button class="btn btn-outline" (click)="cancel()">Cancel</button>
-      <button class="btn btn-danger" (click)="confirmLogout()">Logout</button>
+<div class="logout-page-container animate-fade">
+  <div class="logout-page-body">
+    <!-- Centered Modal: Confirm Logout -->
+    <div class="confirm-logout-modal-wrapper">
+      <div class="confirm-logout-modal-card">
+        <div class="logout-icon-bubble">
+          <span class="material-symbols-outlined">logout</span>
+        </div>
+        <h1 class="confirm-logout-heading">Confirm Logout</h1>
+        <p class="confirm-logout-sub">Are you sure you want to end your session?</p>
+
+        <div class="confirm-logout-actions-row">
+          <button type="button" class="btn-cancel-logout" (click)="cancel()">
+            Cancel
+          </button>
+          <button type="button" class="btn-confirm-logout" (click)="confirmLogout()" [disabled]="isLoggingOut">
+            {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -1,99 +1,204 @@
-<div class="animate-fade">
-  <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Global Users Directory</h1>
-    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Monitor member access, role configuration, tenant alignment, and diagnostic audit statuses</p>
+<div class="users-page-container animate-fade">
+  <!-- Top Header Area matching reference screenshot -->
+  <div class="users-header">
+    <div style="display: flex; align-items: center; gap: 0.65rem;">
+      <span class="material-symbols-outlined" style="color: var(--primary-color); font-size: 1.65rem;">grid_view</span>
+      <h1 class="users-title" style="margin: 0;">All Users</h1>
+    </div>
   </div>
 
   @if (errorMessage) {
-    <div class="api-error-alert animate-fade">
+    <div class="api-error-alert animate-fade" style="margin-bottom: 1.25rem;">
       <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+  <!-- Controls Bar (Matching Image 2: Search, All Tenants, All Roles, All Status, Export, Add User) -->
+  <div class="controls-card">
+    <div class="controls-row">
+      <!-- 1. Search Users Input -->
+      <div class="search-input-wrap">
+        <span class="material-symbols-outlined search-icon-inside">search</span>
         <input
           type="text"
           class="form-input"
-          placeholder="Search by user name, email address, tenant..."
+          placeholder="Search users..."
           [(ngModel)]="searchQuery"
           (input)="onSearch()"
         />
       </div>
 
-      <div class="form-group" style="width: 200px; margin-bottom: 0;">
-        <select class="form-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
-          <option value="">All Platform Roles</option>
-          <option value="SuperAdmin">Super Admin</option>
-          <option value="TenantAdmin">Tenant Admin</option>
-          <option value="Member">Member</option>
-        </select>
-      </div>
+      <!-- 2. All Tenants Filter -->
+      <select class="form-select filter-select" [(ngModel)]="tenantFilter" (change)="onFilterChange()">
+        <option value="">All Tenants</option>
+        @for (tenant of tenants; track tenant.id) {
+          <option [value]="tenant.id">{{ tenant.name }}</option>
+        }
+      </select>
+
+      <!-- 3. All Roles Filter -->
+      <select class="form-select filter-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
+        <option value="">All Roles</option>
+        <option value="SuperAdmin">SuperAdmin</option>
+        <option value="TenantAdmin">TenantAdmin</option>
+        <option value="Manager">Manager</option>
+        <option value="Member">Member</option>
+      </select>
+
+      <!-- 4. All Status Filter -->
+      <select class="form-select filter-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="suspended">Suspended</option>
+      </select>
+
+      <!-- 5. Export Users Button -->
+      <button class="btn-export" type="button" (click)="exportUsers()" title="Export users list as CSV">
+        <span class="material-symbols-outlined" style="font-size: 1.05rem;">download</span>
+        <span>Export Users</span>
+      </button>
+
+      <!-- 6. Add User Button -->
+      <button class="btn-add-user" type="button" (click)="openCreateModal()">
+        <span class="material-symbols-outlined" style="font-size: 1.05rem;">add</span>
+        <span>Add User</span>
+      </button>
     </div>
   </div>
 
+  <!-- Live Record Counter Subtitle -->
+  <!-- Live Record Counter Subtitle -->
+  <div class="record-counter">
+    Showing {{ minDisplayRecord }}–{{ maxDisplayRecord }} of {{ totalCount }} users
+  </div>
+
   <!-- Users Table Card -->
-  <div class="glass-card" style="padding: 0; overflow: hidden;">
-    <div class="table-container" style="border: none; margin-top: 0;">
+  <div class="table-card" (click)="closeDropdown()">
+    <div style="overflow-x: auto;">
       <table class="custom-table">
         <thead>
           <tr>
-            <th>User ID</th>
-            <th>Name & Avatar</th>
-            <th>Email</th>
-            <th>Tenant Organization</th>
-            <th>System Role</th>
-            <th>Access Status</th>
-            <th>Created Date</th>
-            <th>Last Login</th>
-            <th style="text-align: right;">Actions</th>
+            <th>User <span class="sort-icon">▾</span></th>
+            <th>Tenant <span class="sort-icon">▾</span></th>
+            <th>Role <span class="sort-icon">▾</span></th>
+            <th>Status <span class="sort-icon">▾</span></th>
+            <th>Created Date <span class="sort-icon">▾</span></th>
+            <th>Last Login <span class="sort-icon">▾</span></th>
+            <th style="text-align: right; min-width: 230px;">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (user of filteredUsers; track user.id) {
             <tr>
-              <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
-                {{ user.id.substring(0, 8) }}...
-              </td>
-              <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
-                <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
-                <span style="color: var(--text-heading);">{{ user.fullName }}</span>
-              </td>
-              <td>{{ user.email }}</td>
-              <td style="font-weight: 600; color: var(--primary-color);">
-                {{ user.tenant?.name || '—' }}
-              </td>
+              <!-- User Column: Avatar + Name on top, email under it -->
               <td>
-                <span class="badge" [class.badge-success]="user.role === 'SuperAdmin'" [class.badge-warning]="user.role === 'Manager'" [class.badge-info]="user.role === 'TenantAdmin' || user.role === 'Member'">
+                <div class="user-info-cell">
+                  <img
+                    class="user-avatar-img"
+                    [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=60'"
+                    alt="avatar"
+                  />
+                  <div>
+                    <div class="user-name-text">{{ user.fullName }}</div>
+                    <div class="user-email-text">{{ user.email }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Tenant Column -->
+              <td style="font-weight: 600; color: var(--text-heading);">
+                {{ user.tenant?.name || 'Platform Operations' }}
+              </td>
+
+              <!-- System Role Badge -->
+              <td>
+                <span class="role-badge" [class.badge-super]="user.role === 'SuperAdmin'" [class.badge-tenant]="user.role === 'TenantAdmin'" [class.badge-manager]="user.role === 'Manager'" [class.badge-member]="user.role === 'Member'">
                   {{ user.role }}
                 </span>
               </td>
+
+              <!-- Status Dot Badge -->
               <td>
-                <span class="badge" [class.badge-success]="user.isActive" [class.badge-danger]="!user.isActive">
+                <span class="status-pill" [class.status-active]="user.isActive" [class.status-suspended]="!user.isActive">
+                  <span class="status-dot">●</span>
                   {{ user.isActive ? 'Active' : 'Suspended' }}
                 </span>
               </td>
-              <td>{{ user.createdAt | date:'mediumDate' }}</td>
-              <td style="color: var(--text-secondary); font-size: 0.85rem;">{{ user.lastLogin }}</td>
-              <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                <button class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" [class.btn-outline]="!user.isActive" [class.btn-danger]="user.isActive" (click)="toggleUserStatus(user)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">
-                    {{ user.isActive ? 'lock' : 'lock_open' }}
-                  </span>
-                </button>
-                <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteUser(user.id)">
-                  <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                </button>
+
+              <!-- Created Date -->
+              <td style="color: var(--text-secondary); font-size: 0.84rem;">
+                {{ user.createdAt | date:'d MMM y' }}
+              </td>
+
+              <!-- Last Login -->
+              <td style="color: var(--text-secondary); font-size: 0.84rem;">
+                {{ user.lastLogin ? (user.lastLogin | date:'d MMM y, HH:mm') : 'Recently' }}
+              </td>
+
+              <!-- Actions: View, Edit, Disable/Enable, More Dropdown (Reset, Delete) -->
+              <td style="text-align: right;">
+                <div class="actions-cell-wrap">
+                  <button
+                    class="btn-tbl-action"
+                    (click)="openViewModal(user)"
+                    title="View user profile"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    class="btn-tbl-action"
+                    (click)="openEditModal(user)"
+                    title="Edit user details"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    [class]="user.isActive ? 'btn-tbl-disable' : 'btn-tbl-enable'"
+                    (click)="toggleUserStatus(user)"
+                    [title]="user.isActive ? 'Disable User' : 'Enable User'"
+                  >
+                    {{ user.isActive ? 'Disable' : 'Enable' }}
+                  </button>
+
+                  <!-- Dropdown Menu trigger -->
+                  <div class="dropdown-wrap" (click)="$event.stopPropagation()">
+                    <button
+                      class="btn-tbl-more"
+                      (click)="toggleDropdown(user.id, $event)"
+                      title="More options"
+                    >
+                      ▾
+                    </button>
+
+                    @if (openDropdownUserId === user.id) {
+                      <div class="dropdown-menu animate-fade">
+                        <button class="dropdown-item" (click)="resetPassword(user); closeDropdown()">
+                          <span class="material-symbols-outlined dropdown-item-icon">lock_reset</span>
+                          <span>Reset Password</span>
+                        </button>
+                        <button class="dropdown-item danger" (click)="deleteUser(user.id); closeDropdown()">
+                          <span class="material-symbols-outlined dropdown-item-icon">delete</span>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">person_off</span>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3.5rem 1rem;">
+                <span class="material-symbols-outlined" style="font-size: 2.5rem; margin-bottom: 0.5rem;">person_off</span>
                 <div>No users match your selection criteria.</div>
+                @if (searchQuery || tenantFilter || roleFilter || statusFilter) {
+                  <button class="btn btn-outline" style="margin-top: 1rem; font-size: 0.82rem;" (click)="resetFilters()">
+                    Clear Filters
+                  </button>
+                }
               </td>
             </tr>
           }
@@ -102,18 +207,224 @@
     </div>
   </div>
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (loading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
+  <!-- Pagination Controls Footer matching reference screenshot -->
+  <div class="pagination-row">
+    <span class="pagination-count-label">
+      Showing {{ minDisplayRecord }}–{{ maxDisplayRecord }} of {{ totalCount }} users
     </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+
+    <div class="pagination-buttons-wrap">
+      <button class="page-num-btn" [disabled]="loading || page <= 1" (click)="prevPage()">&lsaquo;</button>
+      
+      @for (p of pagesList; track p) {
+        <button class="page-num-btn" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+      }
+
+      <button class="page-num-btn" [disabled]="loading || page >= totalPages" (click)="nextPage()">&rsaquo;</button>
     </div>
   </div>
+
+  <!-- Popup Modal 1: Add User -->
+  @if (isCreateModalOpen) {
+    <div class="modal-backdrop">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 class="modal-title">Add New User</h3>
+          <button class="modal-close" (click)="closeCreateModal()">&times;</button>
+        </div>
+        <form (submit)="saveNewUser()">
+          <div class="form-group">
+            <label class="form-label" for="user-name">Full Name</label>
+            <input
+              type="text"
+              id="user-name"
+              class="form-input"
+              placeholder="e.g. John Doe"
+              [(ngModel)]="newUser.fullName"
+              name="fullName"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user-email">Email Address</label>
+            <input
+              type="email"
+              id="user-email"
+              class="form-input"
+              placeholder="john@example.com"
+              [(ngModel)]="newUser.email"
+              name="email"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="user-pass">Initial Password</label>
+            <input
+              type="password"
+              id="user-pass"
+              class="form-input"
+              [(ngModel)]="newUser.password"
+              name="password"
+              required
+            />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="user-tenant">Tenant Organization</label>
+              <select id="user-tenant" class="form-select" [(ngModel)]="newUser.tenantId" name="tenantId">
+                <option value="">Platform Operations</option>
+                @for (tenant of tenants; track tenant.id) {
+                  <option [value]="tenant.id">{{ tenant.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="user-role">Role</label>
+              <select id="user-role" class="form-select" [(ngModel)]="newUser.role" name="role">
+                <option value="TenantAdmin">TenantAdmin</option>
+                <option value="Manager">Manager</option>
+                <option value="Member">Member</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="margin-top: 1.75rem;">
+            <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="savingUser">
+              {{ savingUser ? 'Creating...' : 'Create User' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Popup Modal 2: View User Details (Displays all columns: ID, Name, Email, Tenant, Role, Status, Created Date, Last Login) -->
+  @if (selectedUserForView) {
+    <div class="modal-backdrop">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <img
+              class="user-avatar-img"
+              style="width: 44px; height: 44px;"
+              [src]="selectedUserForView.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=80'"
+              alt="avatar"
+            />
+            <div>
+              <h3 class="modal-title" style="margin: 0;">{{ selectedUserForView.fullName }}</h3>
+              <div style="font-size: 0.82rem; color: var(--text-secondary);">{{ selectedUserForView.email }}</div>
+            </div>
+          </div>
+          <button class="modal-close" (click)="closeViewModal()">&times;</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem;">
+          <div class="detail-field">
+            <span class="detail-label">User ID</span>
+            <span class="detail-value" style="font-family: monospace; font-size: 0.78rem;">{{ selectedUserForView.id }}</span>
+          </div>
+
+          <div class="detail-field">
+            <span class="detail-label">Tenant Organization</span>
+            <span class="detail-value" style="color: var(--primary-color); font-weight: 600;">{{ selectedUserForView.tenant?.name || 'Platform Operations' }}</span>
+          </div>
+
+          <div class="detail-field">
+            <span class="detail-label">Role</span>
+            <span class="detail-value">
+              <span class="role-badge" [class.badge-super]="selectedUserForView.role === 'SuperAdmin'" [class.badge-tenant]="selectedUserForView.role === 'TenantAdmin'" [class.badge-manager]="selectedUserForView.role === 'Manager'" [class.badge-member]="selectedUserForView.role === 'Member'">
+                {{ selectedUserForView.role }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-field">
+            <span class="detail-label">Account Status</span>
+            <span class="detail-value">
+              <span class="status-pill" [class.status-active]="selectedUserForView.isActive" [class.status-suspended]="!selectedUserForView.isActive">
+                <span class="status-dot">●</span>
+                {{ selectedUserForView.isActive ? 'Active' : 'Suspended' }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-field">
+            <span class="detail-label">Created Date</span>
+            <span class="detail-value">{{ selectedUserForView.createdAt | date:'mediumDate' }}</span>
+          </div>
+
+          <div class="detail-field">
+            <span class="detail-label">Last Login</span>
+            <span class="detail-value">{{ selectedUserForView.lastLogin ? (selectedUserForView.lastLogin | date:'medium') : 'Recently active' }}</span>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 2rem;">
+          <button type="button" class="btn btn-outline" (click)="closeViewModal()">Close</button>
+          <button type="button" class="btn btn-primary" (click)="openEditModal(selectedUserForView); closeViewModal()">
+            Edit User
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Popup Modal 3: Edit User -->
+  @if (selectedUserForEdit) {
+    <div class="modal-backdrop">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit User Details</h3>
+          <button class="modal-close" (click)="closeEditModal()">&times;</button>
+        </div>
+        <form (submit)="saveEditUser()">
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Full Name</label>
+            <input
+              type="text"
+              id="edit-name"
+              class="form-input"
+              [(ngModel)]="selectedUserForEdit.name"
+              name="editName"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-email">Email Address</label>
+            <input
+              type="email"
+              id="edit-email"
+              class="form-input"
+              [(ngModel)]="selectedUserForEdit.email"
+              name="editEmail"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-role">Role</label>
+            <select id="edit-role" class="form-select" [(ngModel)]="selectedUserForEdit.role" name="editRole">
+              <option value="SuperAdmin">SuperAdmin</option>
+              <option value="TenantAdmin">TenantAdmin</option>
+              <option value="Manager">Manager</option>
+              <option value="Member">Member</option>
+            </select>
+          </div>
+
+          <div class="modal-actions" style="margin-top: 1.75rem;">
+            <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="savingEdit">
+              {{ savingEdit ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 </div>

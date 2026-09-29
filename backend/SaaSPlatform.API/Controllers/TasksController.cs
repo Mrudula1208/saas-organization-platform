@@ -52,6 +52,13 @@ namespace SaaSPlatform.API.Controllers
                 return NotFound(new { success = false, message = "Task not found." });
             }
 
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
+            var userId = GetCurrentUserId();
+            if (string.Equals(userRole, "Member", StringComparison.OrdinalIgnoreCase) && existing.AssignedUserId != userId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "Members can only update the status of their own assigned tasks." });
+            }
+
             var result = await _taskService.UpdateStatusAsync(id, dto.Status);
             if (!result)
             {
@@ -84,6 +91,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<TaskItem>> Create(CreateTaskDto dto)
         {
             var tenantId = GetTenantId();
@@ -134,6 +142,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Update(Guid Id, UpdateTaskDto dto)
         {
             var tenantId = GetTenantId();
@@ -170,6 +179,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Delete(Guid Id)
         {
             var tenantId = GetTenantId();

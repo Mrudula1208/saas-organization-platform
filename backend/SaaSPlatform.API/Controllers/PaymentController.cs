@@ -11,7 +11,7 @@ namespace SaaSPlatform.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;

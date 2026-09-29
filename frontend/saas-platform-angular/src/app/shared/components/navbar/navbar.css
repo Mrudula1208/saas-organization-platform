@@ -78,22 +78,40 @@
   color: var(--text-heading);
 }
 
+.nav-btn-notif {
+  position: relative;
+  border-radius: 50% !important;
+  border: 1px solid var(--primary-border) !important;
+  background: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.15) !important;
+  transition: all var(--transition-fast);
+}
+
+.nav-btn-notif:hover {
+  background: var(--primary-light) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.3) !important;
+  color: var(--primary-color) !important;
+}
+
 .badge-unread {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background: var(--danger-color);
+  top: -4px;
+  right: -4px;
+  background: var(--primary-color);
   color: #FFFFFF;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: var(--radius-full);
-  min-width: 1rem;
-  height: 1rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 2px;
-  border: 2px solid var(--bg-sidebar);
+  padding: 0 3px;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
 }
 
 /* Dropdown Panels */

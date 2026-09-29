@@ -1,93 +1,223 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<div class="sub-plans-container animate-fade">
+  <!-- Top Header Area: Title -->
+  <div class="sub-plans-header">
     <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Subscription Tiers</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Define, edit, and audit system-wide pricing packages, billing limitations, and account quotes</p>
+      <h1 class="sub-plans-title">Subscription Plans</h1>
+      <p class="sub-plans-subtitle">Define, audit and manage system-wide pricing packages, billing limitations and quotas</p>
     </div>
-
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      <span class="material-symbols-outlined">add_card</span>
-      Create New Plan
-    </button>
   </div>
 
   @if (errorMessage) {
-    <div class="api-error-alert animate-fade">
+    <div class="api-error-alert animate-fade" style="margin-bottom: 1.5rem;">
       <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
+  <!-- 5 KPI Cards Row (Matching SubscriptionPlans.tsx) -->
+  <div class="kpi-row">
+    <!-- 1. Total Plans -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Plans</span>
+        <div class="kpi-icon-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366F1;">
+          <span class="material-symbols-outlined">sell</span>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-value">{{ totalPlans }}</div>
+        <div class="kpi-trend">
+          <span class="material-symbols-outlined">north_east</span>
+          <span>{{ totalPlans }} Trends</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Active Subscribers -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Active Subscribers</span>
+        <div class="kpi-icon-badge" style="background: rgba(59, 130, 246, 0.12); color: #3B82F6;">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-value">{{ activeSubscribers | number }}</div>
+        <div class="kpi-trend">
+          <span class="material-symbols-outlined">north_east</span>
+          <span>{{ activeSubscribers | number }} Trends</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Plan Conversion Rate -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Plan Conversion Rate</span>
+        <div class="kpi-icon-badge" style="background: rgba(45, 212, 191, 0.12); color: #2DD4BF;">
+          <span class="material-symbols-outlined">percent</span>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-value">{{ planConversionRate }}%</div>
+        <div class="kpi-trend">
+          <span class="material-symbols-outlined">north_east</span>
+          <span>{{ planConversionRate }}% Trends</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Plan Revenue -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Plan Revenue</span>
+        <div class="kpi-icon-badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981;">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-value">${{ planRevenue | number }}</div>
+        <div class="kpi-trend">
+          <span class="material-symbols-outlined">north_east</span>
+          <span>${{ planRevenue | number }} Trends</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Expired Subscriptions -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-label">Expired Subscriptions</span>
+        <div class="kpi-icon-badge" style="background: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+          <span class="material-symbols-outlined">schedule</span>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-value">{{ expiredSubscriptions }}</div>
+        <div class="kpi-trend" [style.color]="expiredSubscriptions > 0 ? '#EF4444' : '#10B981'">
+          <span class="material-symbols-outlined">{{ expiredSubscriptions > 0 ? 'schedule' : 'check_circle' }}</span>
+          <span>{{ expiredSubscriptions }} Expired</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar: Add Plan Button positioned on the right above the cards -->
+  <div class="sub-plans-actions-bar">
+    <div class="plans-deck-subtitle">Choose or customize subscription quotas and features</div>
+    <button class="btn-add-plan" type="button" (click)="openCreateModal()">
+      <span class="material-symbols-outlined" style="font-size: 1.15rem;">add</span>
+      <span>Add Plan</span>
+    </button>
+  </div>
+
   @if (loading) {
-    <div style="text-align: center; padding: 5rem 2rem; color: var(--text-muted);">
-      <span class="material-symbols-outlined" style="font-size: 3rem; animation: spin 1s linear infinite; display: inline-block;">progress_activity</span>
-      <div style="margin-top: 1rem;">Loading subscription plans...</div>
+    <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+      <span class="material-symbols-outlined" style="font-size: 2.5rem; animation: spin 1s linear infinite; display: inline-block;">progress_activity</span>
+      <div style="margin-top: 0.75rem;">Loading subscription tiers...</div>
     </div>
   }
 
-  <!-- Plans Pricing Deck -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+  <!-- Pricing Deck (3 Cards matching Image: Basic, Pro, Enterprise) -->
+  <div class="pricing-deck">
     @for (plan of plans; track plan.id) {
-      <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 420px; position: relative;">
-
-        <!-- Status Indicator Pin -->
-        <span class="badge" [class.badge-success]="plan.isActive" [class.badge-danger]="!plan.isActive" style="position: absolute; top: 1.25rem; right: 1.25rem;">
-          {{ plan.isActive ? 'Active' : 'Suspended' }}
-        </span>
+      <div class="plan-card" [class.featured-card]="plan.name === 'Pro'">
+        <!-- Top Pill Badge for Pro Tier matching reference screenshot -->
+        @if (plan.name === 'Pro') {
+          <div class="badge-featured">Best Comparison</div>
+        }
 
         <div>
-          <!-- Plan Name & Price -->
-          <div style="margin-bottom: 1.25rem;">
-            <h3 style="font-size: 1.35rem; font-family: var(--font-heading); color: var(--text-heading);">{{ plan.name }}</h3>
-            <div style="font-size: 2.25rem; font-weight: 800; font-family: var(--font-heading); margin-top: 0.5rem; color: var(--text-heading); display: flex; align-items: baseline;">
-              ${{ plan.price }}
-              <span style="font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; margin-left: 0.25rem;">/ month</span>
-            </div>
+          <!-- Plan Name & Price as key-value pairs matching reference screenshot -->
+          <div class="plan-kv-row">
+            <span class="plan-kv-label">Plan Name</span>
+            <span class="plan-kv-value">{{ plan.name }}</span>
           </div>
 
-          <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 1.25rem;" />
+          <div class="plan-kv-row" style="margin-bottom: 1.25rem;">
+            <span class="plan-kv-label">Price</span>
+            <span class="plan-kv-value">${{ plan.price }}/month</span>
+          </div>
 
-          <!-- Limitations list -->
-          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.75rem;">
-            <li style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="color: var(--success-color); font-size: 1.15rem;">check_circle</span>
-              Max Registered Users: <strong style="color: var(--text-heading); margin-left: auto;">{{ plan.maxUsers }}</strong>
+          <hr class="plan-divider" />
+
+          <!-- Features & Limitations List matching reference screenshot -->
+          <ul class="plan-features-list">
+            <li class="plan-feature-item">
+              <span class="plan-feature-left">
+                <span class="material-symbols-outlined check-icon">check_circle</span>
+                <span>List Assessment</span>
+              </span>
             </li>
-            <li style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="color: var(--success-color); font-size: 1.15rem;">check_circle</span>
-              Max Active Projects: <strong style="color: var(--text-heading); margin-left: auto;">{{ plan.maxProjects }}</strong>
+            <li class="plan-feature-item">
+              <span class="plan-feature-left">
+                <span class="material-symbols-outlined check-icon">check_circle</span>
+                <span>Unlimited enterprises</span>
+              </span>
             </li>
-            <li style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="color: var(--success-color); font-size: 1.15rem;">check_circle</span>
-              Shared Storage Quota: <strong style="color: var(--text-heading); margin-left: auto;">{{ plan.storageLimitMB / 1024 }} GB</strong>
+            <li class="plan-feature-item">
+              <span class="plan-feature-left">
+                <span class="material-symbols-outlined stat-icon" style="color: #6366F1;">group</span>
+                <span>Max Users</span>
+              </span>
+              <span class="plan-limit-val">{{ plan.maxUsers }}</span>
             </li>
-            <li style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="material-symbols-outlined" style="color: var(--success-color); font-size: 1.15rem;">check_circle</span>
-              Project Management Tools: <strong style="color: var(--text-heading); margin-left: auto;">Included</strong>
+            <li class="plan-feature-item">
+              <span class="plan-feature-left">
+                <span class="material-symbols-outlined stat-icon" style="color: #3B82F6;">folder</span>
+                <span>Max Projects</span>
+              </span>
+              <span class="plan-limit-val">{{ plan.maxProjects }}</span>
+            </li>
+            <li class="plan-feature-item">
+              <span class="plan-feature-left">
+                <span class="material-symbols-outlined stat-icon" style="color: #818CF8;">cloud</span>
+                <span>Storage Limit</span>
+              </span>
+              <span class="plan-limit-val">{{ (plan.storageLimitMB / 1024) | number:'1.0-0' }}GB</span>
             </li>
           </ul>
         </div>
 
-        <!-- Management Actions -->
-        <div style="display: flex; gap: 0.75rem; width: 100%;">
-          <button class="btn btn-outline" style="flex: 1;" (click)="togglePlanStatus(plan)">
-            <span class="material-symbols-outlined" style="font-size: 1.15rem;">{{ plan.isActive ? 'pause' : 'play_arrow' }}</span>
-            {{ plan.isActive ? 'Suspend' : 'Activate' }}
+        <div>
+          <!-- CTA Button: CTA Plan for Basic & Pro, CTA Now for Enterprise -->
+          <button
+            class="plan-cta-btn"
+            [class.btn-featured]="plan.name === 'Pro'"
+            [class.btn-default]="plan.name !== 'Pro'"
+            type="button"
+            (click)="togglePlanStatus(plan)"
+          >
+            {{ plan.name === 'Enterprise' ? 'CTA Now' : 'CTA Plan' }}
           </button>
 
-          @if (plan.name !== 'Basic' && plan.name !== 'Pro' && plan.name !== 'Enterprise') {
-            <button class="btn btn-danger" style="padding: 0.55rem 0.75rem;" (click)="deletePlan(plan.id)">
-              <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete</span>
+          <!-- Plan Action buttons -->
+          <div class="plan-actions-footer">
+            <button
+              class="btn-plan-action"
+              (click)="togglePlanStatus(plan)"
+              [title]="plan.isActive ? 'Suspend tier for new signups' : 'Activate tier for signups'"
+            >
+              {{ plan.isActive ? 'Suspend' : 'Activate' }}
             </button>
-          }
-        </div>
 
+            @if (plan.name !== 'Basic' && plan.name !== 'Pro' && plan.name !== 'Enterprise') {
+              <button
+                class="btn-plan-action danger"
+                (click)="deletePlan(plan.id)"
+                title="Delete custom plan tier"
+              >
+                Delete
+              </button>
+            }
+          </div>
+        </div>
       </div>
     } @empty {
       @if (!loading) {
         <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
           <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">sell</span>
-          <div>No subscription plans available. Create one to get started.</div>
+          <div>No subscription plans available. Click 'Add Plan' to get started.</div>
         </div>
       }
     }
@@ -173,7 +303,9 @@
 
           <div class="modal-actions" style="margin-top: 1.75rem;">
             <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Publish Plan</button>
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Publish Plan' }}
+            </button>
           </div>
         </form>
       </div>

@@ -1,256 +1,496 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Team Members Directory</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Manage your organization's user accounts, roles, access permissions, and profiles</p>
-    </div>
-
-    @if (canManageUsers) {
-      <button class="btn btn-primary" (click)="openAddModal()">
-        <span class="material-symbols-outlined">person_add</span>
-        Add User
-      </button>
-    }
+<div class="user-management-page animate-fade">
+  <!-- Top Breadcrumb Bar -->
+  <div class="dash-breadcrumb-bar">
+    <span class="breadcrumb-role">{{ roleLabel }}</span>
+    <span class="breadcrumb-slash">/</span>
+    <span class="breadcrumb-path">User Directory & Permissions</span>
   </div>
 
-  @if (errorMessage) {
-    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+  <!-- Top Controls & Active Users Row -->
+  <div class="top-controls-card">
+    <!-- Left: Most Active Users Avatar Strip -->
+    <div class="active-users-block">
+      <span class="active-users-title">Most Active Users</span>
+      <div class="active-users-stack">
+        @for (u of mostActiveUsers; track u.id) {
+        <div class="active-avatar" [style.background]="getUserAvatarColor(u.fullName)"
+          [title]="u.fullName + ' (' + u.role + ')'" (click)="openViewModal(u)">
+          {{ getUserInitials(u.fullName) }}
+        </div>
+        } @empty {
+        <div class="active-avatar" style="background: #3B82F6;">JD</div>
+        <div class="active-avatar" style="background: #2563EB;">RP</div>
+        <div class="active-avatar" style="background: #10B981;">SM</div>
+        <div class="active-avatar" style="background: #F59E0B;">AK</div>
+        <div class="active-avatar" style="background: #8B5CF6;">TL</div>
+        }
+      </div>
+    </div>
+
+    <!-- Center/Right: Search, Filter by Role, and Add User Button -->
+    <div class="filters-and-action-block">
+      <!-- Search Users Input with Shortcut -->
+      <div class="search-input-wrapper">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input id="user-search-input" type="text" class="user-search-input" placeholder="Search Users"
+          [(ngModel)]="searchQuery" (input)="onSearch()" />
+        <span class="keyboard-chip">Ctrl+K</span>
+      </div>
+
+      <!-- Filter by Role -->
+      <div class="filter-role-wrapper">
+        <span class="filter-label">Filter by Role</span>
+        <div class="custom-select-wrapper">
+          <select class="custom-role-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
+            <option value="">All Roles</option>
+            <option value="TenantAdmin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Member">Member</option>
+            <option value="Guest">Guest</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- Add User Button -->
+      @if (canManageUsers) {
+      <button class="btn-add-cyan" (click)="openAddModal()" type="button">
+        <span class="material-symbols-outlined btn-plus-icon">add</span>
+        <span>Add User</span>
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- User Management Table Card -->
+  <div class="user-directory-card">
+    <div class="directory-card-header">
+      <div>
+        <h2 class="directory-card-title">{{ canManageUsers ? 'User Management' : 'Team Directory' }}</h2>
+        <p class="directory-card-subtitle">Manage team members, roles, and workspace access</p>
+      </div>
+
+      <div class="count-pill">
+        <span class="material-symbols-outlined pill-icon">group</span>
+        <span>{{ totalCount }} Active Team Members</span>
+      </div>
+    </div>
+
+    @if (errorMessage) {
+    <div class="table-alert-error">
+      <span class="material-symbols-outlined alert-icon">error</span>
       <span>{{ errorMessage }}</span>
     </div>
-  }
+    }
 
-  <!-- Search and filter controls bar -->
-  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Search team members by name, email..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
-        />
-      </div>
-
-      <div class="form-group" style="width: 200px; margin-bottom: 0;">
-        <select class="form-select" [(ngModel)]="roleFilter" (change)="onFilterChange()">
-          <option value="">All Roles</option>
-          <option value="TenantAdmin">Tenant Admin</option>
-          <option value="Member">Member</option>
-        </select>
-      </div>
+    <!-- Loading State -->
+    @if (loading) {
+    <div class="table-state-box">
+      <div class="state-spinner"></div>
+      <span>Loading team members...</span>
     </div>
-  </div>
-
-  <!-- Users Table Card -->
-  <div class="card" style="padding: 0; overflow: hidden;">
-    <div class="table-container" style="border: none; margin-top: 0;">
-      <table class="custom-table">
+    } @else {
+    <!-- Table Wrapper -->
+    <div class="table-wrapper">
+      <table class="user-table">
         <thead>
           <tr>
             <th>User Name</th>
-            <th>Email Address</th>
+            <th>Email</th>
             <th>Role</th>
             <th>Status</th>
             <th>Created Date</th>
-            <th style="text-align: right;">Actions</th>
+            <th style="width: 170px; text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (user of filteredUsers; track user.id) {
-            <tr>
-              <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: var(--text-heading);">
-                <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 2rem; height: 2rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
-                <span>{{ user.fullName }}</span>
-              </td>
-              <td style="color: var(--text-secondary);">{{ user.email }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="user.role === 'TenantAdmin'" [class.badge-warning]="user.role === 'Manager'" [class.badge-info]="user.role === 'Member'">
-                  {{ user.role === 'TenantAdmin' ? 'Tenant Admin' : user.role }}
-                </span>
-              </td>
-              <td>
-                <span class="badge" [class.badge-success]="user.isActive" [class.badge-danger]="!user.isActive">
-                  {{ user.isActive ? 'Active' : 'Suspended' }}
-                </span>
-              </td>
-              <td style="color: var(--text-secondary);">{{ user.createdAt | date:'mediumDate' }}</td>
-              <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <tr class="table-row" (click)="openViewModal(user)">
+            <!-- Tenant Name (Avatar + Name + Org) -->
+            <td>
+              <div class="user-identity-cell">
+                <div class="user-avatar-badge" [style.background]="getUserAvatarColor(user.fullName)">
+                  {{ getUserInitials(user.fullName) }}
+                </div>
+                <div class="user-name-col">
+                  <div class="user-display-name">{{ user.fullName }}</div>
+                  <div class="user-display-sub">{{ tenantName }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Email -->
+            <td class="email-cell">{{ user.email }}</td>
+
+            <!-- Role -->
+            <td>
+              <span class="role-badge {{ getRoleBadgeClass(user.role) }}">
+                {{ getRoleDisplayName(user.role) }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <span class="status-badge" [class.active]="user.isActive" [class.suspended]="!user.isActive">
+                {{ user.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <!-- Created Date -->
+            <td class="date-cell">
+              {{ user.createdAt ? (user.createdAt | date:'mediumDate') : '—' }}
+            </td>
+
+            <!-- Actions: View, Edit, Block, Delete, More -->
+            <td style="text-align: right;" (click)="$event.stopPropagation()">
+              <div class="actions-flex-row">
+                <!-- 1. View -->
+                <button class="btn-action-icon" title="View Profile" (click)="openViewModal(user, $event)"
+                  type="button">
+                  <span class="material-symbols-outlined action-svg">visibility</span>
+                </button>
+
+                <!-- 2. Edit -->
                 @if (canManageUsers) {
-                  <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="openEditModal(user)" title="Modify member">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">edit</span>
-                  </button>
-                  <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" (click)="deleteUser(user.id)" title="Remove member">
-                    <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                  </button>
-                } @else {
-                  <span style="color: var(--text-muted); font-size: 0.8rem; padding: 0.35rem 0.5rem;">Read only</span>
+                <button class="btn-action-icon" title="Edit User" (click)="openEditModal(user, $event)" type="button">
+                  <span class="material-symbols-outlined action-svg">edit</span>
+                </button>
+
+                <!-- 3. Block / Suspend Toggle -->
+                <button class="btn-action-icon block" [class.blocked]="!user.isActive"
+                  [title]="user.isActive ? 'Suspend User' : 'Activate User'" (click)="toggleUserStatus(user, $event)"
+                  type="button">
+                  <span class="material-symbols-outlined action-svg">
+                    {{ user.isActive ? 'block' : 'check_circle' }}
+                  </span>
+                </button>
+
+                <!-- 4. Delete -->
+                <button class="btn-action-icon delete" title="Delete User" (click)="openDeleteModal(user, $event)"
+                  type="button">
+                  <span class="material-symbols-outlined action-svg">delete</span>
+                </button>
                 }
-              </td>
-            </tr>
+
+                <!-- 5. More Options -->
+                <div class="more-menu-wrapper">
+                  <button class="btn-action-icon more" title="More Options" (click)="toggleMoreMenu(user.id, $event)"
+                    type="button">
+                    <span class="material-symbols-outlined action-svg">more_horiz</span>
+                  </button>
+
+                  @if (activeMoreMenuId === user.id) {
+                  <div class="more-dropdown-panel" (click)="$event.stopPropagation()">
+                    <button class="more-dropdown-item" (click)="openViewModal(user, $event)" type="button">
+                      <span class="material-symbols-outlined item-icon">account_circle</span>
+                      <span>View Profile</span>
+                    </button>
+                    @if (canManageUsers) {
+                    <button class="more-dropdown-item" (click)="openEditModal(user, $event)" type="button">
+                      <span class="material-symbols-outlined item-icon">badge</span>
+                      <span>Change Role</span>
+                    </button>
+                    <button class="more-dropdown-item" (click)="toggleUserStatus(user, $event)" type="button">
+                      <span class="material-symbols-outlined item-icon">
+                        {{ user.isActive ? 'pause_circle' : 'play_circle' }}
+                      </span>
+                      <span>{{ user.isActive ? 'Deactivate' : 'Activate' }}</span>
+                    </button>
+                    }
+                  </div>
+                  }
+                </div>
+              </div>
+            </td>
+          </tr>
           } @empty {
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem; color: var(--text-muted);">group</span>
-                <div>No team members match your selection filters.</div>
-              </td>
-            </tr>
+          <tr>
+            <td colspan="6" class="empty-table-cell">
+              <div class="empty-state-content">
+                <span class="material-symbols-outlined empty-icon">group_off</span>
+                <div class="empty-title">No team members match your selection</div>
+                <p class="empty-subtitle">Try adjusting your search criteria or invite a new team member.</p>
+                @if (canManageUsers) {
+                <button class="btn-add-cyan" (click)="openAddModal()" type="button" style="margin-top: 0.75rem;">
+                  <span class="material-symbols-outlined btn-plus-icon">add</span>
+                  <span>Add User</span>
+                </button>
+                }
+              </div>
+            </td>
+          </tr>
           }
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (loading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
-    </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+    <!-- Pagination Footer -->
+    <div class="directory-footer">
+      <div class="footer-count-text">
+        Showing {{ pageStartItem }} to {{ pageEndItem }} of {{ totalCount }} users
+      </div>
+
+      <div class="pagination-buttons-row">
+        <button class="btn-page-step" [disabled]="page <= 1 || loading" (click)="setPage(1)" type="button"
+          title="First Page">
+          &laquo;
+        </button>
+        <button class="btn-page-step" [disabled]="page <= 1 || loading" (click)="prevPage()" type="button"
+          title="Previous Page">
+          &lsaquo;
+        </button>
+
+        @for (p of pagesArray; track p) {
+        <button class="btn-page-number" [class.active]="p === page" (click)="setPage(p)" type="button">
+          {{ p }}
+        </button>
+        }
+
+        <button class="btn-page-step" [disabled]="page >= totalPages || loading" (click)="nextPage()" type="button"
+          title="Next Page">
+          &rsaquo;
+        </button>
+        <button class="btn-page-step" [disabled]="page >= totalPages || loading" (click)="setPage(totalPages)"
+          type="button" title="Last Page">
+          &raquo;
+        </button>
+      </div>
     </div>
+    }
   </div>
 
-  <!-- Popup Modal: Invite User -->
+  <!-- Modal 1: Add New User (CreateUser.tsx - Matches Image 3) -->
   @if (isAddModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Invite New Team Member</h3>
-          <button class="modal-close" (click)="closeAddModal()">&times;</button>
+  <div class="modal-backdrop" (click)="closeAddModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New User</h3>
+        <button class="modal-close-btn" (click)="closeAddModal()" type="button">&times;</button>
+      </div>
+
+      @if (errorMessage) {
+      <div class="modal-alert-error">
+        <span class="material-symbols-outlined alert-icon">error</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+      }
+
+      <form (submit)="saveNewUser()" class="modal-form">
+        <!-- Name -->
+        <div class="modal-form-group">
+          <label class="modal-label" for="add-user-name">Name</label>
+          <input type="text" id="add-user-name" class="modal-input cyan-focus" placeholder="Full name"
+            [(ngModel)]="newUser.fullName" name="fullName" required autofocus />
         </div>
-        <form (submit)="saveNewUser()">
-          <div class="form-group">
-            <label class="form-label" for="add-fullname">Full Name *</label>
-            <input
-              type="text"
-              id="add-fullname"
-              class="form-input"
-              placeholder="e.g. John Doe"
-              [(ngModel)]="newUser.fullName"
-              name="fullName"
-              required
-            />
-          </div>
 
-          <div class="form-group">
-            <label class="form-label" for="add-email">Email Address *</label>
-            <input
-              type="email"
-              id="add-email"
-              class="form-input"
-              placeholder="name@example.com"
-              [(ngModel)]="newUser.email"
-              name="email"
-              required
-            />
-          </div>
+        <!-- Email -->
+        <div class="modal-form-group">
+          <label class="modal-label" for="add-user-email">Email</label>
+          <input type="email" id="add-user-email" class="modal-input" placeholder="name@example.com"
+            [(ngModel)]="newUser.email" name="email" required />
+        </div>
 
-          <div class="form-group">
-            <label class="form-label" for="add-password">Temporary Password *</label>
-            <input
-              type="password"
-              id="add-password"
-              class="form-input"
-              placeholder="••••••••••••"
-              [(ngModel)]="newUser.password"
-              name="password"
-              required
-            />
+        <!-- Password with Toggle -->
+        <div class="modal-form-group">
+          <label class="modal-label" for="add-user-pass">Password</label>
+          <div class="password-input-wrapper">
+            <input [type]="showPassword ? 'text' : 'password'" id="add-user-pass" class="modal-input password-input"
+              placeholder="Temporary password" [(ngModel)]="newUser.password" name="password" required />
+            <button type="button" class="btn-toggle-eye" (click)="showPassword = !showPassword"
+              title="Toggle password visibility">
+              <span class="material-symbols-outlined">
+                {{ showPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label class="form-label" for="add-role">Organization Role</label>
-            <select id="add-role" class="form-select" [(ngModel)]="newUser.role" name="role">
-              <option value="Member">Member (standard access)</option>
-              <option value="Manager">Manager (project & team lead)</option>
-              <option value="TenantAdmin">Tenant Admin (full org rights)</option>
+        <!-- Role & Type Row -->
+        <div class="modal-grid-2">
+          <div class="modal-form-group">
+            <label class="modal-label" for="add-user-role">Role</label>
+            <select id="add-user-role" class="modal-select" [(ngModel)]="newUser.role" name="role">
+              <option value="Admin">Admin</option>
+              <option value="Manager">Manager</option>
+              <option value="Member">Member</option>
+              <option value="Guest">Guest</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="add-avatar">Profile Image URL (optional)</label>
-            <input
-              type="text"
-              id="add-avatar"
-              class="form-input"
-              placeholder="https://images.unsplash.com/..."
-              [(ngModel)]="newUser.profileImageUrl"
-              name="profileImageUrl"
-            />
+          <div class="modal-form-group">
+            <label class="modal-label" for="add-user-guest">Access Type</label>
+            <select id="add-user-guest" class="modal-select" [(ngModel)]="newUser.guestType" name="guestType">
+              <option value="Member">Standard Member</option>
+              <option value="Guest">External Guest</option>
+            </select>
           </div>
+        </div>
 
-          <div class="modal-actions" style="margin-top: 1.75rem;">
-            <button type="button" class="btn btn-outline" (click)="closeAddModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Invite Member</button>
+        <!-- Avatar Placeholder (Matches Image 3) -->
+        <div class="modal-form-group">
+          <label class="modal-label">Avatar</label>
+          <div class="avatar-camera-circle" title="Upload avatar portrait">
+            <span class="material-symbols-outlined camera-icon">photo_camera</span>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions-footer">
+          <button type="submit" class="btn-modal-submit cyan" [disabled]="addLoading">
+            {{ addLoading ? 'Adding User...' : 'Add User' }}
+          </button>
+          <button type="button" class="btn-modal-cancel" (click)="closeAddModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 
-  <!-- Popup Modal: Edit User -->
+  <!-- Modal 2: Edit User -->
   @if (isEditModalOpen) {
-    <div class="modal-backdrop">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Modify Member Profile</h3>
-          <button class="modal-close" (click)="closeEditModal()">&times;</button>
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit User Details</h3>
+        <button class="modal-close-btn" (click)="closeEditModal()" type="button">&times;</button>
+      </div>
+
+      @if (errorMessage) {
+      <div class="modal-alert-error">
+        <span class="material-symbols-outlined alert-icon">error</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+      }
+
+      <form (submit)="saveEditUser()" class="modal-form">
+        <div class="modal-form-group">
+          <label class="modal-label" for="edit-user-name">Full Name *</label>
+          <input type="text" id="edit-user-name" class="modal-input cyan-focus" [(ngModel)]="editUserForm.fullName"
+            name="editFullName" required />
         </div>
-        <form (submit)="saveEditUser()">
-          <div class="form-group">
-            <label class="form-label" for="edit-fullname">Full Name</label>
-            <input
-              type="text"
-              id="edit-fullname"
-              class="form-input"
-              [(ngModel)]="editUserForm.fullName"
-              name="fullName"
-              required
-            />
-          </div>
 
-          <div class="form-group">
-            <label class="form-label" for="edit-email">Email Address</label>
-            <input
-              type="email"
-              id="edit-email"
-              class="form-input"
-              [(ngModel)]="editUserForm.email"
-              name="email"
-              disabled
-            />
-          </div>
+        <div class="modal-form-group">
+          <label class="modal-label" for="edit-user-email">Email Address *</label>
+          <input type="email" id="edit-user-email" class="modal-input" [(ngModel)]="editUserForm.email" name="editEmail"
+            required />
+        </div>
 
-          <div class="form-group">
-            <label class="form-label" for="edit-role">Organization Role</label>
-            <select id="edit-role" class="form-select" [(ngModel)]="editUserForm.role" name="role">
+        <div class="modal-grid-2">
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-user-role">Role</label>
+            <select id="edit-user-role" class="modal-select" [(ngModel)]="editUserForm.role" name="editRole">
+              <option value="Admin">Admin</option>
               <option value="Member">Member</option>
-              <option value="Manager">Manager</option>
-              <option value="TenantAdmin">Tenant Admin</option>
+              <option value="Guest">Guest</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="edit-active">Account Status</label>
-            <select id="edit-active" class="form-select" [(ngModel)]="editUserForm.isActive" name="isActive">
-              <option [ngValue]="true">Active (Access Allowed)</option>
-              <option [ngValue]="false">Suspended (Access Revoked)</option>
+          <div class="modal-form-group">
+            <label class="modal-label" for="edit-user-status">Account Status</label>
+            <select id="edit-user-status" class="modal-select" [(ngModel)]="editUserForm.isActive" name="editIsActive">
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Suspended / Inactive</option>
             </select>
           </div>
+        </div>
 
-          <div class="modal-actions" style="margin-top: 1.75rem;">
-            <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Profile</button>
+        <div class="modal-actions-footer">
+          <button type="submit" class="btn-modal-submit cyan" [disabled]="editLoading">
+            {{ editLoading ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button type="button" class="btn-modal-cancel" (click)="closeEditModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <!-- Modal 3: View User Profile -->
+  @if (isViewModalOpen && viewingUser) {
+  <div class="modal-backdrop" (click)="closeViewModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">User Profile</h3>
+        <button class="modal-close-btn" (click)="closeViewModal()" type="button">&times;</button>
+      </div>
+
+      <div class="profile-details-stack">
+        <div class="profile-header-row">
+          <div class="profile-large-avatar" [style.background]="getUserAvatarColor(viewingUser.fullName)">
+            {{ getUserInitials(viewingUser.fullName) }}
           </div>
-        </form>
+          <div class="profile-name-col">
+            <div class="profile-full-name">{{ viewingUser.fullName }}</div>
+            <div class="profile-email-sub">{{ viewingUser.email }}</div>
+            <div class="profile-badges-row">
+              <span class="role-badge {{ getRoleBadgeClass(viewingUser.role) }}">
+                {{ getRoleDisplayName(viewingUser.role) }}
+              </span>
+              <span class="status-badge" [class.active]="viewingUser.isActive"
+                [class.suspended]="!viewingUser.isActive">
+                {{ viewingUser.isActive ? 'Active Account' : 'Suspended' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-grid">
+          <div class="info-item">
+            <span class="info-label">Organization</span>
+            <span class="info-val">{{ tenantName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">User ID</span>
+            <span class="info-val mono">{{ viewingUser.id.substring(0, 13) }}...</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Member Since</span>
+            <span class="info-val">{{ viewingUser.createdAt ? (viewingUser.createdAt | date:'mediumDate') : 'Recent'
+              }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Last Login</span>
+            <span class="info-val">{{ viewingUser.lastLogin ? (viewingUser.lastLogin | date:'short') : 'Active'
+              }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions-footer center" style="margin-top: 1.25rem;">
+        <button type="button" class="btn-modal-cancel" (click)="closeViewModal()">
+          Close Profile
+        </button>
       </div>
     </div>
+  </div>
+  }
+
+  <!-- Modal 4: Delete User Confirmation -->
+  @if (isDeleteModalOpen && deletingUser) {
+  <div class="modal-backdrop" (click)="closeDeleteModal()">
+    <div class="modal-card small-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icon-circle danger">
+        <span class="material-symbols-outlined">person_remove</span>
+      </div>
+      <h3 class="confirm-title">Remove User?</h3>
+      <p class="confirm-desc">
+        Are you sure you want to remove <strong>"{{ deletingUser.fullName }}"</strong> from {{ tenantName }}? They will
+        lose access to all projects and tasks.
+      </p>
+
+      <div class="modal-actions-footer center">
+        <button type="button" class="btn-modal-cancel" (click)="closeDeleteModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-modal-danger" [disabled]="deleteLoading" (click)="confirmDeleteUser()">
+          {{ deleteLoading ? 'Removing...' : 'Remove User' }}
+        </button>
+      </div>
+    </div>
+  </div>
   }
 </div>

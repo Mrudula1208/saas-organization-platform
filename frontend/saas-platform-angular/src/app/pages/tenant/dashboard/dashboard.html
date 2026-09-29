@@ -1,33 +1,33 @@
 <div class="tenant-dash-container animate-fade">
   <!-- Top Breadcrumb Bar -->
   <div class="dash-breadcrumb-bar">
-    <span class="breadcrumb-role">Tenant Admin</span>
+    <span class="breadcrumb-role">{{ roleLabel }}</span>
     <span class="breadcrumb-slash">/</span>
     <span class="breadcrumb-name">{{ tenantName }}</span>
-    <span class="breadcrumb-badge">Workspace Overview</span>
+    <span class="breadcrumb-badge">{{ isMember ? 'My Work Overview' : (isManager ? 'Projects Delivery Hub' : 'Workspace Overview') }}</span>
   </div>
 
-  <!-- 1. Top 4 KPI Cards Row (Total Users, Total Projects, Active Tasks, Completed Tasks) -->
+  <!-- 1. Top 4 KPI Cards Row (Role-Scoped for Member, Manager, and TenantAdmin) -->
   <div class="kpi-grid-row">
-    <!-- Card 1: Total Users -->
+    <!-- Card 1: Total Users / My Assigned Tasks -->
     <div class="kpi-metric-card">
       <div class="kpi-card-header">
-        <span class="kpi-card-label">Total Users</span>
+        <span class="kpi-card-label">{{ isMember ? 'My Assigned Tasks' : (isManager ? 'Team Members' : 'Total Users') }}</span>
         <span class="kpi-icon-badge cyan">
-          <span class="material-symbols-outlined">person</span>
+          <span class="material-symbols-outlined">{{ isMember ? 'assignment_ind' : 'person' }}</span>
         </span>
       </div>
-      <div class="kpi-card-value">{{ totalUsers }}</div>
+      <div class="kpi-card-value">{{ isMember ? myAssignedTasksCount : totalUsers }}</div>
       <div class="kpi-trend-pill positive">
         <span class="trend-arrow">↗</span>
-        <span>{{ totalUsersTrend }}</span>
+        <span>{{ isMember ? 'Assigned to me' : totalUsersTrend }}</span>
       </div>
     </div>
 
-    <!-- Card 2: Total Projects -->
+    <!-- Card 2: Total Projects / Active Projects -->
     <div class="kpi-metric-card">
       <div class="kpi-card-header">
-        <span class="kpi-card-label">Total Projects</span>
+        <span class="kpi-card-label">{{ isMember ? 'Active Projects' : (isManager ? 'Managed Projects' : 'Total Projects') }}</span>
         <span class="kpi-icon-badge teal">
           <span class="material-symbols-outlined">folder</span>
         </span>
@@ -35,37 +35,37 @@
       <div class="kpi-card-value">{{ totalProjects }}</div>
       <div class="kpi-trend-pill positive">
         <span class="trend-arrow">↗</span>
-        <span>{{ totalProjectsTrend }}</span>
+        <span>{{ isMember ? 'Collaborative workspaces' : totalProjectsTrend }}</span>
       </div>
     </div>
 
-    <!-- Card 3: Active Tasks -->
+    <!-- Card 3: Active Tasks / Tasks In Progress -->
     <div class="kpi-metric-card">
       <div class="kpi-card-header">
-        <span class="kpi-card-label">Active Tasks</span>
+        <span class="kpi-card-label">{{ isMember ? 'Tasks In Progress' : 'Active Tasks' }}</span>
         <span class="kpi-icon-badge blue">
           <span class="material-symbols-outlined">assignment</span>
         </span>
       </div>
-      <div class="kpi-card-value">{{ activeTasksCount }}</div>
+      <div class="kpi-card-value">{{ isMember ? myInProgressTasksCount : activeTasksCount }}</div>
       <div class="kpi-trend-pill neutral">
         <span class="trend-bullet">●</span>
-        <span>{{ activeTasksTrend }}</span>
+        <span>{{ isMember ? 'Currently working' : activeTasksTrend }}</span>
       </div>
     </div>
 
-    <!-- Card 4: Completed Tasks -->
+    <!-- Card 4: Completed Tasks / My Completed Tasks -->
     <div class="kpi-metric-card">
       <div class="kpi-card-header">
-        <span class="kpi-card-label">Completed Tasks</span>
+        <span class="kpi-card-label">{{ isMember ? 'My Completed Tasks' : 'Completed Tasks' }}</span>
         <span class="kpi-icon-badge green">
-          <span class="material-symbols-outlined">check_circle</span>
+          <span class="material-symbols-outlined">task_alt</span>
         </span>
       </div>
-      <div class="kpi-card-value">{{ completedTasksCount }}</div>
+      <div class="kpi-card-value">{{ isMember ? myCompletedTasksCount : completedTasksCount }}</div>
       <div class="kpi-trend-pill positive">
         <span class="trend-arrow">↗</span>
-        <span>{{ completedTasksTrend }}</span>
+        <span>{{ isMember ? (myAssignedTasksCount > 0 ? (myCompletedTasksCount + ' completed') : 'All clear') : completedTasksTrend }}</span>
       </div>
     </div>
   </div>
@@ -117,6 +117,8 @@
                   <span class="meta-tag">{{ task.taskTag }}</span>
                 </div>
               </div>
+            } @empty {
+              <div style="font-size: 0.72rem; color: #64748B; padding: 0.75rem 0.25rem; text-align: center;">No tasks</div>
             }
           </div>
         </div>
@@ -136,6 +138,8 @@
                   <span class="meta-tag">{{ task.taskTag }}</span>
                 </div>
               </div>
+            } @empty {
+              <div style="font-size: 0.72rem; color: #64748B; padding: 0.75rem 0.25rem; text-align: center;">No tasks</div>
             }
           </div>
         </div>
@@ -155,6 +159,8 @@
                   <span class="meta-tag">{{ task.taskTag }}</span>
                 </div>
               </div>
+            } @empty {
+              <div style="font-size: 0.72rem; color: #64748B; padding: 0.75rem 0.25rem; text-align: center;">No tasks</div>
             }
           </div>
         </div>
@@ -174,6 +180,8 @@
                   <span class="meta-tag">{{ task.taskTag }}</span>
                 </div>
               </div>
+            } @empty {
+              <div style="font-size: 0.72rem; color: #64748B; padding: 0.75rem 0.25rem; text-align: center;">No tasks</div>
             }
           </div>
         </div>
@@ -299,9 +307,11 @@
           <span class="material-symbols-outlined action-icon">folder_open</span>
           <span>View All Projects</span>
         </button>
-        <button class="btn-add-cyan" type="button" (click)="openAddProjectModal()">
-          <span>+ New Project</span>
-        </button>
+        @if (canCreateProject) {
+          <button class="btn-add-cyan" type="button" (click)="openAddProjectModal()">
+            <span>+ New Project</span>
+          </button>
+        }
       </div>
     </div>
 
@@ -309,9 +319,6 @@
       <table class="dash-table">
         <thead>
           <tr>
-            <th style="width: 40px;">
-              <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()" class="custom-checkbox" />
-            </th>
             <th>Project Name</th>
             <th>Priority</th>
             <th>Task Progress</th>
@@ -323,9 +330,6 @@
         <tbody>
           @for (row of tableRows; track row.id) {
             <tr class="table-data-row" (click)="onRowClick(row)">
-              <td (click)="$event.stopPropagation()">
-                <input type="checkbox" [checked]="row.isSelected" (change)="toggleRowSelection(row, $event)" class="custom-checkbox" />
-              </td>
               <td>
                 <div class="tenant-identity-cell">
                   <div class="tenant-avatar-badge">{{ row.initials }}</div>
@@ -343,7 +347,7 @@
               <td>
                 <div class="progress-cell-wrapper">
                   <div class="progress-text-line">
-                    <span>{{ row.completedTasksCount }} / {{ row.totalTasksCount }} Tasks</span>
+                    <span>{{ row.completedTasksCount }} / {{ row.totalTasksCount }} Done</span>
                     <span>{{ row.progressPercent }}%</span>
                   </div>
                   <div class="mini-progress-track">
@@ -362,6 +366,12 @@
                 <button class="btn-row-menu" type="button" routerLink="/tenant/projects">
                   <span class="material-symbols-outlined">chevron_right</span>
                 </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 2.5rem 1rem; color: #64748B;">
+                No organization projects found.
               </td>
             </tr>
           }

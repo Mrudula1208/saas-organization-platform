@@ -12,18 +12,20 @@
       </div>
     </div>
 
-    @if (project && canManageProject) {
-      <div class="header-actions">
+    <div class="header-actions">
+      @if (project && canEditProject) {
         <button class="btn btn-primary" (click)="openEditModal()">
           <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
           Edit Project
         </button>
+      }
+      @if (project && canDeleteProject) {
         <button class="btn btn-danger" (click)="deleteProject()">
           <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
           Delete
         </button>
-      </div>
-    }
+      }
+    </div>
   </div>
 
   <!-- Success feedback -->
@@ -107,6 +109,79 @@
     <div class="glass-card">
       <h3 class="section-title">Description</h3>
       <p class="description-text">{{ project.description || 'No description provided for this project.' }}</p>
+    </div>
+
+    <!-- Project Team Members Card -->
+    <div class="glass-card" style="margin-top: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <h3 class="section-title" style="margin: 0;">Project Team Members</h3>
+          <p class="description-text" style="margin: 0.25rem 0 0; font-size: 0.85rem;">Active team contributors assigned to this project</p>
+        </div>
+
+        @if (canManageMembers && eligibleUsers.length > 0) {
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select class="form-select" style="min-width: 180px; padding: 0.45rem 0.75rem; font-size: 0.85rem;" [(ngModel)]="selectedMemberUserId">
+              <option value="">Select team member...</option>
+              @for (u of eligibleUsers; track u.id) {
+                <option [value]="u.id">{{ u.fullName }} ({{ u.role }})</option>
+              }
+            </select>
+            <button
+              class="btn btn-primary"
+              style="padding: 0.45rem 0.85rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem;"
+              [disabled]="!selectedMemberUserId || addMemberLoading"
+              (click)="addMember()"
+            >
+              <span class="material-symbols-outlined" style="font-size: 1rem;">person_add</span>
+              <span>{{ addMemberLoading ? 'Adding...' : 'Add' }}</span>
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (memberError) {
+        <div class="alert alert-error" style="margin-bottom: 1rem;">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ memberError }}</span>
+        </div>
+      }
+
+      @if (membersLoading) {
+        <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary, #94A3B8);">
+          <span>Loading project members...</span>
+        </div>
+      } @else {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.85rem;">
+          @for (m of members; track m.id) {
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-color); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                  {{ (m.userFullName || 'U').substring(0, 2).toUpperCase() }}
+                </div>
+                <div>
+                  <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary, #F8FAFC);">{{ m.userFullName }}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary, #94A3B8);">{{ m.userEmail }}</div>
+                </div>
+              </div>
+              @if (canManageMembers) {
+                <button
+                  type="button"
+                  style="background: transparent; border: none; color: #EF4444; cursor: pointer; padding: 4px; border-radius: 4px;"
+                  title="Remove from project"
+                  (click)="removeMember(m.id)"
+                >
+                  <span class="material-symbols-outlined" style="font-size: 1.1rem;">close</span>
+                </button>
+              }
+            </div>
+          } @empty {
+            <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-secondary, #94A3B8); font-size: 0.9rem;">
+              No team members assigned to this project yet.
+            </div>
+          }
+        </div>
+      }
     </div>
   }
 
@@ -207,12 +282,7 @@
             </div>
           </div>
 
-          <label class="checkbox-group" for="edit-active">
-            <input type="checkbox" id="edit-active" class="checkbox-input" [(ngModel)]="editForm.isActive" name="isActive" />
-            <span>Project is active</span>
-          </label>
-
-          <div class="modal-actions">
+          <div class="modal-actions" style="margin-top: 1.25rem;">
             <button type="button" class="btn btn-outline" [disabled]="saving" (click)="closeEditModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" [disabled]="saving">
               {{ saving ? 'Saving...' : 'Save Changes' }}

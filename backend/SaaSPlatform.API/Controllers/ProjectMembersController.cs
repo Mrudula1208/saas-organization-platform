@@ -31,7 +31,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<ProjectMemberDto>> AddMember([FromBody] AddProjectMemberDto dto)
         {
             var tenantId = GetTenantId();
@@ -53,7 +53,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpDelete("{memberId}")]
-        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> RemoveMember(Guid memberId)
         {
             var tenantId = GetTenantId();

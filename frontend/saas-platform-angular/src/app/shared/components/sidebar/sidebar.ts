@@ -36,20 +36,32 @@ export class Sidebar {
       ];
     } else {
       const links: SidebarLink[] = [
-        { path: '/tenant/dashboard', icon: 'dashboard', label: 'Dashboard' },
-        { path: '/tenant/users', icon: 'group', label: 'Users' },
-        { path: '/tenant/projects', icon: 'folder_open', label: 'Projects' },
-        { path: '/tenant/tasks', icon: 'assignment', label: 'Tasks' },
-        { path: '/tenant/reports', icon: 'monitoring', label: 'Reports' },
-        { path: '/tenant/settings', icon: 'settings', label: 'Settings' }
+        { path: '/tenant/dashboard', icon: 'dashboard', label: 'Dashboard' }
       ];
 
-      // Add billing for TenantAdmin only
+      // Users management strictly for TenantAdmin (Organization Administration)
       if (user.role === 'TenantAdmin') {
-        links.push({ path: '/tenant/billing', icon: 'receipt_long', label: 'Billing' });
+        links.push({ path: '/tenant/users', icon: 'group', label: 'Users' });
       }
-      
-      links.push({ path: '/tenant/notifications', icon: 'notifications', label: 'Notifications' });
+
+      links.push(
+        { path: '/tenant/projects', icon: 'folder_open', label: 'Projects' },
+        { path: '/tenant/tasks', icon: 'assignment', label: user.role === 'Member' ? 'My Tasks' : 'Tasks' },
+        { path: '/tenant/project-members', icon: 'badge', label: 'Project Members' }
+      );
+
+      // Reports and Billing strictly for TenantAdmin
+      if (user.role === 'TenantAdmin') {
+        links.push(
+          { path: '/tenant/reports', icon: 'monitoring', label: 'Reports' },
+          { path: '/tenant/billing', icon: 'receipt_long', label: 'Billing' }
+        );
+      }
+
+      links.push(
+        { path: '/tenant/notifications', icon: 'notifications', label: 'Notifications' },
+        { path: '/tenant/settings', icon: 'settings', label: 'Settings' }
+      );
 
       return links;
     }
@@ -65,6 +77,11 @@ export class Sidebar {
 
   onLogout() {
     this.closeSidebarOnMobile();
-    this.router.navigate(['/logout']);
+    const user = this.auth.currentUser();
+    if (user && user.role !== 'SuperAdmin') {
+      this.router.navigate(['/tenant/logout']);
+    } else {
+      this.router.navigate(['/logout']);
+    }
   }
 }

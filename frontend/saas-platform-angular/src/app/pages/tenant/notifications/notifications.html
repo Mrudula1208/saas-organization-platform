@@ -1,86 +1,137 @@
-<div class="notifications-container animate-fade">
-  <div class="notifications-header">
-    <div>
-      <h1 style="color: var(--text-heading);">Notifications Dashboard</h1>
-      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
-        Manage activity updates and task assignments.
-      </p>
-    </div>
-    
-    <div class="actions-group">
-      @if (hasUnread()) {
-        <button class="btn btn-outline" (click)="markAllRead()">
-          <span class="material-symbols-outlined" style="font-size: 1.15rem;">done_all</span>
-          Mark All Read
-        </button>
-      }
-      <button class="btn btn-danger" (click)="clearAll()">
-        <span class="material-symbols-outlined" style="font-size: 1.15rem;">delete_sweep</span>
-        Clear All
-      </button>
+<div class="notifications-page-container animate-fade">
+  <!-- Top Breadcrumb -->
+  <div class="notifications-breadcrumb-row">
+    <div class="breadcrumb-text">
+      {{ roleLabel }} <span class="breadcrumb-sep">/</span> <span class="breadcrumb-active">Notifications</span>
     </div>
   </div>
 
-  <div class="card" style="padding: 1.5rem;">
-    <div class="filters-row">
-      <div class="tabs-group">
-        <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">
-          All Notifications ({{ notifications().length }})
+  @if (successToast) {
+    <div class="alert alert-success animate-fade">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>{{ successToast }}</span>
+    </div>
+  }
+
+  <!-- MAIN NOTIFICATIONS DIALOG / CARD -->
+  <div class="notifications-dialog-card">
+    
+    <!-- Card Header -->
+    <div class="dialog-header">
+      <h2 class="dialog-title">Notifications</h2>
+
+      @if (unreadTotal > 0) {
+        <button type="button" class="btn-subtle-action" (click)="markAllAsRead()">
+          <span class="material-symbols-outlined" style="font-size: 1.05rem;">done_all</span>
+          <span>Mark All Read</span>
         </button>
-        <button class="tab-btn" [class.active]="activeTab === 'unread'" (click)="setTab('unread')">
-          Unread ({{ unreadCount() }})
-        </button>
+      }
+    </div>
+
+    <!-- Filter Controls Row -->
+    <div class="dialog-filters-row">
+      <div class="filter-col">
+        <div class="filter-dropdown-box">
+          <span class="filter-prefix">Filter by</span>
+          <select class="filter-select" [(ngModel)]="selectedProject" (change)="currentPage = 1">
+            <option value="">Project</option>
+            @for (p of projectsList; track p.id) {
+              <option [value]="p.name">{{ p.name }}</option>
+            }
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
+      </div>
+
+      <div class="filter-col">
+        <div class="filter-dropdown-box">
+          <select class="filter-select" [(ngModel)]="selectedStatus" (change)="currentPage = 1">
+            <option value="All">Status (Unread/Read)</option>
+            <option value="Unread">Unread</option>
+            <option value="Read">Read</option>
+          </select>
+          <span class="material-symbols-outlined select-chevron">expand_more</span>
+        </div>
       </div>
     </div>
 
-    <div class="table-container" style="border: none; margin-top: 0.5rem;">
-      <table class="custom-table notif-table">
+    <!-- Notifications Table -->
+    <div class="notifications-table-box">
+      <table class="notifications-table">
         <thead>
           <tr>
-            <th style="width: 50px;">Status</th>
             <th>Message</th>
             <th>Date</th>
-            <th style="width: 120px; text-align: right;">Actions</th>
+            <th>Status</th>
+            <th style="text-align: right; padding-right: 1.5rem;">Actions</th>
           </tr>
         </thead>
         <tbody>
-          @if (filteredNotifications.length === 0) {
-            <tr>
-              <td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                No notifications to display.
+          @for (item of paginatedNotifications; track item.id) {
+            <tr [class.is-unread]="item.status === 'Unread'">
+              <td>
+                <span class="message-text">{{ item.message }}</span>
+              </td>
+              <td class="date-cell">
+                {{ item.date }}
+              </td>
+              <td>
+                <span class="status-pill status-{{ item.status.toLowerCase() }}">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <div class="actions-inline-group">
+                  @if (item.status === 'Unread') {
+                    <button type="button" class="action-btn-check" (click)="markAsRead(item)">
+                      <span class="material-symbols-outlined icon-check">check</span>
+                      Mark as Read
+                    </button>
+                  }
+                  <button type="button" class="action-btn-delete" (click)="deleteNotification(item)">
+                    <span class="material-symbols-outlined icon-trash">delete</span>
+                    Delete Notification
+                  </button>
+                </div>
               </td>
             </tr>
-          } @else {
-            @for (notif of filteredNotifications; track notif.id) {
-              <tr [style.background]="!notif.isRead ? 'var(--primary-light)' : 'transparent'">
-                <td>
-                  <span class="notif-bullet" [class.unread]="!notif.isRead" [class.read]="notif.isRead"></span>
-                </td>
-                <td>
-                  <div class="notif-message-cell">
-                    <span [style.font-weight]="!notif.isRead ? '600' : '400'" [style.color]="!notif.isRead ? 'var(--text-heading)' : 'var(--text-primary)'">
-                      {{ notif.message }}
-                    </span>
-                  </div>
-                </td>
-                <td style="color: var(--text-secondary);">{{ formatDate(notif.createdAt) }}</td>
-                <td style="text-align: right;">
-                  <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
-                    @if (!notif.isRead) {
-                      <button class="btn btn-outline" style="padding: 0.4rem; border-radius: var(--radius-sm);" (click)="markRead(notif)" title="Mark as Read">
-                        <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
-                      </button>
-                    }
-                    <button class="btn btn-danger" style="padding: 0.4rem; border-radius: var(--radius-sm);" (click)="deleteNotif(notif)" title="Delete Notification">
-                      <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
+          } @empty {
+            <tr>
+              <td colspan="4" style="text-align: center; padding: 3rem 1rem; color: #64748B;">
+                No notifications found matching your criteria.
+              </td>
+            </tr>
           }
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Controls (|<  1  2  >  >|) -->
+    <div class="dialog-pagination-bar">
+      <div class="pagination-buttons">
+        <button class="pag-btn" (click)="firstPage()" [disabled]="currentPage === 1" title="First Page">
+          <span class="material-symbols-outlined">first_page</span>
+        </button>
+        <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 1" title="Previous Page">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
+        @for (p of [1, 2]; track p) {
+          @if (p <= totalPages) {
+            <button class="pag-btn pag-num" [class.pag-active]="currentPage === p" (click)="setPage(p)">
+              {{ p }}
+            </button>
+          }
+        }
+
+        <button class="pag-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages" title="Next Page">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+        <button class="pag-btn" (click)="lastPage()" [disabled]="currentPage >= totalPages" title="Last Page">
+          <span class="material-symbols-outlined">last_page</span>
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>

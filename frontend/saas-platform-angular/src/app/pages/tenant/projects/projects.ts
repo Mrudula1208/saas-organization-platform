@@ -105,6 +105,34 @@ export class Projects implements OnInit {
     this.loadProjects();
   }
 
+  get canCreateProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get canEditProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get canDeleteProject(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
+  }
+
+  get canManageMembers(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
+  }
+
+  get roleLabel(): string {
+    const role = this.auth.currentUser()?.role;
+    if (role === 'Member') return 'Tenant Member';
+    if (role === 'Manager') return 'Tenant Manager';
+    if (role === 'TenantAdmin') return 'Tenant Admin';
+    return role || 'Tenant Member';
+  }
+
+  get isMember(): boolean {
+    return this.auth.hasRole(['Member']);
+  }
+
   get pageStartItem(): number {
     return this.totalCount > 0 ? (this.page - 1) * this.pageSize + 1 : 0;
   }
@@ -148,19 +176,10 @@ export class Projects implements OnInit {
     return this.totalCount >= this.currentPlan.maxProjects;
   }
 
-  get canManageMembers(): boolean {
-    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
-  }
 
-  get canCreateProject(): boolean {
-    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin', 'Manager']);
-  }
-
-  get canDeleteProject(): boolean {
-    return this.auth.hasRole(['SuperAdmin', 'TenantAdmin']);
-  }
 
   loadCurrentPlan() {
+    if (!this.auth.hasRole(['SuperAdmin', 'TenantAdmin'])) return;
     this.billingService.getCurrentPlan().subscribe({
       next: (plan) => {
         this.currentPlan = plan;
@@ -587,8 +606,8 @@ export class Projects implements OnInit {
   }
 
   getOwnerColor(name: string): string {
-    if (!name) return '#06B6D4';
-    const colors = ['#06B6D4', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+    if (!name) return '#2563EB';
+    const colors = ['#2563EB', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6366F1'];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);

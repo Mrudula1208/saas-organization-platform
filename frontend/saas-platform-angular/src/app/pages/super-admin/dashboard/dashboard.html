@@ -1,210 +1,320 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Global Dashboard</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Real-time diagnostics and subscription metrics for the SaaS ecosystem</p>
+<div class="dashboard-container animate-fade">
+  <!-- Top Header Area: Dashboard Title & Filters -->
+  <div class="dash-header">
+    <h1 class="dash-title">Dashboard</h1>
+
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+        <span class="material-symbols-outlined" style="font-size: 0.95rem; color: var(--success-color);">check_circle</span>
+        Synced {{ lastSyncedAt | date:'shortTime' }}
+      </span>
+
+      <button class="dash-filter-btn" type="button" (click)="loadDashboardData()" title="Refresh live metrics">
+        <span class="material-symbols-outlined" style="font-size: 1rem; color: #6366F1;" [class.fa-spin]="isLoading">tune</span>
+        <span>{{ timeFilter }}</span>
+        <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--text-muted);">keyboard_arrow_down</span>
+      </button>
     </div>
-    
-    <button class="btn btn-primary" (click)="loadDashboardData()" [disabled]="isLoading">
-      <span class="material-symbols-outlined" [class.fa-spin]="isLoading">refresh</span>
-      Refresh Stats
-    </button>
   </div>
 
-  @if (isLoading) {
-    <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
-      <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 2.5rem; height: 2.5rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
-    </div>
-  } @else {
-    <!-- KPI cards grid -->
-    <div class="dashboard-grid">
-      <!-- Tenants KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; border-color: rgba(79, 70, 229, 0.2);">
-          <span class="material-symbols-outlined">corporate_fare</span>
+  <!-- Main 2-Column Dashboard Grid: Left Content (75%) + Right Activity Feed (25%) -->
+  <div class="dash-page-layout">
+    <!-- LEFT MAIN COLUMN -->
+    <div class="dash-main-col">
+      <!-- 5 Top KPI Metric Cards Row -->
+      <div class="kpi-row">
+        <!-- 1. Total Tenants -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Tenants</span>
+            <div class="kpi-icon-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366F1;">
+              <span class="material-symbols-outlined">corporate_fare</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ totalTenants | number }}</div>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined">north_east</span>
+              <span>{{ totalTenants | number }} Active</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL TENANTS</div>
-          <div class="kpi-value">{{ totalTenants }}</div>
-          <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
-            <span>+12% this month</span>
+
+        <!-- 2. Total Users -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Users</span>
+            <div class="kpi-icon-badge" style="background: rgba(59, 130, 246, 0.12); color: #3B82F6;">
+              <span class="material-symbols-outlined">person</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ totalUsers | number }}</div>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined">north_east</span>
+              <span>{{ totalUsers | number }} Trends</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Total Projects -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Total Projects</span>
+            <div class="kpi-icon-badge" style="background: rgba(99, 102, 241, 0.12); color: #818CF8;">
+              <span class="material-symbols-outlined">folder</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ totalProjects | number }}</div>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined">north_east</span>
+              <span>{{ totalProjects | number }} Trends</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Monthly Revenue -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Monthly Revenue</span>
+            <div class="kpi-icon-badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981;">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">${{ monthlyRevenue | number }}</div>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined">north_east</span>
+              <span>${{ monthlyRevenue | number }} Trends</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Active Tenants -->
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">Active Tenants</span>
+            <div class="kpi-icon-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366F1;">
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-value">{{ activeTenants | number }}</div>
+            <div class="kpi-trend">
+              <span class="material-symbols-outlined">north_east</span>
+              <span>{{ activeTenants | number }} Expected</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Active Users KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: #0EA5E9; border-color: rgba(14, 165, 233, 0.2);">
-          <span class="material-symbols-outlined">group</span>
+      <!-- 2 Charts Row: Tenants Growth (left) + User Registrations (right) -->
+      <div class="charts-row">
+        <!-- Chart 1: Tenants Growth Over Time -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <div class="card-title">Tenants Growth Over Time</div>
+              <div class="card-subtitle">Tenants and subscriptions over time</div>
+            </div>
+            <div class="card-action-pill" title="Toggle Chart View">
+              <span class="material-symbols-outlined" style="font-size: 0.9rem; color: #6366F1;">monitoring</span>
+              <span>Interactive</span>
+              <span>▾</span>
+            </div>
+          </div>
+
+          <div class="growth-chart-wrap">
+            <svg class="chart-svg" viewBox="0 0 540 230" preserveAspectRatio="none">
+              <defs>
+                <!-- Glowing Blue Area Gradient -->
+                <linearGradient id="blueArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#6366F1" stop-opacity="0.0"/>
+                </linearGradient>
+                <!-- Blue Stroke Gradient -->
+                <linearGradient id="blueStroke" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#3B82F6"/>
+                  <stop offset="60%" stop-color="#6366F1"/>
+                  <stop offset="100%" stop-color="#818CF8"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Horizontal Grid Lines -->
+              <line x1="45" y1="25" x2="520" y2="25" class="chart-grid-line"/>
+              <line x1="45" y1="58" x2="520" y2="58" class="chart-grid-line"/>
+              <line x1="45" y1="91" x2="520" y2="91" class="chart-grid-line"/>
+              <line x1="45" y1="124" x2="520" y2="124" class="chart-grid-line"/>
+              <line x1="45" y1="157" x2="520" y2="157" class="chart-grid-line"/>
+              <line x1="45" y1="190" x2="520" y2="190" class="chart-grid-line"/>
+
+              <!-- Dynamic Y-Axis Labels -->
+              <text x="35" y="28" text-anchor="end" class="chart-axis-text">{{ chartY1 | number }}</text>
+              <text x="35" y="61" text-anchor="end" class="chart-axis-text">{{ chartY2 | number }}</text>
+              <text x="35" y="94" text-anchor="end" class="chart-axis-text">{{ chartY3 | number }}</text>
+              <text x="35" y="127" text-anchor="end" class="chart-axis-text">{{ chartY4 | number }}</text>
+              <text x="35" y="160" text-anchor="end" class="chart-axis-text">{{ chartY5 | number }}</text>
+              <text x="35" y="193" text-anchor="end" class="chart-axis-text">0</text>
+
+              <!-- Wave Line 1 (Main Blue with Dynamic Fill) -->
+              <path
+                [attr.d]="growthSvgArea"
+                fill="url(#blueArea)"
+              />
+              <path
+                [attr.d]="growthSvgPath"
+                fill="none"
+                stroke="url(#blueStroke)"
+                stroke-width="2.5"
+                style="filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.4));"
+              />
+
+              <!-- Wave Line 2 (Secondary Indigo Trend) -->
+              <path
+                d="M 55 180 C 120 165, 200 140, 290 150 C 370 160, 440 110, 515 95"
+                fill="none"
+                stroke="#818CF8"
+                stroke-width="2"
+                opacity="0.8"
+              />
+
+              <!-- Wave Line 3 (Sky Blue Accent) -->
+              <path
+                d="M 55 170 C 120 155, 200 160, 290 135 C 370 145, 440 125, 515 110"
+                fill="none"
+                stroke="#38BDF8"
+                stroke-width="1.8"
+                opacity="0.75"
+              />
+
+              <!-- X-Axis Month Labels -->
+              <text x="55" y="218" text-anchor="middle" class="chart-axis-text">Jan</text>
+              <text x="132" y="218" text-anchor="middle" class="chart-axis-text">Feb</text>
+              <text x="210" y="218" text-anchor="middle" class="chart-axis-text">Mar</text>
+              <text x="288" y="218" text-anchor="middle" class="chart-axis-text">Apr</text>
+              <text x="365" y="218" text-anchor="middle" class="chart-axis-text">May</text>
+              <text x="442" y="218" text-anchor="middle" class="chart-axis-text">Jun</text>
+              <text x="515" y="218" text-anchor="middle" class="chart-axis-text">Jul</text>
+            </svg>
+          </div>
         </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">ACTIVE USERS</div>
-          <div class="kpi-value">{{ activeUsers }}</div>
-          <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
-            <span>+8% active</span>
+
+        <!-- Chart 2: User Registrations per Month -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <div class="card-title">User registrations per month</div>
+              <div class="card-subtitle">User registrations &amp; analytics</div>
+            </div>
+          </div>
+
+          <div class="stacked-chart-wrap">
+            <div class="y-axis-col">
+              <span>$80k</span>
+              <span>$60k</span>
+              <span>$40k</span>
+              <span>$20k</span>
+              <span>0</span>
+            </div>
+
+            <div class="bars-container">
+              @for (bar of monthlyBars; track bar.month) {
+                <div class="bar-group">
+                  <div class="stacked-bar" [style.height.px]="bar.bottomH + bar.middleH + bar.topH">
+                    <div class="bar-seg-bottom" [style.height.px]="bar.bottomH"></div>
+                    <div class="bar-seg-middle" [style.height.px]="bar.middleH"></div>
+                    <div class="bar-seg-top" [style.height.px]="bar.topH"></div>
+                  </div>
+                  <span class="bar-month-label">{{ bar.month }}</span>
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- MRR KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border-color: rgba(16, 185, 129, 0.2);">
-          <span class="material-symbols-outlined">payments</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">MONTHLY REVENUE</div>
-          <div class="kpi-value">${{ monthlyRevenue }}</div>
-          <div class="kpi-trend up">
-            <span class="material-symbols-outlined" style="font-size: 0.95rem;">trending_up</span>
-            <span>MRR Growth</span>
+      <!-- Tenant Management Table Card -->
+      <div class="tenant-bottom-card">
+        <div class="tenant-card-header">
+          <div>
+            <div class="card-title" style="font-size: 1.15rem;">Tenant Management</div>
+            <div class="card-subtitle">Overview &amp; diagnostic metrics</div>
           </div>
-        </div>
-      </div>
 
-      <!-- System Health KPI -->
-      <div class="glass-card kpi-card">
-        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6; border-color: rgba(139, 92, 246, 0.2);">
-          <span class="material-symbols-outlined">security</span>
-        </div>
-        <div>
-          <div style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">SYSTEM STATUS</div>
-          <div class="kpi-value" style="font-size: 1.5rem; color: var(--success-color); margin-top: 0.25rem; margin-bottom: 0.25rem;">ONLINE</div>
-          <div style="color: var(--text-muted); font-size: 0.75rem;">All services active</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Middle Plan distributions -->
-    <div class="glass-card" style="margin-bottom: 2rem;">
-      <h3 style="font-family: var(--font-heading); margin-bottom: 1.25rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-        <span class="material-symbols-outlined" style="color: var(--primary-color);">pie_chart</span>
-        Active Subscription Plan Distribution
-      </h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
-        <div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-            <span>Basic Tiers ($15)</span>
-            <span style="font-weight: 600; color: var(--text-heading);">{{ basicPlanCount }} Tenants</span>
+          <div class="tenant-actions">
+            <a routerLink="/admin/tenants" class="btn-view-data">
+              <span class="material-symbols-outlined" style="font-size: 1.05rem;">grid_view</span>
+              <span>View Data</span>
+            </a>
+            <a routerLink="/admin/tenants" class="btn-add-tenant">
+              <span class="material-symbols-outlined" style="font-size: 1.05rem;">add</span>
+              <span>Add Tenants</span>
+            </a>
           </div>
-          <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="totalTenants > 0 ? (basicPlanCount / totalTenants) * 100 : 0" style="height: 100%; background: #9CA3AF; border-radius: var(--radius-full);"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-            <span>Pro Tiers ($45)</span>
-            <span style="font-weight: 600; color: var(--text-heading);">{{ proPlanCount }} Tenants</span>
-          </div>
-          <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="totalTenants > 0 ? (proPlanCount / totalTenants) * 100 : 0" style="height: 100%; background: var(--primary-color); border-radius: var(--radius-full);"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-            <span>Enterprise Tiers ($180)</span>
-            <span style="font-weight: 600; color: var(--text-heading);">{{ enterprisePlanCount }} Tenants</span>
-          </div>
-          <div style="height: 6px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-            <div [style.width.%]="totalTenants > 0 ? (enterprisePlanCount / totalTenants) * 100 : 0" style="height: 100%; background: var(--text-heading); border-radius: var(--radius-full);"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Side by Side Tables -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;" class="chart-grid">
-      <!-- Recent Tenants -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-            <span class="material-symbols-outlined" style="color: var(--primary-color);">corporate_fare</span>
-            Recent Organizations
-          </h3>
-          <a routerLink="/admin/tenants" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: none; font-weight: 600; display: flex; align-items: center;">
-            View All
-            <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
-          </a>
         </div>
 
-        <div class="table-container" style="border: none; margin-top: 0;">
-          <table class="custom-table">
+        <div style="overflow-x: auto;">
+          <table class="dash-table">
             <thead>
               <tr>
-                <th>Tenant Name</th>
-                <th>Plan</th>
-                <th>Revenue</th>
+                <th>Tenant name</th>
+                <th>Starting</th>
+                <th>Last Used</th>
+                <th>Monthly Revenue</th>
                 <th>Status</th>
+                <th style="width: 40px; text-align: right;"></th>
               </tr>
             </thead>
             <tbody>
-              @for (tenant of recentTenants; track tenant.id) {
+              @for (row of tenantRows; track row.id) {
                 <tr>
-                  <td style="font-weight: 600;">{{ tenant.name }}</td>
                   <td>
-                    <span class="badge" [class.badge-success]="tenant.plan === 'Enterprise'" [class.badge-info]="tenant.plan === 'Pro' || tenant.plan === 'Basic'">
-                      {{ tenant.plan }}
+                    <div class="tenant-cell">
+                      <div class="tenant-avatar-circle">{{ row.initials }}</div>
+                      <div>
+                        <div class="tenant-name-text">{{ row.name }}</div>
+                        <div class="tenant-subtext">{{ row.subtitle }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span [ngClass]="{
+                      'badge-blue-pill': row.plan === 'Enterprise',
+                      'badge-royal-pill': row.plan === 'Pro',
+                      'badge-slate-pill': row.plan === 'Basic'
+                    }">
+                      {{ row.plan === 'Enterprise' ? 'Unlimited complete' : (row.plan === 'Pro' ? 'Pro upgraded' : row.plan) }}
                     </span>
                   </td>
-                  <td style="font-weight: 600;">${{ tenant.monthlyRevenue || 0 }}</td>
+                  <td style="color: var(--text-muted); font-size: 0.82rem;">{{ row.lastUsed }}</td>
+                  <td style="font-weight: 700; color: var(--text-heading); font-size: 0.9rem;">
+                    ${{ row.revenue | number }}
+                  </td>
                   <td>
-                    <span class="badge" [class.badge-success]="tenant.status?.includes('Upgrade') || tenant.status === 'Active'" [class.badge-warning]="!tenant.status?.includes('Upgrade') && tenant.status !== 'Active'">
-                      {{ tenant.status }}
-                    </span>
+                    <div class="status-dot-cell">
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 0.65rem;"
+                        [ngClass]="{
+                          'dot-green': row.status === 'Active',
+                          'dot-blue': row.status === 'Upgraded'
+                        }"
+                      >circle</span>
+                      <span style="color: var(--text-primary); font-size: 0.82rem;">{{ row.status }}</span>
+                    </div>
+                  </td>
+                  <td style="text-align: right;">
+                    <button class="action-dots-btn" type="button" title="Tenant actions">
+                      <span class="material-symbols-outlined" style="font-size: 1.15rem;">more_horiz</span>
+                    </button>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No tenants recorded.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Recent Users -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-            <span class="material-symbols-outlined" style="color: var(--primary-color);">group</span>
-            Recent Registered Users
-          </h3>
-          <a routerLink="/admin/users" style="font-size: 0.8rem; color: var(--primary-color); text-decoration: none; font-weight: 600; display: flex; align-items: center;">
-            View All
-            <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
-          </a>
-        </div>
-
-        <div class="table-container" style="border: none; margin-top: 0;">
-          <table class="custom-table">
-            <thead>
-              <tr>
-                <th>User Name</th>
-                <th>Email</th>
-                <th>Tenant</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of recentUsers; track user.id) {
-                <tr>
-                  <td style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
-                    <img [src]="user.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=50'" style="width: 1.75rem; height: 1.75rem; border-radius: var(--radius-full); border: 1px solid var(--border-color);" />
-                    <span>{{ user.fullName }}</span>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                    No organizations found.
                   </td>
-                  <td>{{ user.email }}</td>
-                  <td>{{ user.tenant?.name || '—' }}</td>
-                  <td>
-                    <span class="badge" [class.badge-success]="user.role === 'SuperAdmin'" [class.badge-info]="user.role === 'TenantAdmin' || user.role === 'Member'">
-                      {{ user.role }}
-                    </span>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No users recorded.</td>
                 </tr>
               }
             </tbody>
@@ -212,5 +322,35 @@
         </div>
       </div>
     </div>
-  }
+
+    <!-- RIGHT SIDE COLUMN: Recent Activity Feed (Full Height) -->
+    <aside class="dash-activity-col">
+      <div class="dash-card activity-feed-card">
+        <div class="dash-card-header" style="margin-bottom: 1rem;">
+          <div class="card-title">Recent Activity Feed</div>
+        </div>
+
+        <div class="activity-list">
+          @for (item of activityFeed; track item.id) {
+            <div class="activity-item">
+              <div class="activity-icon-wrap" [style.background]="item.iconBg" [style.color]="item.iconColor">
+                <span class="material-symbols-outlined">{{ item.icon }}</span>
+              </div>
+              <div class="activity-details">
+                <div class="activity-title">{{ item.title }}</div>
+                <div class="activity-sub">{{ item.subtitle }}</div>
+                <div class="activity-time">{{ item.timeAgo }}</div>
+              </div>
+            </div>
+          } @empty {
+            <div style="text-align: center; color: var(--text-muted); padding: 3rem 0; font-size: 0.85rem;">
+              No recent activity recorded
+            </div>
+          }
+        </div>
+
+        <button class="show-all-btn" type="button" routerLink="/admin/system-logs">Show all</button>
+      </div>
+    </aside>
+  </div>
 </div>

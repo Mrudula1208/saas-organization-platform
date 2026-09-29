@@ -1,286 +1,496 @@
-<div class="animate-fade">
-  <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Workspace Settings</h1>
-    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Configure workspace information, your profile, notification preferences, security, and interface theme</p>
+<div class="settings-page-container animate-fade">
+  <!-- Top Breadcrumb -->
+  <div class="settings-breadcrumb-row">
+    <div class="breadcrumb-text">{{ roleLabel }} <span class="breadcrumb-sep">/</span> <span class="breadcrumb-active">{{ isTenantAdmin ? 'Workspace Settings' : 'Account & Profile Settings' }}</span></div>
   </div>
 
   @if (successMessage) {
-    <div class="alert alert-success" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+    <div class="alert alert-success">
+      <span class="material-symbols-outlined">check_circle</span>
       <span>{{ successMessage }}</span>
     </div>
   }
 
   @if (errorMessage) {
-    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+    <div class="alert alert-error">
+      <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
-
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Workspace Information Card -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">domain</span>
-          Workspace Information
-        </h3>
-
-        @if (!isTenantAdmin) {
-          <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">Only workspace administrators can modify these details. You can view them here.</p>
-        }
-
-        <form (submit)="saveWorkspace()">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="ws-name">Workspace Name</label>
-              <input type="text" id="ws-name" class="form-input" [(ngModel)]="workspaceForm.name" name="wsName" required [readonly]="!isTenantAdmin || isLoadingWorkspace" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="ws-domain">Domain</label>
-              <input type="text" id="ws-domain" class="form-input" [(ngModel)]="workspaceForm.domain" name="wsDomain" readonly />
-              <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.15rem;">Managed by your platform administrator</p>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="ws-email">Contact Email</label>
-              <input type="email" id="ws-email" class="form-input" [(ngModel)]="workspaceForm.contactEmail" name="wsEmail" required [readonly]="!isTenantAdmin || isLoadingWorkspace" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="ws-phone">Contact Phone</label>
-              <input type="tel" id="ws-phone" class="form-input" [(ngModel)]="workspaceForm.contactPhone" name="wsPhone" [readonly]="!isTenantAdmin || isLoadingWorkspace" />
-            </div>
-          </div>
-
-          @if (isLoadingWorkspace) {
-            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
-              <span class="material-symbols-outlined" style="font-size: 1rem; animation: spin 1s linear infinite;">autorenew</span>
-              Loading workspace settings...
-            </p>
-          }
-
-          <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;" [disabled]="isSavingWorkspace || isLoadingWorkspace || !isTenantAdmin">
-            {{ isSavingWorkspace ? 'Saving...' : 'Save Workspace Information' }}
-          </button>
-        </form>
-      </div>
-
-      <!-- Workspace Logo Card -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">image</span>
-          Workspace Logo
-        </h3>
-
-        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.25rem;">
-          Upload your organization logo. It will be stored securely on the server and shown for {{ tenantName || 'your workspace' }}.
-        </p>
-
-        <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem;">
-          @if (logoPreviewUrl) {
-            <div style="text-align: center;">
-              <img [src]="logoPreviewUrl" alt="New logo preview" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 2px dashed var(--primary-color); object-fit: contain; background: #F9FAFB; padding: 0.25rem;" />
-              <div style="font-size: 0.7rem; color: var(--primary-color); margin-top: 0.25rem;">Preview</div>
-            </div>
-          } @else if (tenantLogoUrl) {
-            <img [src]="tenantLogoUrl" alt="{{ tenantName }}-logo" style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); object-fit: contain; background: #F9FAFB; padding: 0.25rem;" />
-          } @else {
-            <div style="width: 5.5rem; height: 5.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #F9FAFB; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; color: var(--text-muted);">
-              <span class="material-symbols-outlined" style="font-size: 2rem;">image</span>
-              <span style="font-size: 0.7rem;">No logo</span>
-            </div>
-          }
-
-          <div style="flex: 1;">
-            <label class="form-label" for="workspace-logo">Choose an image</label>
-            <input
-              #logoInput
-              type="file"
-              id="workspace-logo"
-              class="form-input"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              style="padding: 0.5rem;"
-              (change)="onLogoSelected($event)"
-            />
-            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.35rem;">PNG, JPG, JPEG, WEBP or GIF &middot; Maximum 2 MB</p>
+  <!-- TOP KPI STAT CARDS ROW (TENANT ADMIN ONLY) -->
+  @if (isTenantAdmin) {
+    <div class="settings-kpi-row">
+      <!-- Card 1: Team Members Active -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Team Members<br><span class="kpi-sublabel">Active</span></span>
+          <div class="kpi-icon-badge cyan-badge">
+            <span class="material-symbols-outlined">group</span>
           </div>
         </div>
-
-        @if (logoUploadError) {
-          <div class="alert alert-error" style="margin-bottom: 1rem;">
-            <span class="material-symbols-outlined" style="font-size: 1.15rem;">error</span>
-            <span>{{ logoUploadError }}</span>
-          </div>
-        }
-
-        <button class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="uploadLogo()" [disabled]="isUploadingLogo || !selectedLogoFile">
-          @if (isUploadingLogo) {
-            <span class="material-symbols-outlined" style="font-size: 1.15rem; animation: spin 1s linear infinite;">autorenew</span>
-            Uploading...
-          } @else {
-            <span class="material-symbols-outlined" style="font-size: 1.15rem;">upload</span>
-            Upload Logo
-          }
-        </button>
+        <div class="kpi-value">{{ kpiStats.teamMembersActive }}</div>
       </div>
 
-      <!-- Profile Card -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">account_circle</span>
-          Edit Profile Information
-        </h3>
-
-        <form (submit)="saveProfile()">
-          <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
-            @if (profileForm.profileImageUrl) {
-              <img [src]="profileForm.profileImageUrl" alt="Profile avatar" style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px solid var(--primary-color); object-fit: cover;" />
-            } @else {
-              <div style="width: 4.5rem; height: 4.5rem; border-radius: var(--radius-full); border: 2px dashed var(--primary-color); display: flex; align-items: center; justify-content: center; background: #F9FAFB; color: var(--text-muted);">
-                <span class="material-symbols-outlined" style="font-size: 2rem;">account_circle</span>
-              </div>
-            }
-            <div class="form-group" style="flex: 1; margin-bottom: 0;">
-              <label class="form-label" for="profile-avatar">Profile Avatar URL</label>
-              <input type="text" id="profile-avatar" class="form-input" [(ngModel)]="profileForm.profileImageUrl" name="profileImageUrl" placeholder="https://..." />
-            </div>
+      <!-- Card 2: Profile Completeness -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Profile<br><span class="kpi-sublabel">Completeness</span></span>
+          <div class="kpi-icon-badge cyan-badge">
+            <span class="material-symbols-outlined">check_circle</span>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="profile-name">Full Name</label>
-              <input type="text" id="profile-name" class="form-input" [(ngModel)]="profileForm.fullName" name="fullName" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="profile-email">Email Address</label>
-              <input type="email" id="profile-email" class="form-input" [(ngModel)]="profileForm.email" name="email" disabled />
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;" [disabled]="isSavingProfile || isLoadingProfile">
-            {{ isSavingProfile ? 'Saving...' : 'Save Profile Details' }}
-          </button>
-        </form>
+        </div>
+        <div class="kpi-value">{{ kpiStats.profileCompleteness }}%</div>
       </div>
 
-      <!-- Password Card -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">vpn_key</span>
-          Change Password Credentials
-        </h3>
-
-        <form (submit)="changePassword()">
-          <div class="form-group">
-            <label class="form-label" for="pass-current">Current Password</label>
-            <input type="password" id="pass-current" class="form-input" [(ngModel)]="passwordForm.currentPassword" name="currentPassword" placeholder="••••••••••••" autocomplete="current-password" required />
+      <!-- Card 3: Connected Integrations -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Connected<br><span class="kpi-sublabel">Integrations</span></span>
+          <div class="kpi-icon-badge cyan-badge">
+            <span class="material-symbols-outlined">hub</span>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
-            <div class="form-group">
-              <label class="form-label" for="pass-new">New Password</label>
-              <input type="password" id="pass-new" class="form-input" [(ngModel)]="passwordForm.newPassword" name="newPassword" placeholder="••••••••••••" minlength="6" autocomplete="new-password" required />
-              <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.15rem;">Minimum 6 characters</p>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="pass-confirm">Confirm New Password</label>
-              <input type="password" id="pass-confirm" class="form-input" [(ngModel)]="passwordForm.confirmPassword" name="confirmPassword" placeholder="••••••••••••" minlength="6" autocomplete="new-password" required />
-            </div>
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-value">{{ kpiStats.connectedIntegrations }}</span>
+          <div class="integration-chips">
+            <span class="int-dot int-slack" title="Slack"></span>
+            <span class="int-dot int-github" title="GitHub"></span>
+            <span class="int-dot int-google" title="Google"></span>
           </div>
+        </div>
+      </div>
 
-          <button type="submit" class="btn btn-outline" style="margin-top: 1rem; width: 100%;" [disabled]="isChangingPassword">
-            {{ isChangingPassword ? 'Updating Password...' : 'Update Password' }}
-          </button>
-        </form>
+      <!-- Card 4: Storage Used -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Storage Used</span>
+          <div class="kpi-icon-badge cyan-badge">
+            <span class="material-symbols-outlined">cloud</span>
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiStats.storageUsedGb }} GB</div>
+        <div class="storage-progress-bar">
+          <div class="storage-fill" [style.width.%]="kpiStats.storagePercent"></div>
+        </div>
+      </div>
+
+      <!-- Card 5: Security Alerts -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Security Alerts</span>
+          <div class="kpi-icon-badge red-badge">
+            <span class="material-symbols-outlined">warning</span>
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiStats.securityAlerts }}</div>
       </div>
     </div>
+  }
 
-    <!-- Right Side: Preferences and Theme -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Theme preference -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">contrast</span>
-          Theme Preference
-        </h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">
-          Change your interface style preference. The selected preference is saved on your active device configuration.
-        </p>
-        <button class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" (click)="toggleTheme()">
-          <span class="material-symbols-outlined">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</span>
-          Toggle {{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}
-        </button>
-      </div>
+  <!-- NAVIGATION TABS (PROFILE | SECURITY | NOTIFICATIONS | BILLING | ADVANCED) -->
+  <div class="settings-tabs-bar">
+    <button class="settings-tab-btn" [class.tab-active]="activeTab === 'profile'" (click)="setTab('profile')">
+      <span class="material-symbols-outlined">person</span>
+      Profile
+    </button>
+    <button class="settings-tab-btn" [class.tab-active]="activeTab === 'security'" (click)="setTab('security')">
+      <span class="material-symbols-outlined">shield</span>
+      Security
+    </button>
+    <button class="settings-tab-btn" [class.tab-active]="activeTab === 'notifications'" (click)="setTab('notifications')">
+      <span class="material-symbols-outlined">notifications</span>
+      Notifications
+    </button>
+    @if (isTenantAdmin) {
+      <button class="settings-tab-btn" [class.tab-active]="activeTab === 'billing'" (click)="setTab('billing')">
+        <span class="material-symbols-outlined">credit_card</span>
+        Billing
+      </button>
+      <button class="settings-tab-btn" [class.tab-active]="activeTab === 'advanced'" (click)="setTab('advanced')">
+        <span class="material-symbols-outlined">settings</span>
+        Advanced
+      </button>
+    }
+  </div>
 
-      <!-- Notifications preference -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">notifications</span>
-          Preferences
-        </h3>
+  <!-- MAIN 2-COLUMN LAYOUT: Content (74%) + Right Activity Feed (26%) -->
+  <div class="settings-main-layout">
 
-        <form (submit)="savePreferences()">
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <label class="checkbox-group">
-              <input type="checkbox" class="checkbox-input" [(ngModel)]="preferencesForm.emailNotifications" name="emailNotifications" [disabled]="isSavingPreferences || !isTenantAdmin" />
-              <span style="color: var(--text-secondary); font-size: 0.9rem;">Email digests & assignments</span>
-            </label>
+    <!-- LEFT CONTENT CONTAINER -->
+    <div class="settings-content-col">
 
-            <label class="checkbox-group">
-              <input type="checkbox" class="checkbox-input" [(ngModel)]="preferencesForm.inAppNotifications" name="inAppNotifications" [disabled]="isSavingPreferences || !isTenantAdmin" />
-              <span style="color: var(--text-secondary); font-size: 0.9rem;">In-App alerts & logs</span>
-            </label>
+      <!-- DEFAULT / NOTIFICATIONS VIEW: Split Layout Matching Image 2 -->
+      @if (activeTab === 'notifications' || activeTab === 'profile') {
+        <div class="settings-card-split">
+          
+          <!-- LEFT SIDE OF CARD: Profile Form -->
+          <div class="card-col-profile">
+            <div class="form-field-group">
+              <label class="field-label" for="profile-name">Name</label>
+              <input
+                type="text"
+                id="profile-name"
+                class="field-input"
+                [(ngModel)]="profileForm.name"
+                placeholder="Organization Name"
+              />
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="profile-email">Email</label>
+              <input
+                type="email"
+                id="profile-email"
+                class="field-input"
+                [(ngModel)]="profileForm.email"
+                placeholder="contact@company.com"
+              />
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label">Avatar</label>
+              <div class="avatar-upload-box">
+                <input
+                  #avatarFileInput
+                  type="file"
+                  accept="image/*"
+                  style="display: none;"
+                  (change)="onAvatarFileSelected($event)"
+                />
+                <button
+                  type="button"
+                  class="avatar-camera-btn"
+                  (click)="avatarFileInput.click()"
+                  title="Upload profile photo or company avatar"
+                >
+                  @if (avatarPreviewUrl || profileForm.avatarUrl) {
+                    <img [src]="avatarPreviewUrl || profileForm.avatarUrl" alt="Avatar preview" class="avatar-preview-img" />
+                  } @else {
+                    <span class="material-symbols-outlined camera-icon">photo_camera</span>
+                  }
+                </button>
+              </div>
+            </div>
           </div>
 
-          @if (!isTenantAdmin) {
-            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 1rem;">Only workspace administrators can change these preferences.</p>
-          }
+          <!-- RIGHT SIDE OF CARD: Notifications & Triggers -->
+          <div class="card-col-notifications">
+            <!-- Channel 1: Email -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon">mail</span>
+                  <span class="notif-name">Email</span>
+                </div>
+                <div class="notif-desc">Manage alerts when using your email</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.email" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
 
-          <button type="submit" class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; font-size: 0.85rem;" [disabled]="isSavingPreferences || isLoadingWorkspace || !isTenantAdmin">
-            {{ isSavingPreferences ? 'Saving...' : 'Save Preferences' }}
-          </button>
-        </form>
-      </div>
+            <!-- Channel 2: In-app -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon">smartphone</span>
+                  <span class="notif-name">in-app</span>
+                </div>
+                <div class="notif-desc">Manage alerts when using your in-app</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.inApp" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
 
-      <!-- Data Portability / GDPR Compliance Export Card -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">folder_zip</span>
-          Data Portability & Export
-        </h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.25rem;">
-          Download a complete snapshot of your organization workspace metadata, team settings, and configuration archive for compliance and backup.
-        </p>
+            <!-- Channel 3: Slack Integration -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon" style="color: #EC4899;">tag</span>
+                  <span class="notif-name">Slack integration</span>
+                </div>
+                <div class="notif-desc">Manage slack integration on Slack integration</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.slackIntegration" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
 
-        @if (exportSuccess) {
-          <div class="alert alert-success" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; font-size: 0.8rem;">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">check_circle</span>
-            <span>Workspace archive downloaded successfully.</span>
+            <!-- Triggers Header -->
+            <div class="triggers-section-header">Triggers</div>
+
+            <!-- Trigger 1: Task Assignment -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon">assignment_ind</span>
+                  <span class="notif-name">Task Assignment</span>
+                </div>
+                <div class="notif-desc">When task programmed the task assignment/events</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.taskAssignment" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Trigger 2: Project Update -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon">update</span>
+                  <span class="notif-name">Project Update</span>
+                </div>
+                <div class="notif-desc">When task nominated the project update</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.projectUpdate" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Trigger 3: User Joining -->
+            <div class="notification-switch-row">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon">group_add</span>
+                  <span class="notif-name">User Joining</span>
+                </div>
+                <div class="notif-desc">When user Joining the user joining</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="notifications.userJoining" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- Bottom Action Buttons Strip -->
+          <div class="card-bottom-actions-bar">
+            @if (isTenantAdmin) {
+              <button type="button" class="btn-secondary-dark" (click)="openAddSettingModal()">
+                Add Setting
+              </button>
+            }
+            <button type="button" class="btn-primary-cyan" (click)="saveChanges()" [disabled]="isSaving">
+              {{ isSaving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- TAB: SECURITY (CHANGE PASSWORD & 2FA) -->
+      @if (activeTab === 'security') {
+        <div class="analytics-card" style="padding: 1.5rem;">
+          <h2 class="chart-card-title" style="margin-bottom: 0.35rem;">Change Password Credentials</h2>
+          <p class="chart-card-sub" style="margin-bottom: 1.5rem;">Ensure your account is using a long, random password to stay secure.</p>
+
+          <form (submit)="changePassword()" style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 540px;">
+            <div class="form-field-group">
+              <label class="field-label" for="sec-current">Current Password</label>
+              <input
+                type="password"
+                id="sec-current"
+                class="field-input"
+                [(ngModel)]="passwordForm.currentPassword"
+                name="currentPassword"
+                placeholder="••••••••••••"
+                required
+              />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-field-group">
+                <label class="field-label" for="sec-new">New Password</label>
+                <input
+                  type="password"
+                  id="sec-new"
+                  class="field-input"
+                  [(ngModel)]="passwordForm.newPassword"
+                  name="newPassword"
+                  placeholder="••••••••••••"
+                  minlength="6"
+                  required
+                />
+              </div>
+
+              <div class="form-field-group">
+                <label class="field-label" for="sec-confirm">Confirm Password</label>
+                <input
+                  type="password"
+                  id="sec-confirm"
+                  class="field-input"
+                  [(ngModel)]="passwordForm.confirmPassword"
+                  name="confirmPassword"
+                  placeholder="••••••••••••"
+                  minlength="6"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="notification-switch-row" style="margin-top: 0.5rem; background: #0F172A; border: 1px solid #1F2937; border-radius: 8px; padding: 0.75rem 1rem;">
+              <div class="notif-text-col">
+                <div class="notif-title-row">
+                  <span class="material-symbols-outlined notif-channel-icon" style="color: var(--primary-color);">lock_reset</span>
+                  <span class="notif-name">Two-Factor Authentication (2FA)</span>
+                </div>
+                <div class="notif-desc">Add an extra layer of security using an authenticator app</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="twoFactorEnabled" name="twoFactor" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+              <button type="submit" class="btn-primary-cyan" [disabled]="isSaving">
+                {{ isSaving ? 'Updating...' : 'Update Password' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- TAB: BILLING -->
+      @if (isTenantAdmin && activeTab === 'billing') {
+        <div class="analytics-card" style="padding: 1.5rem;">
+          <h2 class="chart-card-title" style="margin-bottom: 0.35rem;">Active Subscription Plan</h2>
+          <p class="chart-card-sub" style="margin-bottom: 1.5rem;">Manage your organization subscription tier and resource allocations.</p>
+
+          <div class="billing-summary-grid">
+            <div class="tier-card active-tier">
+              <div class="tier-badge">Current Plan</div>
+              <h3 class="tier-name">Enterprise Pro</h3>
+              <div class="tier-price">$399 <span class="tier-period">/ month</span></div>
+              <p class="tier-desc">Unlimited projects, dedicated support, 500GB SSD storage, custom domain integration.</p>
+              <a routerLink="/tenant/billing" class="btn-secondary-dark" style="text-align: center; text-decoration: none; display: block; margin-top: 1rem;">
+                Manage Invoices & Billing
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB: ADVANCED (THEME TOGGLE & DATA EXPORT) -->
+      @if (isTenantAdmin && activeTab === 'advanced') {
+        <div class="analytics-card" style="padding: 1.5rem;">
+          <h2 class="chart-card-title" style="margin-bottom: 0.35rem;">Interface Theme & Preferences</h2>
+          <p class="chart-card-sub" style="margin-bottom: 1.5rem;">Toggle between modern dark mode and high-contrast light mode.</p>
+
+          <div class="theme-toggle-row">
+            <div class="theme-info">
+              <span class="material-symbols-outlined theme-icon" style="color: var(--primary-color);">
+                {{ isDarkTheme ? 'dark_mode' : 'light_mode' }}
+              </span>
+              <div>
+                <div class="theme-label">Active Theme: <strong>{{ isDarkTheme ? 'Dark Mode' : 'Light Mode' }}</strong></div>
+                <div class="notif-desc">Theme preference is preserved across your browser sessions.</div>
+              </div>
+            </div>
+            <button type="button" class="btn-secondary-dark" (click)="toggleTheme()">
+              Switch to {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+            </button>
+          </div>
+
+          <div class="export-data-section" style="margin-top: 2rem; border-top: 1px solid #1F2937; padding-top: 1.5rem;">
+            <h3 class="chart-card-title" style="font-size: 1rem;">Data Portability & GDPR Export</h3>
+            <p class="notif-desc" style="margin-top: 0.25rem; margin-bottom: 1rem;">Download a complete JSON snapshot of all your organization workspace metadata.</p>
+
+            @if (exportSuccess) {
+              <div class="alert alert-success" style="margin-bottom: 1rem;">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Workspace archive downloaded successfully!</span>
+              </div>
+            }
+
+            @if (exportError) {
+              <div class="alert alert-error" style="margin-bottom: 1rem;">
+                <span class="material-symbols-outlined">error</span>
+                <span>{{ exportError }}</span>
+              </div>
+            }
+
+            <button type="button" class="btn-secondary-dark" (click)="exportWorkspaceData()" [disabled]="isExportingData">
+              <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--primary-color);">download</span>
+              {{ isExportingData ? 'Generating Archive...' : 'Export Workspace JSON' }}
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- RIGHT SIDEBAR: Recent Activity Feed (26%) -->
+    <div class="analytics-card activity-feed-card">
+      <h2 class="activity-feed-title">Recent Activity Feed</h2>
+
+      <div class="activity-items-stack">
+        @for (item of activityFeed; track item.id) {
+          <div class="feed-item-row">
+            <div class="feed-icon-circle" [style.background]="item.iconBg" [style.color]="item.iconColor">
+              <span class="material-symbols-outlined">{{ item.icon }}</span>
+            </div>
+            <div class="feed-content-col">
+              <span class="feed-item-title">{{ item.title }}</span>
+              <span class="feed-item-sub">{{ item.subtitle }}</span>
+              <span class="feed-item-time">{{ item.timeAgo }}</span>
+            </div>
+          </div>
+        } @empty {
+          <div style="padding: 2rem 1rem; text-align: center; color: #64748B; font-size: 0.875rem;">
+            No recent activity recorded.
           </div>
         }
+      </div>
 
-        @if (exportError) {
-          <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; font-size: 0.8rem;">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">error</span>
-            <span>{{ exportError }}</span>
-          </div>
-        }
-
-        <button
-          type="button"
-          class="btn btn-outline"
-          style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem;"
-          (click)="exportWorkspaceData()"
-          [disabled]="isExportingData"
-        >
-          <span class="material-symbols-outlined" [class.spin-icon]="isExportingData">
-            {{ isExportingData ? 'autorenew' : 'download' }}
-          </span>
-          {{ isExportingData ? 'Preparing Archive...' : 'Export Workspace JSON' }}
-        </button>
+      <div class="feed-footer-row">
+        <a routerLink="/tenant/dashboard" class="btn-show-all">Show all</a>
       </div>
     </div>
 
   </div>
+
+  <!-- ADD SETTING MODAL -->
+  @if (showAddSettingModal) {
+    <div class="modal-backdrop animate-fade">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Custom Workspace Setting</h3>
+          <button class="modal-close-btn" (click)="closeAddSettingModal()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-field-group">
+            <label class="field-label">Setting Key / Name</label>
+            <input type="text" class="field-input" [(ngModel)]="newSetting.key" placeholder="e.g. SLACK_WEBHOOK_URL" />
+          </div>
+          <div class="form-field-group">
+            <label class="field-label">Type</label>
+            <select class="field-input" [(ngModel)]="newSetting.type">
+              <option value="Notification Webhook">Notification Webhook</option>
+              <option value="API Integration Key">API Integration Key</option>
+              <option value="Security Preference">Security Preference</option>
+            </select>
+          </div>
+          <div class="form-field-group">
+            <label class="field-label">Value</label>
+            <input type="text" class="field-input" [(ngModel)]="newSetting.value" placeholder="Value or webhook URL..." />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary-dark" (click)="closeAddSettingModal()">Cancel</button>
+          <button class="btn-primary-cyan" (click)="submitAddSetting()" [disabled]="!newSetting.key">Save Setting</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

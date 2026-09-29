@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
+import { ThemeService } from '../../../core/services/theme';
 import { AppNotification } from '../../../models/notification.model';
 
 export interface CommandItem {
@@ -24,7 +25,6 @@ export interface CommandItem {
   styleUrl: './navbar.css'
 })
 export class Navbar implements OnInit {
-  isDarkTheme = true;
   showNotifications = false;
   showProfile = false;
 
@@ -36,16 +36,19 @@ export class Navbar implements OnInit {
   constructor(
     private auth: Auth,
     private router: Router,
-    public notifService: NotificationService
-  ) {
-    this.detectSystemTheme();
-  }
+    public notifService: NotificationService,
+    public themeService: ThemeService
+  ) {}
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
       this.notifService.loadUnreadCount();
       this.notifService.loadNotifications();
     }
+  }
+
+  get isDarkTheme(): boolean {
+    return this.themeService.isDark;
   }
 
   get user() {
@@ -60,24 +63,8 @@ export class Navbar implements OnInit {
     return this.notifService.notifications();
   }
 
-  detectSystemTheme() {
-    if (typeof window !== 'undefined') {
-      const isLightTheme = document.body.classList.contains('light-theme');
-      this.isDarkTheme = !isLightTheme;
-    }
-  }
-
   toggleTheme() {
-    if (typeof window !== 'undefined') {
-      this.isDarkTheme = !this.isDarkTheme;
-      if (this.isDarkTheme) {
-        document.body.classList.add('dark-theme');
-        document.body.classList.remove('light-theme');
-      } else {
-        document.body.classList.add('light-theme');
-        document.body.classList.remove('dark-theme');
-      }
-    }
+    this.themeService.toggleTheme();
   }
 
   toggleNotifications() {
@@ -151,7 +138,12 @@ export class Navbar implements OnInit {
 
   onLogout() {
     this.showProfile = false;
-    this.router.navigate(['/logout']);
+    const user = this.user();
+    if (user && user.role !== 'SuperAdmin') {
+      this.router.navigate(['/tenant/logout']);
+    } else {
+      this.router.navigate(['/logout']);
+    }
   }
 
   formatDate(dateStr: string): string {
@@ -223,19 +215,20 @@ export class Navbar implements OnInit {
         { id: 't-dash', title: 'Workspace Dashboard', subtitle: 'Project velocity & team overview', category: 'Navigation', icon: 'dashboard', action: () => this.navigateAndClose('/tenant/dashboard') },
         { id: 't-proj', title: 'Projects Workspace', subtitle: 'Deliverables & timeline tracking', category: 'Navigation', icon: 'folder_open', action: () => this.navigateAndClose('/tenant/projects') },
         { id: 't-tasks', title: 'Tasks Kanban Board', subtitle: 'Interactive drag-and-drop task workflow', category: 'Navigation', icon: 'assignment', badge: 'Kanban', action: () => this.navigateAndClose('/tenant/tasks') },
-        { id: 't-users', title: 'Team Members Directory', subtitle: 'Manage organization user accounts', category: 'Navigation', icon: 'group', action: () => this.navigateAndClose('/tenant/users') },
-        { id: 't-reports', title: 'Analytics & Reports', subtitle: 'Productivity metrics & PDF exports', category: 'Navigation', icon: 'monitoring', action: () => this.navigateAndClose('/tenant/reports') },
-        { id: 't-settings', title: 'Workspace Settings', subtitle: 'Organization info, security & theme', category: 'Navigation', icon: 'settings', action: () => this.navigateAndClose('/tenant/settings') }
+        { id: 't-members', title: 'Project Members', subtitle: 'Project team directory', category: 'Navigation', icon: 'badge', action: () => this.navigateAndClose('/tenant/project-members') }
       );
 
       if (isTenantAdmin) {
         commands.push(
+          { id: 't-users', title: 'Team Members Directory', subtitle: 'Manage organization user accounts', category: 'Navigation', icon: 'group', action: () => this.navigateAndClose('/tenant/users') },
+          { id: 't-reports', title: 'Analytics & Reports', subtitle: 'Productivity metrics & PDF exports', category: 'Navigation', icon: 'monitoring', action: () => this.navigateAndClose('/tenant/reports') },
           { id: 't-billing', title: 'Subscription & Billing', subtitle: 'Tier quota guardrails & invoices', category: 'Navigation', icon: 'receipt_long', badge: 'Billing', action: () => this.navigateAndClose('/tenant/billing') }
         );
       }
 
       commands.push(
-        { id: 't-notif', title: 'Notifications Center', subtitle: 'View task assignments & system alerts', category: 'Navigation', icon: 'notifications', action: () => this.navigateAndClose('/tenant/notifications') }
+        { id: 't-notif', title: 'Notifications Center', subtitle: 'View task assignments & system alerts', category: 'Navigation', icon: 'notifications', action: () => this.navigateAndClose('/tenant/notifications') },
+        { id: 't-settings', title: 'Settings', subtitle: 'Account preferences & profile', category: 'Navigation', icon: 'settings', action: () => this.navigateAndClose('/tenant/settings') }
       );
     }
 

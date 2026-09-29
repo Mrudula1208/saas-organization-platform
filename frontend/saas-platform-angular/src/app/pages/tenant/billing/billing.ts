@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BillingService } from '../../../core/services/billing';
@@ -48,7 +48,8 @@ export class Billing implements OnInit {
   constructor(
     private billingService: BillingService,
     private planService: SubscriptionPlanService,
-    public auth: Auth
+    public auth: Auth,
+    private cdr: ChangeDetectorRef
   ) {}
 
   get canManageBilling(): boolean {
@@ -62,16 +63,21 @@ export class Billing implements OnInit {
   loadBillingInfo() {
     this.isLoading = true;
     this.errorMessage = '';
+    this.cdr.markForCheck();
 
     this.billingService.getBillingSummary().subscribe({
       next: (summary: BillingSummary) => {
         this.summary = summary;
         this.currentPlan = summary.currentPlan;
         this.loadPayments();
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.isLoading = false;
         this.errorMessage = 'Could not load billing information. Please try again later.';
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
     });
   }
@@ -81,10 +87,14 @@ export class Billing implements OnInit {
       next: (payments: PaymentRecord[]) => {
         this.payments = payments;
         this.isLoading = false;
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.isLoading = false;
         this.errorMessage = 'Could not load payment history. Please try again later.';
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
     });
   }
@@ -104,6 +114,7 @@ export class Billing implements OnInit {
     this.upgradeErrorMessage = '';
     this.upgradeSuccessMessage = '';
     this.isUpgradeModalOpen = true;
+    this.cdr.markForCheck();
     this.loadPlans();
   }
 
@@ -117,9 +128,13 @@ export class Billing implements OnInit {
               (p) => p.id.toLowerCase() !== this.currentPlan?.subscriptionPlanId?.toLowerCase()
             ) || this.availablePlans[0];
         }
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.upgradeErrorMessage = getErrorMessage(err, 'Failed to load subscription plans.');
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
     });
   }
@@ -129,6 +144,8 @@ export class Billing implements OnInit {
       return;
     }
     this.selectedPlan = plan;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   closeUpgradeModal() {

@@ -1,147 +1,323 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Workspace Analytics</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Detailed insights on project counts, completed tasks progress, and team productivity logs</p>
+<div class="reports-page-container animate-fade">
+  <!-- Top Breadcrumb & Page Subtitle -->
+  <div class="reports-breadcrumb-row">
+    <div class="breadcrumb-text">{{ roleLabel }} <span class="breadcrumb-sep">/</span> <span class="breadcrumb-active">Reports & Analytics</span></div>
+  </div>
+
+  <!-- Top Filters & Export Controls Strip -->
+  <div class="reports-filter-strip">
+    <div class="filter-group-left">
+      <!-- Date Range Picker Control -->
+      <div class="filter-control-box">
+        <label class="filter-label">Date Range</label>
+        <div class="date-picker-button" (click)="toggleDatePicker()">
+          <span class="material-symbols-outlined filter-icon">calendar_today</span>
+          <span class="date-range-text">{{ dateRangeDisplay }}</span>
+        </div>
+
+        @if (showDatePicker) {
+          <div class="date-picker-dropdown">
+            <div class="date-input-row">
+              <label>Start: <input type="date" [(ngModel)]="dateRangeStart" class="form-input date-input" /></label>
+              <label>End: <input type="date" [(ngModel)]="dateRangeEnd" class="form-input date-input" /></label>
+            </div>
+            <div class="date-picker-actions">
+              <button class="btn btn-outline btn-xs" (click)="showDatePicker = false">Cancel</button>
+              <button class="btn btn-primary btn-xs" (click)="applyDateRange(dateRangeStart, dateRangeEnd)">Apply</button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Filter by Project Dropdown -->
+      <div class="filter-control-box">
+        <label class="filter-label">Filter by Project</label>
+        <div class="select-wrapper">
+          <select class="project-filter-select" [(ngModel)]="selectedProjectId" (change)="onProjectFilterChange()">
+            <option value="">All Projects</option>
+            @for (p of projectsList; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+          <span class="material-symbols-outlined select-arrow">expand_more</span>
+        </div>
+      </div>
     </div>
-    
-    <div style="display: flex; gap: 0.75rem;">
-      <button class="btn btn-outline" (click)="exportReport('Excel')" [disabled]="exportingFormat !== null">
-        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'Excel'">
-          {{ exportingFormat === 'Excel' ? 'autorenew' : 'download' }}
-        </span>
-        {{ exportingFormat === 'Excel' ? 'Generating...' : 'Export Excel' }}
-      </button>
-      <button class="btn btn-primary" (click)="exportReport('PDF')" [disabled]="exportingFormat !== null">
-        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'PDF'">
-          {{ exportingFormat === 'PDF' ? 'autorenew' : 'picture_as_pdf' }}
-        </span>
-        {{ exportingFormat === 'PDF' ? 'Generating...' : 'Export PDF' }}
-      </button>
+
+    <!-- Export Buttons -->
+    <div class="filter-group-right">
+      <label class="filter-label">Export</label>
+      <div class="export-buttons-row">
+        <a [href]="pdfExportUrl" download="workspace-analytics.pdf" class="export-btn" (click)="onExportClick('PDF')" title="Export report as PDF file (.pdf)">
+          <span class="material-symbols-outlined export-icon">picture_as_pdf</span>
+          <span>PDF</span>
+        </a>
+
+        <a [href]="excelExportUrl" download="workspace-analytics.xlsx" class="export-btn" (click)="onExportClick('Excel')" title="Export report as Excel spreadsheet (.xlsx)">
+          <span class="material-symbols-outlined export-icon">table_chart</span>
+          <span>Excel</span>
+        </a>
+      </div>
     </div>
   </div>
 
+  @if (exportSuccessToast) {
+    <div class="alert alert-success" style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.12); border: 1px solid #10B981; color: #10B981; padding: 0.75rem 1rem; border-radius: 8px;">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>{{ exportSuccessToast }}</span>
+    </div>
+  }
+
   @if (exportError) {
-    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+    <div class="alert alert-error" style="margin-top: 1rem;">
+      <span class="material-symbols-outlined">error</span>
       <span>{{ exportError }}</span>
     </div>
   }
 
   @if (errorMessage) {
-    <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+    <div class="alert alert-error" style="margin-top: 1rem;">
+      <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  @if (isLoading) {
-    <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
-      <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 3rem; height: 3rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
-    </div>
-  } @else {
-    <div class="chart-grid">
-      <!-- Projects Created Chart -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">folder</span>
-          Projects Opened (Monthly)
-        </h3>
-        <div class="bar-chart-container" style="padding-top: 2rem;">
-          @for (record of projectsCreated; track record.month) {
-            <div class="bar-column">
-              <div class="bar-fill" [style.height.%]="record.heightPercent">
-                <span class="bar-value">{{ record.count }}</span>
-              </div>
-              <span class="bar-label">{{ record.month }}</span>
+  <!-- Main 2-Column Content Grid: Left Main Section (74%) + Right Activity Feed (26%) -->
+  <div class="reports-main-layout">
+    
+    <!-- LEFT MAIN CONTENT -->
+    <div class="reports-content-col">
+
+      <!-- TOP ROW: Stacked Bar Chart & Dual Gauges -->
+      <div class="charts-top-row">
+
+        <!-- Card 1: Projects Progress Stacked Bar Chart -->
+        <div class="analytics-card projects-progress-card">
+          <div class="card-header-between">
+            <div>
+              <h2 class="chart-card-title">Projects Progress</h2>
+              <div class="chart-card-sub">Projects and milestones completed over time</div>
             </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No project data available yet.</div>
-          }
+
+            <!-- Legend Dots -->
+            <div class="chart-legend-row">
+              <span class="legend-item"><span class="legend-dot complete-dot"></span> Complete</span>
+              <span class="legend-item"><span class="legend-dot active-dot"></span> Active</span>
+              <span class="legend-item"><span class="legend-dot pending-dot"></span> Pending</span>
+            </div>
+          </div>
+
+          <!-- Stacked Bar Chart Body -->
+          <div class="bar-chart-wrapper">
+            <!-- Left Y-Axis Scale Labels -->
+            <div class="y-axis-labels">
+              <span>1,200</span>
+              <span>1,000</span>
+              <span>800</span>
+              <span>60k</span>
+              <span>40k</span>
+              <span>20k</span>
+              <span>0</span>
+            </div>
+
+            <!-- Chart Plot Area -->
+            <div class="chart-plot-area">
+              <!-- Grid guideline lines -->
+              <div class="grid-line" style="top: 0%;"></div>
+              <div class="grid-line" style="top: 20%;"></div>
+              <div class="grid-line" style="top: 40%;"></div>
+              <div class="grid-line" style="top: 60%;"></div>
+              <div class="grid-line" style="top: 80%;"></div>
+              <div class="grid-line" style="top: 100%;"></div>
+
+              <!-- Monthly Stacked Bars -->
+              <div class="stacked-bars-container">
+                @for (bar of monthlyStackedBars; track bar.month) {
+                  <div class="stacked-bar-col">
+                    <div class="bar-pill-track" [title]="bar.month + ': ' + bar.total + ' items (Complete: ' + bar.complete + ', Active: ' + bar.active + ', Pending: ' + bar.pending + ')'">
+                      <!-- Pending Segment (Top) -->
+                      <div class="bar-segment seg-pending" [style.height.%]="bar.pendingPercent"></div>
+                      <!-- Active Segment (Middle) -->
+                      <div class="bar-segment seg-active" [style.height.%]="bar.activePercent"></div>
+                      <!-- Complete Segment (Bottom) -->
+                      <div class="bar-segment seg-complete" [style.height.%]="bar.completePercent"></div>
+                    </div>
+                    <span class="bar-x-label">{{ bar.month }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT GAUGES COLUMN (User Productivity & Overall Task Completion) -->
+        <div class="gauges-stack-col">
+
+          <!-- Gauge Card 1: User Productivity -->
+          <div class="analytics-card gauge-card">
+            <h3 class="gauge-card-title">User Productivity</h3>
+            <div class="gauge-card-sub">Average tasks completed per team member</div>
+
+            <div class="gauge-and-legend-row">
+              <div class="semicircle-gauge-box">
+                <svg viewBox="0 0 120 70" class="gauge-svg">
+                  <!-- Background Track -->
+                  <path d="M 15 60 A 45 45 0 0 1 105 60" fill="none" class="gauge-bg-arc" stroke-width="9" stroke-linecap="round" />
+                  <!-- Primary Progress Track -->
+                  <path
+                    d="M 15 60 A 45 45 0 0 1 105 60"
+                    fill="none"
+                    stroke="var(--primary-color)"
+                    stroke-width="9"
+                    stroke-linecap="round"
+                    class="gauge-progress-arc"
+                    stroke-dasharray="141.4"
+                    [attr.stroke-dashoffset]="productivityStrokeDashoffset"
+                  />
+                </svg>
+                <div class="gauge-center-value">{{ productivityScore }}</div>
+              </div>
+
+              <!-- Legend -->
+              <div class="gauge-legend-list">
+                <div class="g-legend-row"><span class="legend-dot cyan-dot"></span> High Velocity</div>
+                <div class="g-legend-row"><span class="legend-dot blue-dot"></span> Steady Pace</div>
+                <div class="g-legend-row"><span class="legend-dot navy-dot"></span> Baseline</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gauge Card 2: Overall Task Completion Rate -->
+          <div class="analytics-card gauge-card">
+            <h3 class="gauge-card-title">Overall Task Completion Rate</h3>
+            <div class="gauge-card-sub">Ratio of completed tasks across all projects</div>
+
+            <div class="gauge-and-legend-row">
+              <div class="semicircle-gauge-box">
+                <svg viewBox="0 0 120 70" class="gauge-svg">
+                  <!-- Background Track -->
+                  <path d="M 15 60 A 45 45 0 0 1 105 60" fill="none" class="gauge-bg-arc" stroke-width="9" stroke-linecap="round" />
+                  <!-- Primary Progress Track -->
+                  <path
+                    d="M 15 60 A 45 45 0 0 1 105 60"
+                    fill="none"
+                    stroke="var(--primary-color)"
+                    stroke-width="9"
+                    stroke-linecap="round"
+                    class="gauge-progress-arc"
+                    stroke-dasharray="141.4"
+                    [attr.stroke-dashoffset]="completionStrokeDashoffset"
+                  />
+                </svg>
+                <div class="gauge-center-value">{{ completionRate }}%</div>
+              </div>
+
+              <!-- Legend -->
+              <div class="gauge-legend-list">
+                <div class="g-legend-row"><span class="legend-dot cyan-dot"></span> Completed</div>
+                <div class="g-legend-row"><span class="legend-dot blue-dot"></span> In Progress</div>
+                <div class="g-legend-row"><span class="legend-dot navy-dot"></span> Pending</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- BOTTOM ROW: Reports Table Card -->
+      <div class="analytics-card reports-table-card">
+        <div class="card-header-between" style="margin-bottom: 1.25rem;">
+          <div>
+            <h2 class="chart-card-title">Reports</h2>
+            <div class="chart-card-sub">Performance metrics and project revenue breakdown</div>
+          </div>
+
+          <!-- Table Pagination Control -->
+          <div class="table-pagination-nav">
+            <button class="nav-arrow-btn" (click)="prevPage()" [disabled]="currentPage <= 1">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <span class="page-indicator-pill">{{ currentPage }}</span>
+            <button class="nav-arrow-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-responsive-box">
+          <table class="reports-data-table">
+            <thead>
+              <tr>
+                <th>Project / Tenant</th>
+                <th>Stage</th>
+                <th>Last Updated</th>
+                <th>Monthly Revenue</th>
+                <th>Status</th>
+                <th style="width: 40px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of reportsTableData; track row.id) {
+                <tr>
+                  <td>
+                    <div class="tenant-name-cell">
+                      <div class="tenant-avatar-badge">{{ row.avatarText }}</div>
+                      <div class="tenant-meta">
+                        <div class="t-name">{{ row.name }}</div>
+                        <div class="t-sub">{{ row.subText }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="stating-pill">{{ row.stating }}</span>
+                  </td>
+                  <td class="cell-date">{{ row.lastUsed }}</td>
+                  <td class="cell-revenue">{{ row.monthlyRevenue }}</td>
+                  <td>
+                    <span class="status-pill status-{{ row.statusType }}">
+                      <span class="status-live-dot"></span>
+                      {{ row.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="row-menu-btn" title="More options">
+                      <span class="material-symbols-outlined">more_horiz</span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Tasks Created Chart -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">add_task</span>
-          Tasks Opened (Monthly)
-        </h3>
-        <div class="bar-chart-container" style="padding-top: 2rem;">
-          @for (record of tasksCreated; track record.month) {
-            <div class="bar-column">
-              <div class="bar-fill" [style.height.%]="record.heightPercent">
-                <span class="bar-value">{{ record.count }}</span>
-              </div>
-              <span class="bar-label">{{ record.month }}</span>
+    </div>
+
+    <!-- RIGHT SIDEBAR: Recent Activity Feed (26%) -->
+    <div class="analytics-card activity-feed-card">
+      <h2 class="activity-feed-title">Recent Activity Feed</h2>
+
+      <div class="activity-items-stack">
+        @for (item of activityFeed; track item.id) {
+          <div class="feed-item-row">
+            <div class="feed-icon-circle" [style.background]="item.iconBg" [style.color]="item.iconColor">
+              <span class="material-symbols-outlined">{{ item.icon }}</span>
             </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No task data available yet.</div>
-          }
-        </div>
+            <div class="feed-content-col">
+              <span class="feed-item-title">{{ item.title }}</span>
+              <span class="feed-item-sub">{{ item.subtitle }}</span>
+              <span class="feed-item-time">{{ item.timeAgo }}</span>
+            </div>
+          </div>
+        }
       </div>
 
-      <!-- Tasks Completed Chart -->
-      <div class="card">
-        <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-symbols-outlined" style="color: var(--success-color);">task_alt</span>
-          Tasks Closed (Monthly)
-        </h3>
-        <div class="bar-chart-container" style="padding-top: 2rem;">
-          @for (record of tasksCompleted; track record.month) {
-            <div class="bar-column">
-              <div class="bar-fill" style="background: var(--success-color);" [style.height.%]="record.heightPercent">
-                <span class="bar-value">{{ record.count }}</span>
-              </div>
-              <span class="bar-label">{{ record.month }}</span>
-            </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No task data available yet.</div>
-          }
-        </div>
+      <div class="feed-footer-row">
+        <a routerLink="/tenant/dashboard" class="btn-show-all">Show all</a>
       </div>
     </div>
 
-    <!-- Operational metrics -->
-    <div class="card" style="margin-top: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-        <span class="material-symbols-outlined" style="color: var(--primary-color);">speed</span>
-        Workspace Productivity Logs
-      </h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Pending Tasks</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--warning-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ pendingTasks }}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalProjects }} total projects</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--warning-color);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">pending_actions</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">In Progress Tasks</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ inProgressTasks }}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Currently being worked on</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--primary-color);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">hourglass_top</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Task Completion Rate</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--success-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ completionRate }}%</div>
-          <div style="font-size: 0.75rem; color: var(--success-color); font-weight: 600; margin-top: 0.25rem;">{{ completedTasks }} of {{ totalTasks }} tasks completed</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--success-color);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">check_circle</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Active Tasks / Member</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ avgTasksPerMember }} Tasks</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalMembers }} team members</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">groups</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
+  </div>
 </div>

@@ -68,16 +68,30 @@
 
           <div class="form-group" style="margin-top: 1.25rem;">
             <label class="form-label" for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              class="form-input"
-              placeholder="••••••••••••"
-              name="password"
-              [(ngModel)]="password"
-              required
-              #passInput="ngModel"
-            />
+            <div style="position: relative; display: flex; align-items: center;">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                class="form-input"
+                placeholder="••••••••••••"
+                name="password"
+                [(ngModel)]="password"
+                required
+                #passInput="ngModel"
+                style="padding-right: 2.75rem;"
+              />
+              <button
+                type="button"
+                (click)="togglePasswordVisibility()"
+                style="position: absolute; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 0.25rem;"
+                [title]="showPassword ? 'Hide password' : 'Show password'"
+                aria-label="Toggle password visibility"
+              >
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
             @if (passInput.invalid && passInput.touched) {
               <span class="validation-error">Password is required</span>
             }

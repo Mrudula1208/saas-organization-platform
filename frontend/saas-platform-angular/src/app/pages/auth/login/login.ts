@@ -19,10 +19,15 @@ export class Login implements OnInit {
   rememberMe = false;
   errorMessage = '';
   submitting = false;
+  showPassword = false;
 
   // Platform configuration state
   platformName = 'SaaS Platform';
   maintenanceMode = false;
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
 
   constructor(
     private auth: Auth,

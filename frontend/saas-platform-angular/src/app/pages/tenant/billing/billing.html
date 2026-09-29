@@ -138,19 +138,19 @@
     <div class="card" style="margin-top: 1.5rem;">
       <h3 style="font-family: var(--font-heading); color: var(--text-heading); font-size: 1.15rem; margin-bottom: 1.25rem;">Billing Summary</h3>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-        <div style="background: #F9FAFB; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div class="summary-card">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Paid</div>
           <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-top: 0.25rem;">${{ summary?.totalPaid ?? 0 }}</div>
         </div>
-        <div style="background: #F9FAFB; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div class="summary-card">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Successful Payments</div>
           <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color); margin-top: 0.25rem;">{{ summary?.successfulPayments ?? 0 }}</div>
         </div>
-        <div style="background: #F9FAFB; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div class="summary-card">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Failed Payments</div>
           <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color); margin-top: 0.25rem;">{{ summary?.failedPayments ?? 0 }}</div>
         </div>
-        <div style="background: #F9FAFB; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div class="summary-card">
           <div style="font-size: 0.8rem; color: var(--text-secondary);">Last Payment</div>
           <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-top: 0.25rem;">{{ summary?.lastPaymentDate ? (summary?.lastPaymentDate | date:'mediumDate') : '—' }}</div>
         </div>

@@ -25,6 +25,29 @@ export class Register implements OnInit {
   successMessage = '';
   submitting = false;
 
+  showPassword = false;
+  showConfirmPassword = false;
+
+  get passwordStrength(): { label: string; color: string; percent: number } {
+    const p = this.password;
+    if (!p) return { label: '', color: '', percent: 0 };
+    if (p.length < 6) return { label: 'Too short (min 6 characters)', color: 'var(--danger-color)', percent: 25 };
+    const hasLetters = /[a-zA-Z]/.test(p);
+    const hasNumbers = /[0-9]/.test(p);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(p);
+    if (p.length >= 8 && hasLetters && hasNumbers && hasSpecial) {
+      return { label: '✓ Strong password', color: 'var(--success-color)', percent: 100 };
+    }
+    if (p.length >= 6 && hasLetters && (hasNumbers || hasSpecial)) {
+      return { label: 'Medium strength', color: 'var(--warning-color)', percent: 65 };
+    }
+    return { label: 'Weak password', color: 'var(--danger-color)', percent: 35 };
+  }
+
+  get isPasswordMatch(): boolean {
+    return !!(this.password && this.confirmPassword && this.password === this.confirmPassword);
+  }
+
   // Platform configuration state
   platformName = 'SaaS Platform';
   maintenanceMode = false;

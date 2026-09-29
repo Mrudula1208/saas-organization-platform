@@ -27,6 +27,7 @@ import { Dashboard as TenantDashboard } from './pages/tenant/dashboard/dashboard
 import { Users as TenantUsers } from './pages/tenant/users/users';
 import { Projects } from './pages/tenant/projects/projects';
 import { ProjectDetails } from './pages/tenant/projects/project-details/project-details';
+import { ProjectMembers } from './pages/tenant/project-members/project-members';
 import { Tasks } from './pages/tenant/tasks/tasks';
 import { Reports as TenantReports } from './pages/tenant/reports/reports';
 import { Billing } from './pages/tenant/billing/billing';
@@ -71,14 +72,16 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: TenantDashboard },
-      { path: 'users', component: TenantUsers },
+      { path: 'users', component: TenantUsers, canActivate: [authGuard], data: { roles: ['TenantAdmin'] } },
       { path: 'projects', component: Projects },
       { path: 'projects/:id', component: ProjectDetails },
+      { path: 'project-members', component: ProjectMembers },
       { path: 'tasks', component: Tasks },
-      { path: 'reports', component: TenantReports },
-      { path: 'billing', component: Billing },
+      { path: 'reports', component: TenantReports, canActivate: [authGuard], data: { roles: ['TenantAdmin'] } },
+      { path: 'billing', component: Billing, canActivate: [authGuard], data: { roles: ['TenantAdmin'] } },
       { path: 'notifications', component: Notifications },
-      { path: 'settings', component: TenantSettings }
+      { path: 'settings', component: TenantSettings },
+      { path: 'logout', component: Logout }
     ]
   },
 

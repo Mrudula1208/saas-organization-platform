@@ -40,3 +40,93 @@ export function getErrorMessage(err: any, fallback: string): string {
 
   return fallback;
 }
+
+/**
+ * Triggers a real native browser HTTP download directly from the server endpoint.
+ * The browser's native download manager receives the server's HTTP response headers:
+ * Content-Disposition: attachment; filename="report.pdf" (or .xlsx)
+ * This guarantees the exact filename and real extension (.pdf / .xlsx) without any
+ * client-side Blob or Object URL UUID.
+ */
+export function triggerServerDownload(url: string, fileName?: string): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.location.href = url;
+  } catch {
+    window.open(url, '_blank');
+  }
+}
+
+/**
+ * Triggers a real-life browser file download with the exact specified filename and extension.
+ * Converts the file to a Data URL (Base64) to eliminate any Blob UUID (e.g. blob:http://.../uuid)
+ * from the browser request. This guarantees Chrome names the file with the exact filename and .pdf extension.
+ */
+export function downloadBlobAsFile(blob: Blob, fileName: string, mimeType?: string): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const resolvedMime = mimeType || blob.type || 'application/octet-stream';
+
+  // 1. Ensure fileName has the correct extension matching the mime type
+  let safeFileName = (fileName || 'document').trim();
+  if (resolvedMime === 'application/pdf' && !safeFileName.toLowerCase().endsWith('.pdf')) {
+    safeFileName = safeFileName.replace(/\.[^/.]+$/, '') + '.pdf';
+  } else if (
+    (resolvedMime.includes('spreadsheet') || resolvedMime.includes('excel')) &&
+    !safeFileName.toLowerCase().endsWith('.xlsx')
+  ) {
+    safeFileName = safeFileName.replace(/\.[^/.]+$/, '') + '.xlsx';
+  } else if (resolvedMime.includes('json') && !safeFileName.toLowerCase().endsWith('.json')) {
+    safeFileName = safeFileName.replace(/\.[^/.]+$/, '') + '.json';
+  }
+
+  // 2. Convert to Data URL (Base64) so there is NO blob UUID for Chrome to extract.
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    let dataUrl = reader.result as string;
+
+    // Ensure the data URL has the exact mimeType specified
+    if (resolvedMime && dataUrl.startsWith('data:')) {
+      dataUrl = dataUrl.replace(/^data:[^;]+;base64,/, `data:${resolvedMime};base64,`);
+    }
+
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = dataUrl;
+    link.setAttribute('download', safeFileName);
+    link.download = safeFileName;
+
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    }, 2000);
+  };
+  reader.readAsDataURL(blob);
+}
+
+/**
+ * Opens a PDF or document Blob directly in a new browser tab for instant in-browser viewing.
+ */
+export function openBlobInNewTab(blob: Blob, mimeType = 'application/pdf'): void {
+  if (typeof window === 'undefined') return;
+  const typedBlob = new Blob([blob], { type: mimeType });
+  const objectUrl = window.URL.createObjectURL(typedBlob);
+  const win = window.open(objectUrl, '_blank');
+  if (win) {
+    win.focus();
+  }
+  // Delay revoke so the new tab finishes rendering
+  setTimeout(() => {
+    try {
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      // Ignored
+    }
+  }, 120000);
+}
+

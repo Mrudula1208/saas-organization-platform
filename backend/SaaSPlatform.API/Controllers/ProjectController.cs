@@ -63,7 +63,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<ProjectViewDto>> Create(CreateProjectDto dto)
         {
             var tenantId = GetTenantId();
@@ -99,7 +99,7 @@ namespace SaaSPlatform.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+        [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Update(Guid id, UpdateProjectDto dto)
         {
             var tenantId = GetTenantId();

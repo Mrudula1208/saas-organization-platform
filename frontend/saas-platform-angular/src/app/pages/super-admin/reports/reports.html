@@ -1,23 +1,28 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<div class="reports-page-container animate-fade">
+  <!-- Top Page Header -->
+  <div class="reports-header-flex">
     <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">Global Reports Hub</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Consolidated subscriber milestones, workspace statistics, and platform operations reports</p>
+      <h1 class="reports-main-title">Reports</h1>
     </div>
-    
-    <div style="display: flex; gap: 0.75rem;">
-      <button class="btn btn-outline" (click)="exportData('Excel')" [disabled]="exportingFormat !== null">
-        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'Excel'">
-          {{ exportingFormat === 'Excel' ? 'autorenew' : 'download' }}
-        </span>
-        {{ exportingFormat === 'Excel' ? 'Generating...' : 'Export Excel' }}
+    <div class="reports-header-actions dropdown-container">
+      <button class="btn-filter-dropdown" (click)="topFilterOpen = !topFilterOpen">
+        <span class="material-symbols-outlined" style="font-size: 1rem;">tune</span>
+        <span>{{ selectedTopFilter }}</span>
+        <span class="material-symbols-outlined" style="font-size: 0.95rem;">expand_more</span>
       </button>
-      <button class="btn btn-primary" (click)="exportData('PDF')" [disabled]="exportingFormat !== null">
-        <span class="material-symbols-outlined" [class.spin-icon]="exportingFormat === 'PDF'">
-          {{ exportingFormat === 'PDF' ? 'autorenew' : 'picture_as_pdf' }}
-        </span>
-        {{ exportingFormat === 'PDF' ? 'Generating...' : 'Export PDF' }}
-      </button>
+
+      @if (topFilterOpen) {
+        <div class="filter-dropdown-menu animate-fade">
+          @for (opt of topFilterOptions; track opt) {
+            <button class="dropdown-item" [class.selected]="opt === selectedTopFilter" (click)="selectTopFilter(opt, $event)">
+              <span>{{ opt }}</span>
+              @if (opt === selectedTopFilter) {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+          }
+        </div>
+      }
     </div>
   </div>
 
@@ -28,100 +33,383 @@
     </div>
   }
 
-  @if (errorMessage) {
-    <div class="api-error-alert animate-fade">
-      <span class="material-symbols-outlined">error</span>
-      <span>{{ errorMessage }}</span>
+  <!-- 1. Top 5 Real Dynamic KPI Cards Row -->
+  <div class="kpi-grid-row">
+    <!-- Card 1: Tenants Total Revenue -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Tenants Total Revenue</span>
+        <span class="kpi-icon-badge cyan">
+          <span class="material-symbols-outlined">bar_chart</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ tenantsTotalRevenue }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ tenantsTotalRevenueTrends }}</span>
+      </div>
     </div>
-  }
 
-  @if (isLoading) {
-    <div style="display: flex; justify-content: center; align-items: center; height: 300px;">
-      <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 2.5rem; height: 2.5rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
+    <!-- Card 2: Top-Performing Plan -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Top-Performing Plan</span>
+        <span class="kpi-icon-badge blue">
+          <span class="material-symbols-outlined">analytics</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ topPerformingPlan }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ topPerformingPlanTrends }}</span>
+      </div>
     </div>
-  } @else {
-    <div class="chart-grid">
-      <!-- Organization Growth Chart -->
-      <div class="glass-card">
-        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">corporate_fare</span>
-          Tenant Organization Registration Growth (Quarterly)
-        </h3>
-        <div class="bar-chart-container" style="padding-top: 2rem;">
-          @for (record of tenantGrowth; track record.label) {
-            <div class="bar-column">
-              <div class="bar-fill" [style.height.%]="record.heightPercent">
-                <span class="bar-value">{{ record.count }}</span>
+
+    <!-- Card 3: Average Task Completion -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Average Task Completion</span>
+        <span class="kpi-icon-badge purple">
+          <span class="material-symbols-outlined">task_alt</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ avgTaskCompletion }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ avgTaskCompletionTrends }}</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Support Ticket Volume -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Support Ticket Volume</span>
+        <span class="kpi-icon-badge green">
+          <span class="material-symbols-outlined">forum</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ supportTicketVolume }}</div>
+      <div class="kpi-trend-pill" [ngClass]="supportTicketVolume === 0 ? 'positive' : 'negative'">
+        <span class="trend-arrow">{{ supportTicketVolume === 0 ? '↗' : '↘' }}</span>
+        <span>{{ supportTicketVolumeTrends }}</span>
+      </div>
+    </div>
+
+    <!-- Card 5: System Uptime -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">System Uptime</span>
+        <span class="kpi-icon-badge teal">
+          <span class="material-symbols-outlined">speed</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ systemUptime }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ systemUptimeTrends }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Middle Section: Dynamic Charts Side-by-Side (Compact Height) -->
+  <div class="charts-duo-grid">
+    <!-- Left: Global Project Progress Over Time (Dynamic Multi-Line SVG Chart) -->
+    <div class="analytics-card progress-curve-card">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-main-title">Global Project Progress Over Time</h2>
+          <p class="card-sub-text">Tenants and deliverables over time</p>
+        </div>
+        <div class="chart-header-actions">
+          <button class="pill-toggle" [class.active]="activeCurveTab === 'trends'" (click)="activeCurveTab = 'trends'">
+            <span class="material-symbols-outlined" style="font-size: 0.9rem;">trending_up</span>
+            <span>Trends</span>
+          </button>
+          
+          <div class="dropdown-container">
+            <button class="pill-dropdown-btn" (click)="interactiveMenuOpen = !interactiveMenuOpen">
+              <span>{{ selectedInteractive }}</span>
+              <span class="material-symbols-outlined" style="font-size: 0.9rem;">expand_more</span>
+            </button>
+            @if (interactiveMenuOpen) {
+              <div class="filter-dropdown-menu animate-fade">
+                @for (opt of interactiveOptions; track opt) {
+                  <button class="dropdown-item" [class.selected]="opt === selectedInteractive" (click)="selectInteractive(opt, $event)">
+                    <span>{{ opt }}</span>
+                    @if (opt === selectedInteractive) {
+                      <span class="material-symbols-outlined check-icon">check</span>
+                    }
+                  </button>
+                }
               </div>
-              <span class="bar-label">{{ record.label }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact SVG Multi-Line Chart with Real Gridlines -->
+      <div class="svg-multiline-container">
+        <svg viewBox="0 0 700 130" class="curve-chart-svg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="cyanLineGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#2563EB" />
+              <stop offset="100%" stop-color="#60A5FA" />
+            </linearGradient>
+            <linearGradient id="indigoLineGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#3B82F6" />
+              <stop offset="100%" stop-color="#6366F1" />
+            </linearGradient>
+          </defs>
+
+          <!-- Dynamic Horizontal Gridlines & Y-Axis Labels -->
+          <line x1="50" y1="15" x2="680" y2="15" class="chart-gridline" />
+          <text x="40" y="19" class="chart-axis-label">{{ chartYValues[0] }}</text>
+
+          <line x1="50" y1="35" x2="680" y2="35" class="chart-gridline" />
+          <text x="40" y="39" class="chart-axis-label">{{ chartYValues[1] }}</text>
+
+          <line x1="50" y1="55" x2="680" y2="55" class="chart-gridline" />
+          <text x="40" y="59" class="chart-axis-label">{{ chartYValues[2] }}</text>
+
+          <line x1="50" y1="75" x2="680" y2="75" class="chart-gridline" />
+          <text x="40" y="79" class="chart-axis-label">{{ chartYValues[3] }}</text>
+
+          <line x1="50" y1="95" x2="680" y2="95" class="chart-gridline" />
+          <text x="40" y="99" class="chart-axis-label">{{ chartYValues[4] }}</text>
+
+          <line x1="50" y1="115" x2="680" y2="115" class="chart-baseline" />
+          <text x="40" y="119" class="chart-axis-label">{{ chartYValues[5] }}</text>
+
+          <!-- 5 Dynamic Curved Paths Generated from Real Data -->
+          <path [attr.d]="curvePath1" fill="none" stroke="url(#cyanLineGlow)" stroke-width="2.5" stroke-linecap="round" class="chart-line-path" />
+          <path [attr.d]="curvePath2" fill="none" stroke="url(#indigoLineGlow)" stroke-width="2.2" stroke-linecap="round" class="chart-line-path" />
+          <path [attr.d]="curvePath3" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" class="chart-line-path" />
+          <path [attr.d]="curvePath4" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" class="chart-line-path" />
+          <path [attr.d]="curvePath5" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" class="chart-line-path" />
+        </svg>
+
+        <!-- X-Axis Real Months -->
+        <div class="chart-xaxis-labels">
+          @for (m of monthLabels; track m) {
+            <span class="x-label">{{ m }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: User Productivity Scores (Dynamic Donut + Mini Bars) -->
+    <div class="analytics-card productivity-card">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-main-title">User Productivity Scores</h2>
+          <p class="card-sub-text">User registrations & analytics</p>
+        </div>
+        <div class="chart-header-actions dropdown-container">
+          <button class="pill-dropdown-btn" (click)="productivityFilterOpen = !productivityFilterOpen">
+            <span>{{ selectedProductivityFilter }}</span>
+            <span class="material-symbols-outlined" style="font-size: 0.9rem;">expand_more</span>
+          </button>
+          @if (productivityFilterOpen) {
+            <div class="filter-dropdown-menu animate-fade">
+              @for (opt of productivityFilterOptions; track opt) {
+                <button class="dropdown-item" [class.selected]="opt === selectedProductivityFilter" (click)="selectProductivityFilter(opt, $event)">
+                  <span>{{ opt }}</span>
+                  @if (opt === selectedProductivityFilter) {
+                    <span class="material-symbols-outlined check-icon">check</span>
+                  }
+                </button>
+              }
             </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No tenant registration data available yet.</div>
           }
         </div>
       </div>
 
-      <!-- Active Users growth chart -->
-      <div class="glass-card">
-        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">group</span>
-          Platform Registered Users Trend (Monthly)
-        </h3>
-        <div class="bar-chart-container" style="padding-top: 2rem;">
-          @for (record of userGrowth; track record.label) {
-            <div class="bar-column">
-              <div class="bar-fill" [style.height.%]="record.heightPercent">
-                <span class="bar-value">{{ record.count }}</span>
-              </div>
-              <span class="bar-label">{{ record.label }}</span>
+      <div class="productivity-body-grid">
+        <!-- Left Side: Scaled Donut Gauge with Vector SVG Centered Text (Zero Collision) -->
+        <div class="donut-and-legend-col">
+          <div class="donut-gauge-wrapper">
+            <svg viewBox="0 0 160 160" class="donut-gauge-svg">
+              <circle cx="80" cy="80" r="54" class="donut-track" />
+              <circle cx="80" cy="80" r="54" class="donut-progress"
+                      stroke-dasharray="339.29"
+                      [style.strokeDashoffset]="donutDashOffset" />
+              <!-- Native SVG Scaled Center Text: Perfectly Spaced & Vertically Aligned -->
+              <text x="80" y="70" class="svg-donut-label">User Productivity</text>
+              <text x="80" y="96" class="svg-donut-val">{{ userProductivityScore }}%</text>
+            </svg>
+          </div>
+
+          <div class="donut-legend-list">
+            <div class="legend-row">
+              <span class="legend-dot" style="background: #3B82F6;"></span>
+              <span class="legend-name">User Corp</span>
             </div>
-          } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No user growth data available yet.</div>
-          }
+            <div class="legend-row">
+              <span class="legend-dot" style="background: #60A5FA;"></span>
+              <span class="legend-name">Customer</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background: #8B5CF6;"></span>
+              <span class="legend-name">Partners</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background: #60A5FA;"></span>
+              <span class="legend-name">Platform</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background: #F59E0B;"></span>
+              <span class="legend-name">Others</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Right Side: Real Mini Bar Charts -->
+        <div class="mini-charts-col">
+          <div class="mini-chart-block">
+            <div class="mini-chart-title">Task completion rates</div>
+            <div class="mini-chart-body">
+              <div class="mini-yaxis">
+                <span>100%</span>
+                <span>80%</span>
+                <span>40%</span>
+                <span>0</span>
+              </div>
+              <div class="mini-bars-track">
+                @for (bar of taskCompletionBars; track bar.month) {
+                  <div class="mini-bar-col">
+                    <div class="mini-bar-tube">
+                      <div class="mini-bar-fill" [style.height.%]="bar.heightPercent"></div>
+                    </div>
+                    <span class="mini-bar-month">{{ bar.month }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="mini-chart-block">
+            <div class="mini-chart-title">Projects per month</div>
+            <div class="mini-chart-body">
+              <div class="mini-yaxis">
+                <span>80K</span>
+                <span>60K</span>
+                <span>40K</span>
+                <span>0</span>
+              </div>
+              <div class="mini-bars-track">
+                @for (bar of projectsPerMonthBars; track bar.month) {
+                  <div class="mini-bar-col">
+                    <div class="mini-bar-tube">
+                      <div class="mini-bar-fill" [style.height.%]="bar.heightPercent"></div>
+                    </div>
+                    <span class="mini-bar-month">{{ bar.month }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Bottom Section: Reports Table Container -->
+  <div class="analytics-card reports-table-card">
+    <div class="table-header-toolbar">
+      <div>
+        <h2 class="table-section-title">Reports</h2>
+        <p class="table-section-subtitle">Optimized for export and review.</p>
+      </div>
+
+      <!-- Pagination, View All and Export Buttons -->
+      <div class="table-actions-toolbar">
+        <div class="pagination-pill-group">
+          <button class="pagination-pill-btn" [disabled]="currentPage <= 1">
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">keyboard_double_arrow_left</span>
+          </button>
+          <button class="pagination-pill-btn active">{{ currentPage }}</button>
+          <button class="pagination-pill-btn" [disabled]="currentPage >= totalPages">
+            <span class="material-symbols-outlined" style="font-size: 0.95rem;">keyboard_double_arrow_right</span>
+          </button>
+        </div>
+
+        <button class="btn-export-action btn-view-all-action" (click)="toggleViewAll()" [class.active]="isViewAll" title="Toggle between showing top 4 and all items">
+          <span class="material-symbols-outlined" style="font-size: 1rem;">{{ isViewAll ? 'unfold_less' : 'visibility' }}</span>
+          <span>{{ isViewAll ? 'Show 4' : 'View All (' + reportsRows.length + ')' }}</span>
+        </button>
+
+        <a [href]="pdfExportUrl" download="platform-analytics.pdf" class="btn-export-action" (click)="onExportClick('PDF')" title="Download Clean PDF file (.pdf)">
+          <span class="material-symbols-outlined">picture_as_pdf</span>
+          <span>Export PDF</span>
+        </a>
+
+        <a [href]="excelExportUrl" download="platform-analytics.xlsx" class="btn-export-action" (click)="onExportClick('Excel')" title="Export Excel Spreadsheet (.xlsx)">
+          <span class="material-symbols-outlined">table_view</span>
+          <span>Export Excel</span>
+        </a>
       </div>
     </div>
 
-    <!-- Global Metrics Summary -->
-    <div class="glass-card" style="margin-top: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--text-heading); display: flex; align-items: center; gap: 0.5rem;">
-        <span class="material-symbols-outlined" style="color: var(--primary-color);">insights</span>
-        Executive Summary Metrics
-      </h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Avg Tenant Lifetime</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ avgTenantLifetime }} Months</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Average retention period</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--primary-color);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">calendar_month</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Customer Acquisition Cost</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">${{ customerAcquisitionCost }} / org</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Blended sales & marketing</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">price_check</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Platform Churn Rate</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ churnRate }}%</div>
-          <div style="font-size: 0.75rem; color: var(--success-color); font-weight: 600; margin-top: 0.25rem;">Zero active churn</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--text-heading);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">trending_down</span>
-          </div>
-        </div>
-        <div class="stat-tile">
-          <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Registered Users</div>
-          <div style="font-size: 1.75rem; font-weight: 800; color: var(--success-color); margin-top: 0.35rem; font-family: 'Plus Jakarta Sans', var(--font-heading);">{{ totalUsers }}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Across {{ totalTenants }} organizations</div>
-          <div style="position: absolute; right: 1rem; top: 1.25rem; opacity: 0.15; color: var(--success-color);">
-            <span class="material-symbols-outlined" style="font-size: 2.25rem;">group</span>
-          </div>
-        </div>
+    <!-- Reports Table with REAL database records -->
+    <div class="table-responsive-container">
+      <table class="reports-data-table">
+        <thead>
+          <tr>
+            <th>Tenant name</th>
+            <th>Billing</th>
+            <th>Last Used</th>
+            <th>Monthly Revenue</th>
+            <th>Status</th>
+            <th class="th-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of displayedRows; track row.id) {
+            <tr>
+              <td>
+                <div class="tenant-cell-flex">
+                  <div class="tenant-avatar-circle">{{ row.initials }}</div>
+                  <div class="tenant-meta-col">
+                    <span class="tenant-primary-name">{{ row.name }}</span>
+                    <span class="tenant-sub-label">{{ row.subtitle }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="billing-tier-badge">{{ row.billing }}</span>
+              </td>
+              <td class="last-used-cell">{{ row.lastUsed }}</td>
+              <td class="revenue-cell">{{ row.revenueFormatted }}</td>
+              <td>
+                <span class="status-indicator-pill" [ngClass]="row.statusType">
+                  <span class="status-dot"></span>
+                  {{ row.status }}
+                </span>
+              </td>
+              <td class="td-actions">
+                <button class="btn-icon-more" title="More options">
+                  <span class="material-symbols-outlined">more_horiz</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-table-cell">No organization records found in the database.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer with Record Counts and View All Control -->
+    <div class="table-footer-toolbar">
+      <span class="records-count-text">Showing {{ displayedRows.length }} of {{ reportsRows.length }} organizations</span>
+      <div class="footer-btn-group">
+        <button class="btn-footer-view-all" (click)="toggleViewAll()">
+          <span class="material-symbols-outlined" style="font-size: 0.95rem;">{{ isViewAll ? 'unfold_less' : 'visibility' }}</span>
+          <span>{{ isViewAll ? 'Show Top 4' : 'View All (' + reportsRows.length + ')' }}</span>
+        </button>
       </div>
     </div>
-  }
+  </div>
 </div>

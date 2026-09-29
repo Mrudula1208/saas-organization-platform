@@ -1,0 +1,422 @@
+/* Revenue Reports & Financial Analytics - Precision Styling matching RevenueReports.tsx */
+
+:host {
+  display: block;
+}
+
+.revenue-page-container {
+  padding-bottom: 2.5rem;
+}
+
+/* Header Area */
+.revenue-header {
+  margin-bottom: 1.25rem;
+}
+
+.revenue-main-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  letter-spacing: -0.02em;
+}
+
+/* 2-Column Layout matching Image 1 */
+.revenue-layout-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .revenue-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Foundations */
+.analytics-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.card-main-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 0.2rem;
+}
+
+.card-sub-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.btn-project-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-project-toggle.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* LEFT COLUMN STYLING */
+.left-charts-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.revenue-month-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* SVG Bar Chart Container */
+.svg-bar-chart-container {
+  width: 100%;
+  height: 250px;
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.revenue-bar-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.bar-svg-group {
+  transition: opacity var(--transition-fast);
+}
+
+.bar-svg-group:hover rect {
+  filter: brightness(1.15);
+}
+
+/* Bottom Row: 2 Mini Charts */
+.bottom-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .bottom-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mini-chart-card {
+  padding: 1.15rem;
+}
+
+.mini-chart-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 0.85rem;
+}
+
+.mini-chart-body {
+  display: flex;
+  gap: 0.65rem;
+  height: 110px;
+}
+
+.mini-y-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  text-align: right;
+  min-width: 28px;
+  padding-bottom: 1.25rem;
+}
+
+.mini-svg-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.smooth-svg {
+  width: 100%;
+  height: 85px;
+  overflow: visible;
+}
+
+.mini-x-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* RIGHT COLUMN: Highest-Earning Tenants Table & Export Actions */
+.right-tenants-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.tenants-leaderboard-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tenants-table-wrap {
+  flex: 1;
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.leaderboard-table td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.leaderboard-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tenant-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tenant-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tenant-name-txt {
+  font-weight: 600;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+/* Bottom Export Action Buttons matching Image 1 */
+.export-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-export-doc {
+  background: var(--bg-card);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.btn-export-doc:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38BDF8;
+  color: #38BDF8;
+  transform: translateY(-1px);
+}
+
+.export-icon {
+  font-size: 1.15rem;
+  color: #38BDF8;
+}
+
+/* ========================================================================= */
+/* PRINT / PDF EXPORT MEDIA STYLES - Guaranteed 100% Vector Fidelity in PDF  */
+/* ========================================================================= */
+@media print {
+  @page {
+    size: landscape;
+    margin: 8mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body, html {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation chrome, file paths, and action buttons during print */
+  app-navbar,
+  app-sidebar,
+  .btn-project-toggle,
+  .export-actions-row,
+  .revenue-header,
+  .file-path-badge,
+  .file-path-badge-right {
+    display: none !important;
+  }
+
+  .main-content,
+  .app-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #FFFFFF !important;
+    width: 100% !important;
+  }
+
+  .revenue-page-container {
+    padding: 0 !important;
+  }
+
+  /* Force 2-Column Grid Layout in PDF */
+  .revenue-layout-grid {
+    display: grid !important;
+    grid-template-columns: 1.35fr 1fr !important;
+    gap: 14px !important;
+  }
+
+  .analytics-card {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .card-main-title {
+    color: #0F172A !important;
+  }
+
+  .card-sub-text {
+    color: #475569 !important;
+  }
+
+  .mini-chart-title {
+    color: #0F172A !important;
+  }
+
+  .bottom-charts-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+  }
+
+  .mini-y-labels,
+  .mini-x-labels {
+    color: #64748B !important;
+  }
+
+  .revenue-bar-svg,
+  .smooth-svg {
+    display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* SVG elements styling in light mode print */
+  .revenue-bar-svg line {
+    stroke: #E2E8F0 !important;
+  }
+
+  .revenue-bar-svg text {
+    fill: #475569 !important;
+  }
+
+  .revenue-bar-svg text[fill="#34D399"] {
+    fill: #059669 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Table styling in light mode print */
+  .leaderboard-table th {
+    background: #F8FAFC !important;
+    color: #334155 !important;
+    border-bottom: 2px solid #CBD5E1 !important;
+  }
+
+  .leaderboard-table td {
+    color: #1E293B !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+  }
+
+  .tenant-name-txt {
+    color: #0F172A !important;
+  }
+
+  .tenant-avatar-circle {
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #1E293B !important;
+  }
+}

@@ -1,100 +1,400 @@
-<div class="animate-fade">
-  <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">System Settings</h1>
-    <p style="color: var(--text-secondary); margin-top: 0.25rem;">Adjust global platform configurations, security protocols, system notifications, and themes</p>
+<div class="settings-page-container animate-fade">
+  <!-- Top Page Header -->
+  <div class="settings-header-area">
+    <h1 class="settings-main-title">Settings</h1>
+    <p class="settings-subtitle-text">This page serves as the configuration hub for the Super Admin, adapting its view based on the role.</p>
   </div>
 
   @if (successMessage) {
-    <div style="background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;" class="animate-fade">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">check_circle</span>
+    <div class="api-success-alert animate-fade">
+      <span class="material-symbols-outlined">check_circle</span>
       <span>{{ successMessage }}</span>
     </div>
   }
 
   @if (errorMessage) {
     <div class="api-error-alert animate-fade">
-      <span class="material-symbols-outlined" style="font-size: 1.25rem;">error</span>
+      <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="chart-grid">
-    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <h3 style="font-family: var(--font-heading); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-        <span class="material-symbols-outlined" style="color: var(--primary-color);">tune</span>
-        Global Configuration Parameters
-      </h3>
-
-      <form (submit)="saveSettings()">
-        <!-- Platform Name -->
-        <div class="form-group">
-          <label class="form-label" for="plat-name">Platform Public Name</label>
-          <input type="text" id="plat-name" class="form-input" [(ngModel)]="platformName" name="platformName" required />
-        </div>
-
-        <!-- Support Email -->
-        <div class="form-group" style="margin-top: 1rem;">
-          <label class="form-label" for="support-mail">System Support Contact Email</label>
-          <input type="email" id="support-mail" class="form-input" [(ngModel)]="supportEmail" name="supportEmail" required />
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
-          <!-- Timeout -->
-          <div class="form-group">
-            <label class="form-label" for="sess-timeout">Session Inactivity Timeout (mins)</label>
-            <input type="number" id="sess-timeout" class="form-input" [(ngModel)]="sessionTimeout" name="sessionTimeout" min="5" max="120" required />
-          </div>
-
-          <!-- MFA Toggle -->
-          <div class="form-group">
-            <label class="form-label">Multi-Factor Authentication (MFA)</label>
-            <label class="checkbox-group" style="margin-top: 0.75rem;">
-              <input type="checkbox" class="checkbox-input" [(ngModel)]="mfaRequired" name="mfaRequired" />
-              <span style="color: var(--text-secondary);">Enforce for all accounts</span>
-            </label>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
-          <!-- Registrations lock toggle -->
-          <div class="form-group">
-            <label class="form-label">Registrations Portal</label>
-            <label class="checkbox-group" style="margin-top: 0.75rem;">
-              <input type="checkbox" class="checkbox-input" [(ngModel)]="allowRegistrations" name="allowRegistrations" />
-              <span style="color: var(--text-secondary);">Allow new organization registers</span>
-            </label>
-          </div>
-
-          <!-- Maintenance mode toggle -->
-          <div class="form-group">
-            <label class="form-label">System Operations Flag</label>
-            <label class="checkbox-group" style="margin-top: 0.75rem;">
-              <input type="checkbox" class="checkbox-input" [(ngModel)]="maintenanceMode" name="maintenanceMode" />
-              <span style="color: var(--text-secondary);">Enable System Maintenance Mode</span>
-            </label>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%;">
-          Save Changes
-        </button>
-      </form>
+  <!-- 1. Top 5 KPI Metric Cards Row -->
+  <div class="kpi-grid-row">
+    <!-- Card 1: Profile Completeness with Progress Bar -->
+    <div class="kpi-metric-card completeness-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Profile Completeness</span>
+        <span class="kpi-icon-badge cyan">
+          <span class="material-symbols-outlined">military_tech</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ profileCompleteness }}%</div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" [style.width.%]="profileCompleteness"></div>
+      </div>
     </div>
 
-    <!-- Right Column: Quick Toggles -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Quick Platform Info -->
-      <div class="glass-card">
-        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-heading);">
-          <span class="material-symbols-outlined" style="color: var(--primary-color);">info</span>
-          System Version
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
-          <div>Environment: <strong style="color: var(--text-heading);">Production</strong></div>
-          <div>API Server: <strong style="color: var(--text-heading);">.NET 8 Clean Architecture</strong></div>
-          <div>Front-End UI: <strong style="color: var(--text-heading);">Angular 21</strong></div>
-          <div>Database Cluster: <strong style="color: var(--text-heading);">SQL Server / EF Core</strong></div>
-        </div>
+    <!-- Card 2: Active Sessions -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Active Sessions</span>
+        <span class="kpi-icon-badge blue">
+          <span class="material-symbols-outlined">devices</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ activeSessions }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ activeSessionsTrends }}</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Connected Apps -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Connected Apps</span>
+        <span class="kpi-icon-badge purple">
+          <span class="material-symbols-outlined">hub</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ connectedApps }}</div>
+      <div class="kpi-trend-pill negative">
+        <span class="trend-arrow">↘</span>
+        <span>{{ connectedAppsTrends }}</span>
+      </div>
+    </div>
+
+    <!-- Card 4: API Keys Active -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">API Keys Active</span>
+        <span class="kpi-icon-badge green">
+          <span class="material-symbols-outlined">key</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ apiKeysActive }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ apiKeysTrends }}</span>
+      </div>
+    </div>
+
+    <!-- Card 5: Security Score -->
+    <div class="kpi-metric-card">
+      <div class="kpi-card-header">
+        <span class="kpi-card-label">Security Score</span>
+        <span class="kpi-icon-badge teal">
+          <span class="material-symbols-outlined">verified_user</span>
+        </span>
+      </div>
+      <div class="kpi-card-value">{{ securityScore }}</div>
+      <div class="kpi-trend-pill positive">
+        <span class="trend-arrow">↗</span>
+        <span>{{ securityScoreTrends }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Master 2-Column Console Layout -->
+  <div class="settings-console-grid">
+    <!-- Left Column (~74% width): Configuration Hub Card with Sub-Navigation Tabs -->
+    <div class="analytics-card config-hub-card">
+      <div class="config-tabs-sidebar">
+        <button class="config-tab-btn" [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+          <span class="material-symbols-outlined tab-icon">person</span>
+          <span class="tab-title">Profile</span>
+        </button>
+
+        <button class="config-tab-btn" [class.active]="activeTab === 'security'" (click)="activeTab = 'security'">
+          <span class="material-symbols-outlined tab-icon">verified_user</span>
+          <span class="tab-title">Security</span>
+        </button>
+
+        <button class="config-tab-btn" [class.active]="activeTab === 'team'" (click)="activeTab = 'team'">
+          <span class="material-symbols-outlined tab-icon">group</span>
+          <span class="tab-title">Team</span>
+        </button>
+
+        <button class="config-tab-btn" [class.active]="activeTab === 'notifications'" (click)="activeTab = 'notifications'">
+          <span class="material-symbols-outlined tab-icon">notifications</span>
+          <span class="tab-title">Notifications</span>
+        </button>
+
+        <button class="config-tab-btn" [class.active]="activeTab === 'advanced'" (click)="activeTab = 'advanced'">
+          <span class="material-symbols-outlined tab-icon">tune</span>
+          <span class="tab-title">Advanced</span>
+        </button>
+      </div>
+
+      <!-- Right Form Panel for the Selected Tab -->
+      <div class="config-form-panel">
+        <!-- TAB 1: PROFILE (Shown in Image 2) -->
+        @if (activeTab === 'profile') {
+          <div class="tab-content-pane animate-fade">
+            <h2 class="form-pane-heading">Profile</h2>
+
+            <form (submit)="saveProfile()">
+              <!-- Name Input -->
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="profileName">Name</label>
+                <input type="text" id="profileName" [(ngModel)]="profileName" name="profileName" class="settings-text-input" placeholder="Name" required />
+              </div>
+
+              <!-- Email Input -->
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="profileEmail">Email</label>
+                <input type="email" id="profileEmail" [(ngModel)]="profileEmail" name="profileEmail" class="settings-text-input" placeholder="email@example.com" required />
+              </div>
+
+              <!-- Role Select Dropdown -->
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="profileRole">Role</label>
+                <div class="custom-select-wrapper">
+                  <select id="profileRole" [(ngModel)]="profileRole" name="profileRole" class="settings-select-input">
+                    <option value="Super Admin">Super Admin</option>
+                    <option value="Platform Administrator">Platform Administrator</option>
+                    <option value="Auditor">Auditor</option>
+                  </select>
+                  <span class="material-symbols-outlined select-chevron">expand_more</span>
+                </div>
+              </div>
+
+              <!-- Avatar Upload Area -->
+              <div class="settings-form-group">
+                <label class="settings-form-label">Avatar</label>
+                <div class="avatar-edit-flex">
+                  <div class="avatar-circle-display">
+                    @if (avatarPreview) {
+                      <img [src]="avatarPreview" alt="Avatar" class="avatar-img-preview" />
+                    } @else {
+                      <span class="material-symbols-outlined avatar-default-icon">person</span>
+                    }
+                    <span class="material-symbols-outlined avatar-camera-badge">photo_camera</span>
+                  </div>
+
+                  <label class="btn-avatar-upload">
+                    <input type="file" (change)="onAvatarFileChange($event)" accept="image/*" style="display: none;" />
+                    <span class="material-symbols-outlined" style="font-size: 1.05rem;">upload</span>
+                    <span>Upload</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Active States Toggle -->
+              <div class="settings-form-group toggle-row-flex">
+                <span class="toggle-row-label">Active states</span>
+                <div class="toggle-control-group">
+                  <span class="toggle-status-text">{{ activeState ? 'On' : 'Off' }}</span>
+                  <label class="switch-pill">
+                    <input type="checkbox" [(ngModel)]="activeState" name="activeState" />
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Save Changes Button -->
+              <div class="form-submit-row">
+                <button type="submit" class="btn-save-glow" [disabled]="isSaving">
+                  <span>{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+
+        <!-- TAB 2: SECURITY -->
+        @if (activeTab === 'security') {
+          <div class="tab-content-pane animate-fade">
+            <h2 class="form-pane-heading">Security Protocols</h2>
+
+            <form (submit)="saveSecurity()">
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">Multi-Factor Authentication (MFA)</span>
+                  <p class="settings-form-subtext">Enforce multi-factor verification for all platform users</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="mfaRequired" name="mfaRequired" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="sessionTimeout">Session Inactivity Timeout (minutes)</label>
+                <input type="number" id="sessionTimeout" [(ngModel)]="sessionTimeout" name="sessionTimeout" class="settings-text-input" min="5" max="120" />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" [(ngModel)]="currentPassword" name="currentPassword" class="settings-text-input" placeholder="••••••••••••" />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="newPassword">New Password</label>
+                <input type="password" id="newPassword" [(ngModel)]="newPassword" name="newPassword" class="settings-text-input" placeholder="••••••••••••" />
+              </div>
+
+              <div class="form-submit-row">
+                <button type="submit" class="btn-save-glow" [disabled]="isSaving">
+                  <span>Update Security Credentials</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+
+        <!-- TAB 3: TEAM -->
+        @if (activeTab === 'team') {
+          <div class="tab-content-pane animate-fade">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+              <h2 class="form-pane-heading" style="margin-bottom: 0;">Super Admin Team & Roles</h2>
+              <button class="btn-avatar-upload" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); color: #38BDF8;">
+                <span class="material-symbols-outlined" style="font-size: 1rem;">person_add</span>
+                <span>Invite Admin</span>
+              </button>
+            </div>
+
+            <div class="team-list-container">
+              @for (member of teamMembers; track member.id) {
+                <div class="team-member-row">
+                  <div class="member-meta">
+                    <div class="avatar-circle-display" style="width: 38px; height: 38px;">
+                      <span class="material-symbols-outlined" style="font-size: 1.2rem;">person</span>
+                    </div>
+                    <div>
+                      <div style="font-weight: 600; color: var(--text-heading);">{{ member.name }}</div>
+                      <div style="font-size: 0.76rem; color: var(--text-secondary);">{{ member.email }}</div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="member-role-badge">{{ member.role }}</span>
+                    <span class="member-status-dot"></span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- TAB 4: NOTIFICATIONS -->
+        @if (activeTab === 'notifications') {
+          <div class="tab-content-pane animate-fade">
+            <h2 class="form-pane-heading">System Alerts & Notifications</h2>
+
+            <form (submit)="saveProfile()">
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">Platform Audit & Security Alerts</span>
+                  <p class="settings-form-subtext">Receive immediate email alerts when security events or policy modifications happen</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="securityAlerts" name="securityAlerts" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">New Tenant Registration Notifications</span>
+                  <p class="settings-form-subtext">Notify Super Admin when a new organization workspace registers</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="emailAlerts" name="emailAlerts" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">Weekly Global Intelligence Digest</span>
+                  <p class="settings-form-subtext">Deliver executive summary reports every Monday at 08:00 UTC</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="weeklyDigest" name="weeklyDigest" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="form-submit-row">
+                <button type="submit" class="btn-save-glow">
+                  <span>Save Notification Preferences</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+
+        <!-- TAB 5: ADVANCED -->
+        @if (activeTab === 'advanced') {
+          <div class="tab-content-pane animate-fade">
+            <h2 class="form-pane-heading">Platform Engine Settings</h2>
+
+            <form (submit)="saveAdvanced()">
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="advPlatformName">Platform Public Name</label>
+                <input type="text" id="advPlatformName" [(ngModel)]="platformName" name="advPlatformName" class="settings-text-input" required />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-form-label" for="advSupportEmail">Support Contact Email</label>
+                <input type="email" id="advSupportEmail" [(ngModel)]="supportEmail" name="advSupportEmail" class="settings-text-input" required />
+              </div>
+
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">Allow New Organization Registrations</span>
+                  <p class="settings-form-subtext">When disabled, public self-service organization signup is paused</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="allowRegistrations" name="allowRegistrations" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="settings-form-group toggle-row-flex">
+                <div>
+                  <span class="toggle-row-label">System Maintenance Mode</span>
+                  <p class="settings-form-subtext">Redirect standard traffic to maintenance screen while preserving Super Admin console</p>
+                </div>
+                <label class="switch-pill">
+                  <input type="checkbox" [(ngModel)]="maintenanceMode" name="maintenanceMode" />
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="form-submit-row">
+                <button type="submit" class="btn-save-glow" [disabled]="isSaving">
+                  <span>Save Platform Configurations</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right Column (~26% width): Recent Activity Feed Card -->
+    <div class="analytics-card activity-feed-card">
+      <h2 class="activity-feed-title">Recent Activity Feed</h2>
+
+      <div class="activity-items-stack">
+        @for (item of activityFeed; track item.id) {
+          <div class="feed-item-row">
+            <div class="feed-icon-circle" [style.background]="item.iconBg" [style.color]="item.iconColor">
+              <span class="material-symbols-outlined">{{ item.icon }}</span>
+            </div>
+            <div class="feed-content-col">
+              <span class="feed-item-title">{{ item.title }}</span>
+              <span class="feed-item-sub">{{ item.subtitle }}</span>
+              <span class="feed-item-time">{{ item.timeAgo }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="feed-footer-row">
+        <a routerLink="/super-admin/system-logs" class="btn-show-all">Show all</a>
       </div>
     </div>
   </div>

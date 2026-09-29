@@ -58,11 +58,7 @@ namespace SaaSPlatform.Tests
         }
 
         [Theory]
-        [InlineData(typeof(ProjectController), "Create")]
-        [InlineData(typeof(ProjectController), "Update")]
         [InlineData(typeof(ProjectController), "Delete")]
-        [InlineData(typeof(ProjectMembersController), "AddMember")]
-        [InlineData(typeof(ProjectMembersController), "RemoveMember")]
         [InlineData(typeof(UserController), "Create")]
         [InlineData(typeof(UserController), "UpdateUser")]
         [InlineData(typeof(UserController), "DeleteUser")]
@@ -77,6 +73,21 @@ namespace SaaSPlatform.Tests
             var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
             Assert.NotNull(attribute);
             Assert.Equal("SuperAdmin,TenantAdmin", attribute!.Roles);
+        }
+
+        [Theory]
+        [InlineData(typeof(ProjectController), "Create")]
+        [InlineData(typeof(ProjectController), "Update")]
+        [InlineData(typeof(ProjectMembersController), "AddMember")]
+        [InlineData(typeof(ProjectMembersController), "RemoveMember")]
+        public void ProjectManagementEndpoints_RequireAdminOrManagerRoles(Type controllerType, string methodName)
+        {
+            var method = controllerType.GetMethod(methodName);
+            Assert.NotNull(method);
+
+            var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
+            Assert.NotNull(attribute);
+            Assert.Equal("SuperAdmin,TenantAdmin,Manager", attribute!.Roles);
         }
 
         [Fact]

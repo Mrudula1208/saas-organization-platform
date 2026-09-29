@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaaSPlatform.Application.DTOS.Billing;
 using SaaSPlatform.Application.Interfaces;
@@ -11,7 +11,7 @@ namespace SaaSPlatform.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
     public class BillingController : ControllerBase
     {
         private readonly IBillingService _billingService;

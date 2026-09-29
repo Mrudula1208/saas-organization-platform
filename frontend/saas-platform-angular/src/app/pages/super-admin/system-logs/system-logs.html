@@ -1,124 +1,109 @@
-<div class="animate-fade">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <h1 style="font-size: 2rem; font-weight: 800; color: var(--text-heading);">System Diagnostic Logs</h1>
-      <p style="color: var(--text-secondary); margin-top: 0.25rem;">Audit platform interaction traces, exceptions, login sessions, and service operations</p>
-    </div>
-  </div>
-
-  <!-- Search and filter controls bar -->
-  <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Filter logs by action or message..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
-        />
-      </div>
-
-      <div class="form-group" style="width: 220px; margin-bottom: 0;">
-        <select class="form-select" [(ngModel)]="actionFilter" (change)="onFilterChange()">
-          <option value="">All Actions</option>
-          <option value="LOGIN_SUCCESS">Login activity</option>
-          <option value="LOGIN_FAILED">Failed logins</option>
-          <option value="LOGOUT">Logouts</option>
-          <option value="ACCOUNT_LOCKOUT">Account lockouts</option>
-          <option value="TENANT_CREATED">Tenant creation</option>
-          <option value="TENANT_UPDATED">Tenant updates</option>
-          <option value="TENANT_SETTINGS_UPDATED">Tenant settings updates</option>
-          <option value="USER_CREATED">User creation</option>
-          <option value="USER_UPDATED">User updates</option>
-          <option value="USER_DELETED">User deletion</option>
-          <option value="PASSWORD_CHANGED">Password changes</option>
-          <option value="PROFILE_UPDATED">Profile updates</option>
-          <option value="PROJECT_CREATED">Project creation</option>
-          <option value="PROJECT_UPDATED">Project updates</option>
-          <option value="PROJECT_DELETED">Project deletion</option>
-          <option value="TASK_CREATED">Task creation</option>
-          <option value="TASK_UPDATED">Task updates</option>
-          <option value="TASK_DELETED">Task deletion</option>
-          <option value="TASK_STATUS_UPDATED">Task status changes</option>
-          <option value="PAYMENT_RECEIVED">Payments received</option>
-          <option value="PAYMENT_DELETED">Payments deleted</option>
-          <option value="SUBSCRIPTION_PLAN_CREATED">Plan creation</option>
-          <option value="SUBSCRIPTION_PLAN_UPDATED">Plan updates</option>
-          <option value="SUBSCRIPTION_PLAN_DELETED">Plan deletion</option>
-          <option value="SYSTEM_ERROR">Errors</option>
-        </select>
-      </div>
-
-      <div class="form-group" style="width: 190px; margin-bottom: 0;">
-        <label class="form-label" style="font-size: 0.75rem; color: var(--text-secondary);">From date</label>
-        <input type="date" class="form-input" [(ngModel)]="startDate" (change)="onFilterChange()" />
-      </div>
-
-      <div class="form-group" style="width: 190px; margin-bottom: 0;">
-        <label class="form-label" style="font-size: 0.75rem; color: var(--text-secondary);">To date</label>
-        <input type="date" class="form-input" [(ngModel)]="endDate" (change)="onFilterChange()" />
-      </div>
+<div class="system-logs-container animate-fade">
+  <!-- Top Header Area: System Audit Logs -->
+  <div class="logs-header">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; width: 100%;">
+      <h1 class="logs-title">System Audit Logs</h1>
+      <span class="logs-file-ref">src/pages/admin/SystemLogs.tsx</span>
     </div>
   </div>
 
   @if (errorMessage) {
-    <div class="api-error-alert animate-fade">
+    <div class="api-error-alert animate-fade" style="margin-bottom: 1.25rem;">
       <span class="material-symbols-outlined">error</span>
       <span>{{ errorMessage }}</span>
     </div>
   }
 
-  <!-- Logs Table Card -->
-  <div class="glass-card" style="padding: 0; overflow: hidden;">
-    <div class="table-container" style="border: none; margin-top: 0;">
-      <table class="custom-table">
+  <!-- Filters Row matching reference screenshot: Date Range and Action Type -->
+  <div class="logs-filters-card">
+    <div class="filters-row">
+      <!-- 1. Date Range Filter -->
+      <div class="filter-field">
+        <label class="filter-label">Date Range</label>
+        <div class="date-picker-wrap">
+          <span class="material-symbols-outlined date-icon">calendar_month</span>
+          <input
+            type="date"
+            class="filter-date-input"
+            [(ngModel)]="startDate"
+            (change)="onFilterChange()"
+            title="Start date"
+          />
+          <span class="date-sep">&ndash;</span>
+          <input
+            type="date"
+            class="filter-date-input"
+            [(ngModel)]="endDate"
+            (change)="onFilterChange()"
+            title="End date"
+          />
+        </div>
+      </div>
+
+      <!-- 2. Action Type Filter -->
+      <div class="filter-field">
+        <label class="filter-label">Action Type</label>
+        <div class="select-picker-wrap">
+          <select class="filter-select" [(ngModel)]="actionFilter" (change)="onFilterChange()">
+            <option value="">Action Type</option>
+            <option value="LOGIN">LOGIN</option>
+            <option value="TENANT_CREATE">TENANT_CREATE</option>
+            <option value="PROJECT_CREATE">PROJECT_CREATE</option>
+            <option value="ERROR">ERROR</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs Table Card matching reference screenshot columns: Timestamp, Action Type, User, Tenant, Message -->
+  <div class="logs-table-card">
+    <div style="overflow-x: auto;">
+      <table class="logs-custom-table">
         <thead>
           <tr>
-            <th>Log ID</th>
-            <th>Timestamp</th>
-            <th>Type</th>
-            <th>Tenant</th>
-            <th>Log Message Details</th>
-            <th>Operated By</th>
+            <th style="width: 190px;">Timestamp</th>
+            <th style="width: 160px;">Action Type</th>
+            <th style="width: 170px;">User</th>
+            <th style="width: 150px;">Tenant</th>
+            <th>Message</th>
           </tr>
         </thead>
         <tbody>
           @for (log of filteredLogs; track log.id) {
             <tr>
-              <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
-                {{ shortId(log.id) }}
-              </td>
-              <td style="font-family: monospace; font-size: 0.85rem; color: var(--text-secondary);">
+              <!-- Timestamp: formatted yyyy-MM-dd HH:mm:ss -->
+              <td class="log-timestamp-cell">
                 {{ log.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}
               </td>
+
+              <!-- Action Type Badge: [LOGIN], [TENANT_CREATE], [PROJECT_CREATE], [ERROR] -->
               <td>
-                <span class="badge" [ngClass]="badgeClass(log.action)">
-                  {{ log.action }}
+                <span class="badge-action" [ngClass]="getActionBadgeClass(log.action)">
+                  {{ formatAction(log.action) }}
                 </span>
               </td>
-              <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
-                {{ shortId(log.tenantId) }}
+
+              <!-- User: Full name or JD Dewhiffov -->
+              <td class="log-user-cell">
+                {{ getUserDisplay(log) }}
               </td>
-              <td style="white-space: normal; word-break: break-word; max-width: 400px; line-height: 1.4; color: var(--text-primary);">
+
+              <!-- Tenant: Tenant name or -- -->
+              <td class="log-tenant-cell">
+                {{ getTenantDisplay(log) }}
+              </td>
+
+              <!-- Message -->
+              <td class="log-message-cell">
                 {{ log.description }}
-              </td>
-              <td style="font-weight: 600;">
-                @if (log.userId) {
-                  <span style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-heading);">
-                    <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--text-muted);">person</span>
-                    {{ shortId(log.userId) }}
-                  </span>
-                } @else {
-                  <span style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">System</span>
-                }
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 3rem; margin-bottom: 0.5rem;">check_circle</span>
-                <div>{{ loading ? 'Loading logs...' : 'No diagnostic logs found matching the selected filters.' }}</div>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
+                <span class="material-symbols-outlined" style="font-size: 2.75rem; margin-bottom: 0.5rem;">history</span>
+                <div>{{ loading ? 'Loading system audit logs...' : 'No system audit logs found for the selected criteria.' }}</div>
               </td>
             </tr>
           }
@@ -127,18 +112,23 @@
     </div>
   </div>
 
-  <!-- Pagination controls -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <span style="color: var(--text-secondary); font-size: 0.875rem;">
-      @if (loading) {
-        Loading...
-      } @else {
-        Page {{ page }} of {{ totalPages }} &middot; {{ totalCount }} records
-      }
+  <!-- Pagination Footer matching reference screenshot -->
+  <div class="logs-pagination-row">
+    <span class="logs-entry-count">
+      Showing {{ minDisplayRecord }} of {{ totalCount }} entries
     </span>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page <= 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-outline" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;" [disabled]="loading || page >= totalPages" (click)="nextPage()">Next</button>
+
+    <div class="logs-pagination-controls">
+      <span class="logs-page-label">Page {{ page }} of {{ totalPages }}</span>
+      <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="goToPage(1)" title="First Page">&laquo;</button>
+      <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="prevPage()" title="Previous Page">&lsaquo;</button>
+      
+      @for (p of pagesList; track p) {
+        <button class="logs-page-btn" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
+      }
+
+      <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="nextPage()" title="Next Page">&rsaquo;</button>
+      <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="goToPage(totalPages)" title="Last Page">&raquo;</button>
     </div>
   </div>
 </div>

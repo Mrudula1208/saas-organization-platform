@@ -1,9 +1,9 @@
 <div class="project-list-page animate-fade">
   <!-- Top Breadcrumb Bar -->
   <div class="dash-breadcrumb-bar">
-    <span class="breadcrumb-role">Tenant Admin</span>
+    <span class="breadcrumb-role">{{ roleLabel }}</span>
     <span class="breadcrumb-slash">/</span>
-    <span class="breadcrumb-path">src/pages/app/projects/ProjectList.tsx</span>
+    <span class="breadcrumb-path">Projects Workspace</span>
   </div>
 
   <!-- Top Analytics & Controls Card Row -->
@@ -101,14 +101,6 @@
         <table class="project-table">
           <thead>
             <tr>
-              <th style="width: 44px;">
-                <input
-                  type="checkbox"
-                  class="custom-checkbox"
-                  [checked]="selectAll"
-                  (change)="toggleSelectAll()"
-                />
-              </th>
               <th>Project Name</th>
               <th>Owner</th>
               <th>Start Date</th>
@@ -119,17 +111,7 @@
           </thead>
           <tbody>
             @for (project of filteredProjects; track project.id) {
-              <tr class="table-row" [class.row-selected]="isRowSelected(project.id)" (click)="viewProject(project.id)">
-                <!-- Checkbox -->
-                <td (click)="$event.stopPropagation()">
-                  <input
-                    type="checkbox"
-                    class="custom-checkbox"
-                    [checked]="isRowSelected(project.id)"
-                    (change)="toggleRowSelection(project.id, $event)"
-                  />
-                </td>
-
+              <tr class="table-row" (click)="viewProject(project.id)">
                 <!-- Project Name -->
                 <td>
                   <div class="project-name-cell">
@@ -217,37 +199,41 @@
                     }
 
                     <!-- 5. More Menu Popover -->
-                    <div class="more-menu-wrapper">
-                      <button
-                        class="btn-action-icon more"
-                        title="More Actions"
-                        (click)="toggleMoreMenu(project.id, $event)"
-                        type="button"
-                      >
-                        <span class="material-symbols-outlined action-svg">more_horiz</span>
-                      </button>
+                    @if (canCreateProject || canDeleteProject || canManageMembers) {
+                      <div class="more-menu-wrapper">
+                        <button
+                          class="btn-action-icon more"
+                          title="More Actions"
+                          (click)="toggleMoreMenu(project.id, $event)"
+                          type="button"
+                        >
+                          <span class="material-symbols-outlined action-svg">more_horiz</span>
+                        </button>
 
-                      @if (activeMoreMenuId === project.id) {
-                        <div class="more-dropdown-panel" (click)="$event.stopPropagation()">
-                          <button class="more-dropdown-item" (click)="viewProject(project.id)" type="button">
-                            <span class="material-symbols-outlined item-icon">open_in_new</span>
-                            <span>Open Details</span>
-                          </button>
-                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Active', $event)" type="button">
-                            <span class="material-symbols-outlined item-icon active-green">play_arrow</span>
-                            <span>Mark as Active</span>
-                          </button>
-                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Completed', $event)" type="button">
-                            <span class="material-symbols-outlined item-icon check-teal">task_alt</span>
-                            <span>Mark Completed</span>
-                          </button>
-                          <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Pending', $event)" type="button">
-                            <span class="material-symbols-outlined item-icon pause-amber">pause</span>
-                            <span>Mark Pending</span>
-                          </button>
-                        </div>
-                      }
-                    </div>
+                        @if (activeMoreMenuId === project.id) {
+                          <div class="more-dropdown-panel" (click)="$event.stopPropagation()">
+                            <button class="more-dropdown-item" (click)="viewProject(project.id)" type="button">
+                              <span class="material-symbols-outlined item-icon">open_in_new</span>
+                              <span>Open Details</span>
+                            </button>
+                            @if (canCreateProject) {
+                              <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Active', $event)" type="button">
+                                <span class="material-symbols-outlined item-icon active-green">play_arrow</span>
+                                <span>Mark as Active</span>
+                              </button>
+                              <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Completed', $event)" type="button">
+                                <span class="material-symbols-outlined item-icon check-teal">task_alt</span>
+                                <span>Mark Completed</span>
+                              </button>
+                              <button class="more-dropdown-item" (click)="quickUpdateStatus(project, 'Pending', $event)" type="button">
+                                <span class="material-symbols-outlined item-icon pause-amber">pause</span>
+                                <span>Mark Pending</span>
+                              </button>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 </td>
               </tr>
