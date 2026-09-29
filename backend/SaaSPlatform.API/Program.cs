@@ -93,7 +93,7 @@ namespace SaaSPlatform.API
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {
-                    policy.WithOrigins(allowedOrigins)
+                    policy.SetIsOriginAllowed(origin => true)
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials()
