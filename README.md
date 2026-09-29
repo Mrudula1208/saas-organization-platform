@@ -52,8 +52,8 @@ SaaSOrganizationPlatform/
 | **Authentication & RBAC** | JWT Bearer, BCrypt.Net, Refresh Tokens | Role-based authorization across **4 distinct roles** (`SuperAdmin`, `TenantAdmin`, `Manager`, `Member`) with account lockout protection. |
 | **Project Management** | EF Core, Unit of Work Pattern | Full CRUD operations, budget tracking, milestone deadlines, and project manager allocation. |
 | **Task & Sprint Kanban Board** | Angular Drag-and-Drop, CSS Grid | Interactive sprint columns (`To Do`, `In Progress`, `Done`) with priority badges and real-time state synchronization. |
-| **Analytics & Export Engine** | QuestPDF & EPPlus | Generates branded executive PDF reports and formatted multi-sheet Excel workbooks (`.xlsx`) on demand. |
-| **Security Audit Logs** | System Logging Repository | Tracks security events (logins, failed attempts, account lockouts, tenant modifications) for compliance. |
+| **Analytics & Export Engine** | QuestPDF & EPPlus, Dynamic SVG | Generates branded executive PDF reports and formatted multi-sheet Excel workbooks (`.xlsx`). Interactive stacked bar charts with tier legend (`⚫ Enterprise`, `🔵 Pro`, `🟣 Basic`). |
+| **Security Audit Logs** | System Logging Repository | Tracks security events (logins, lockouts, tenant changes) with 12-hour format AM/PM timestamping (`hh:mm:ss a`). |
 | **Health Checks** | ASP.NET Core Diagnostics | `/health` endpoint for container monitoring, SQL database connectivity, and uptime probes. |
 | **Enterprise Design System** | Pure CSS Tokens | Modern Enterprise Royal Blue (`#2563EB`), Deep Slate (`#0F172A`), with instant Dark and Light mode switching. |
 
