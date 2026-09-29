@@ -133,7 +133,7 @@
 
               <!-- Last Login -->
               <td style="color: var(--text-secondary); font-size: 0.84rem;">
-                {{ user.lastLogin ? (user.lastLogin | date:'d MMM y, HH:mm') : 'Recently' }}
+                {{ user.lastLogin ? (user.lastLogin | date:'d MMM y, hh:mm a') : 'Recently' }}
               </td>
 
               <!-- Actions: View, Edit, Disable/Enable, More Dropdown (Reset, Delete) -->

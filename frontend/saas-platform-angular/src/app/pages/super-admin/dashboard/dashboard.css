@@ -260,6 +260,56 @@
   padding-bottom: 2px;
 }
 
+/* Color Legend for Stacked Bar Segments */
+.chart-tier-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.legend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.05));
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+}
+
+.legend-badge:hover {
+  color: var(--text-heading);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dot-black {
+  background: #1E293B;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dot-dark-blue {
+  background: #3B82F6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
+.dot-light-blue {
+  background: #6366F1;
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
+}
+
 .bar-group {
   display: flex;
   flex-direction: column;

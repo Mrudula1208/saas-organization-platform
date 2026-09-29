@@ -62,7 +62,7 @@
       <table class="logs-custom-table">
         <thead>
           <tr>
-            <th style="width: 190px;">Timestamp</th>
+            <th style="width: 220px;">Timestamp</th>
             <th style="width: 160px;">Action Type</th>
             <th style="width: 170px;">User</th>
             <th style="width: 150px;">Tenant</th>
@@ -72,9 +72,9 @@
         <tbody>
           @for (log of filteredLogs; track log.id) {
             <tr>
-              <!-- Timestamp: formatted yyyy-MM-dd HH:mm:ss -->
+              <!-- Timestamp: formatted yyyy-MM-dd hh:mm:ss a (with AM/PM) -->
               <td class="log-timestamp-cell">
-                {{ log.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}
+                {{ log.createdAt | date:'yyyy-MM-dd hh:mm:ss a' }}
               </td>
 
               <!-- Action Type Badge: [LOGIN], [TENANT_CREATE], [PROJECT_CREATE], [ERROR] -->

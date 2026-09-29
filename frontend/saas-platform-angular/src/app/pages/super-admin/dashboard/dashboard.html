@@ -205,7 +205,23 @@
           <div class="dash-card-header">
             <div>
               <div class="card-title">User registrations per month</div>
-              <div class="card-subtitle">User registrations &amp; analytics</div>
+              <div class="card-subtitle">Tier breakdown: Enterprise, Pro &amp; Basic</div>
+            </div>
+
+            <!-- Visual Legend for Colors -->
+            <div class="chart-tier-legend">
+              <span class="legend-badge" title="Enterprise Tier (Tenant Admins)">
+                <span class="legend-dot dot-black"></span>
+                <span>Black: Enterprise</span>
+              </span>
+              <span class="legend-badge" title="Professional Tier (Project Managers)">
+                <span class="legend-dot dot-dark-blue"></span>
+                <span>Dark Blue: Pro</span>
+              </span>
+              <span class="legend-badge" title="Basic Tier (Team Members)">
+                <span class="legend-dot dot-light-blue"></span>
+                <span>Light Blue: Basic</span>
+              </span>
             </div>
           </div>
 
@@ -221,10 +237,10 @@
             <div class="bars-container">
               @for (bar of monthlyBars; track bar.month) {
                 <div class="bar-group">
-                  <div class="stacked-bar" [style.height.px]="bar.bottomH + bar.middleH + bar.topH">
-                    <div class="bar-seg-bottom" [style.height.px]="bar.bottomH"></div>
-                    <div class="bar-seg-middle" [style.height.px]="bar.middleH"></div>
-                    <div class="bar-seg-top" [style.height.px]="bar.topH"></div>
+                  <div class="stacked-bar" [style.height.px]="bar.bottomH + bar.middleH + bar.topH" [title]="bar.month + ' Registrations: ' + bar.count + ' total users'">
+                    <div class="bar-seg-bottom" [style.height.px]="bar.bottomH" [title]="'Enterprise Tier: ' + bar.bottomH + ' users'"></div>
+                    <div class="bar-seg-middle" [style.height.px]="bar.middleH" [title]="'Pro Tier: ' + bar.middleH + ' users'"></div>
+                    <div class="bar-seg-top" [style.height.px]="bar.topH" [title]="'Basic Tier: ' + bar.topH + ' users'"></div>
                   </div>
                   <span class="bar-month-label">{{ bar.month }}</span>
                 </div>
