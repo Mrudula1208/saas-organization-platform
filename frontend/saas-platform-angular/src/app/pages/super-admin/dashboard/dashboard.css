@@ -52,11 +52,21 @@
   grid-template-columns: minmax(0, 1fr) 290px;
   gap: 1.25rem;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dash-page-layout > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
   .dash-page-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -64,13 +74,19 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* 5 KPI Metric Cards Row */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
@@ -87,6 +103,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 
@@ -150,7 +169,7 @@
 
 @media (max-width: 992px) {
   .charts-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -161,6 +180,10 @@
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .dash-card-header {
@@ -207,13 +230,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 250px;
+  min-height: 200px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .chart-svg {
   width: 100%;
-  height: 220px;
-  overflow: visible;
+  height: 200px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .chart-grid-line {
@@ -235,7 +264,9 @@
   align-items: flex-end;
   justify-content: space-between;
   padding-top: 1rem;
-  min-height: 220px;
+  min-height: 200px;
+  overflow: hidden;
+  position: relative;
 }
 
 .y-axis-col {
@@ -362,6 +393,11 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tenant-card-header {
@@ -380,53 +416,87 @@
 }
 
 .btn-view-data {
-  background: transparent;
+  background: var(--bg-card-hover);
   border: 1px solid var(--border-color);
-  color: var(--text-primary);
+  color: var(--text-heading) !important;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.9rem;
-  border-radius: var(--radius-md);
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .btn-view-data:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--border-color);
+  color: var(--text-heading);
 }
 
 .btn-add-tenant {
   background: var(--primary-gradient);
-  border: none;
-  color: #FFFFFF;
+  border: 1px solid var(--primary-color);
+  color: #FFFFFF !important;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  border-radius: var(--radius-md);
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
   transition: all var(--transition-fast);
 }
 
 .btn-add-tenant:hover {
-  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
   transform: translateY(-1px);
 }
 
 /* Custom Table in Tenant Management */
+.table-scroll-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  box-sizing: border-box;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  height: 5px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-card-hover);
+  border-radius: 9999px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 9999px;
+}
+
 .dash-table {
   width: 100%;
+  min-width: 580px;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .dash-table th {
@@ -654,4 +724,171 @@
   background: rgba(99, 102, 241, 0.08);
   color: var(--text-heading);
   border-color: rgba(99, 102, 241, 0.4);
+}
+
+.dash-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Mobile & Tablet Responsive Enhancements (Strict Cascade: 1200px -> 768px -> 480px)
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+  .dash-page-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .charts-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .dash-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dash-title {
+    font-size: 1.4rem;
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .kpi-card {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .kpi-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .kpi-value {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .kpi-label {
+    font-size: 0.72rem !important;
+  }
+
+  .kpi-trend {
+    font-size: 0.68rem !important;
+  }
+
+  .kpi-icon-badge {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .kpi-icon-badge span {
+    font-size: 0.85rem !important;
+  }
+
+  .dash-card {
+    padding: 0.85rem 1rem;
+  }
+
+  .growth-chart-wrap {
+    min-height: 160px;
+  }
+
+  .chart-svg {
+    height: 160px;
+  }
+
+  .stacked-chart-wrap {
+    min-height: 140px;
+    padding-top: 0.5rem;
+  }
+
+  .y-axis-col {
+    height: 110px;
+    font-size: 9px;
+    padding-bottom: 18px;
+  }
+
+  .dash-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .card-action-pill {
+    align-self: flex-start;
+  }
+
+  .chart-tier-legend {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .bars-container {
+    height: 110px;
+    overflow: hidden;
+  }
+
+  .tenant-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .tenant-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-view-data,
+  .btn-add-tenant {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .tenant-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-view-data,
+  .btn-add-tenant {
+    width: 100%;
+    justify-content: center;
+  }
 }

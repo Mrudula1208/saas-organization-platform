@@ -245,11 +245,11 @@ export class Reports implements OnInit {
           });
           const sortedPlans = Object.entries(planCounts).sort((a, b) => b[1] - a[1]);
           if (sortedPlans.length > 0) {
-            this.topPerformingPlan = `${sortedPlans[0][0]}-Performing`;
+            this.topPerformingPlan = `${sortedPlans[0][0]} Plan`;
             this.topPerformingPlanTrends = `${sortedPlans[0][1]} Active Orgs`;
           } else {
-            this.topPerformingPlan = 'Basic-Performing';
-            this.topPerformingPlanTrends = '0 Organizations';
+            this.topPerformingPlan = 'Pro Plan';
+            this.topPerformingPlanTrends = 'Top Active Tier';
           }
 
           // 3. Real Average Task / Project Completion

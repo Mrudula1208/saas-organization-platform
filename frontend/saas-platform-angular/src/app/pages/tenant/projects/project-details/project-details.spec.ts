@@ -13,6 +13,7 @@ describe('ProjectDetails', () => {
     getProject: ReturnType<typeof vi.fn>;
     updateProject: ReturnType<typeof vi.fn>;
     deleteProject: ReturnType<typeof vi.fn>;
+    getProjectMembers: ReturnType<typeof vi.fn>;
   };
   let routerMock: { navigate: ReturnType<typeof vi.fn> };
 
@@ -39,6 +40,7 @@ describe('ProjectDetails', () => {
       getProject: vi.fn().mockReturnValue(of(project)),
       updateProject: vi.fn().mockReturnValue(of(true)),
       deleteProject: vi.fn().mockReturnValue(of(true)),
+      getProjectMembers: vi.fn().mockReturnValue(of([])),
     };
     routerMock = { navigate: vi.fn() };
 

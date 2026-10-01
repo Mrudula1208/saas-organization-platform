@@ -352,6 +352,7 @@
 
 .task-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.78rem;
   text-align: left;
@@ -1195,4 +1196,228 @@
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* --- Tablet (≤1024px) --- */
+@media (max-width: 1024px) {
+  .kanban-columns-row {
+    grid-template-columns: 1fr;
+  }
+
+  .section-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .filters-card {
+    padding: 0.65rem 0.85rem;
+  }
+}
+
+/* --- Small Tablet / Large Phone (≤768px) --- */
+@media (max-width: 768px) {
+  .dash-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .view-switch-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .filter-group {
+    min-width: 120px;
+  }
+
+  .filter-group.search-group {
+    min-width: 160px;
+  }
+
+  .task-table th,
+  .task-table td {
+    padding: 0.45rem 0.6rem;
+  }
+
+  .kanban-lane-card {
+    min-height: 240px;
+  }
+
+  .lane-cards-scroll {
+    max-height: 400px;
+  }
+
+  .modal-grid-2,
+  .modal-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Mobile (≤640px) --- */
+@media (max-width: 640px) {
+  .filters-card {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .filter-group {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .filter-group.search-group {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .section-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-desc-sub {
+    max-width: 120px;
+  }
+
+  .actions-flex-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .more-dropdown-panel {
+    width: 140px;
+  }
+
+  .btn-page-step,
+  .btn-page-number {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+  }
+
+  .task-table th {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.62rem;
+  }
+
+  .task-table td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .kanban-lane-card {
+    min-height: 200px;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .lane-cards-scroll {
+    max-height: 300px;
+  }
+
+  .kanban-task-card {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .card-name-title {
+    font-size: 0.75rem;
+  }
+
+  .table-state-box {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .empty-table-cell {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .empty-icon {
+    font-size: 1.5rem;
+  }
+
+  .table-pagination-footer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination-buttons-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-create-task-cyan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-switch-group {
+    flex-wrap: wrap;
+  }
+
+  .btn-view-toggle,
+  .btn-scope-pill {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+/* --- Small Mobile (≤480px) --- */
+@media (max-width: 480px) {
+  .modal-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 1rem;
+  }
+
+  .modal-card.small-confirm {
+    max-width: 100%;
+  }
+
+  .confirm-icon-circle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .confirm-icon-circle span {
+    font-size: 1.2rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .confirm-title {
+    font-size: 1rem;
+  }
+
+  .modal-actions-footer {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions-footer .btn-modal-submit,
+  .modal-actions-footer .btn-modal-cancel,
+  .modal-actions-footer .btn-modal-danger {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .status-count-pills {
+    flex-wrap: wrap;
+  }
+
+  .metric-chip {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+  }
 }

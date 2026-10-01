@@ -1,12 +1,12 @@
-<div class="auth-layout" style="display: flex; align-items: center; justify-content: center; padding: 2rem;">
-  <div class="glass-card animate-slide-up" style="width: 100%; max-width: 600px; padding: 2.5rem;">
-    <div style="text-align: center; margin-bottom: 2rem;">
+<div class="auth-layout" style="display: flex; align-items: center; justify-content: center; padding: 1.25rem 0.75rem;">
+  <div class="glass-card animate-slide-up" style="width: 100%; max-width: 600px; padding: 1.75rem 1.25rem; box-sizing: border-box;">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
       <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
         <div style="width: 2.5rem; height: 2.5rem; background: var(--primary-color); color: #fff; border-radius: var(--radius-md); display: grid; place-content: center; font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">S</div>
         <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-heading);">{{ platformName }}</span>
       </div>
-      <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin-top: 0.5rem; color: var(--text-heading);">Create Organization</h2>
-      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Register your business tenant environment and admin credentials</p>
+      <h2 style="font-family: var(--font-heading); font-size: 1.6rem; margin-top: 0.35rem; color: var(--text-heading);">Create Organization</h2>
+      <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">Register your business tenant environment and admin credentials</p>
     </div>
 
     @if (maintenanceMode) {
@@ -36,7 +36,7 @@
     }
 
     <form (submit)="onSubmit($event)">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-grid-2">
         <!-- Org Name -->
         <div class="form-group">
           <label class="form-label" for="org-name">Organization Name *</label>
@@ -57,10 +57,9 @@
         </div>
 
         <!-- Domain -->
-        <!-- Domain -->
         <div class="form-group">
           <label class="form-label" for="domain-slug">Domain Name *</label>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; min-width: 0;">
             <input
               type="text"
               id="domain-slug"
@@ -70,9 +69,9 @@
               [(ngModel)]="domain"
               required
               #domainInput="ngModel"
-              style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+              style="border-top-right-radius: 0; border-bottom-right-radius: 0; min-width: 0; flex: 1;"
             />
-            <span style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-left: none; padding: 0.65rem 0.85rem; border-top-right-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.85rem; font-family: monospace; white-space: nowrap;">.saasapp.com</span>
+            <span style="background: var(--bg-card-hover); border: 1px solid var(--border-color); border-left: none; padding: 0.65rem 0.65rem; border-top-right-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.8rem; font-family: monospace; white-space: nowrap; flex-shrink: 0;">.saasapp.com</span>
           </div>
           @if (domainInput.invalid && domainInput.touched) {
             <span class="validation-error">Domain name is required</span>
@@ -80,7 +79,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+      <div class="form-grid-2" style="margin-top: 0.5rem;">
         <!-- Admin Name -->
         <div class="form-group">
           <label class="form-label" for="admin-name">Admin Full Name *</label>
@@ -123,7 +122,8 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+      <div class="form-grid-2" style="margin-top: 0.5rem;">
+
         <!-- Password -->
         <div class="form-group">
           <label class="form-label" for="pass">Password *</label>

@@ -117,11 +117,17 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .logs-custom-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -276,5 +282,30 @@
   app-sidebar,
   .logs-file-ref {
     display: none !important;
+  }
+}
+
+/* Responsive fixes for mobile (360px, 390px), tablet (768px), and desktop (1024px) */
+@media (max-width: 768px) {
+  .logs-title {
+    font-size: 1.4rem;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .filter-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-picker-wrap {
+    flex-wrap: wrap;
+    height: auto;
   }
 }

@@ -324,6 +324,7 @@
 
 .members-table {
   width: 100%;
+  min-width: 620px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -789,4 +790,196 @@
 :host-context(.light-theme) .modal-footer,
 :host-context([data-theme="light"]) .modal-footer {
   border-color: #E2E8F0 !important;
+}
+
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* --- Tablet (≤1024px) --- */
+@media (max-width: 1024px) {
+  .project-members-page {
+    padding: 1.25rem 1.5rem 2.5rem;
+  }
+
+  .kpi-grid-row {
+    gap: 1rem;
+  }
+
+  .members-directory-card {
+    padding: 1.25rem;
+  }
+}
+
+/* --- Small Tablet / Large Phone (≤768px) --- */
+@media (max-width: 768px) {
+  .kpi-grid-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .kpi-metric-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .kpi-card-value {
+    font-size: 1.75rem;
+  }
+
+  .filters-row {
+    gap: 0.75rem;
+  }
+
+  .members-table th {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .members-table td {
+    padding: 0.75rem;
+  }
+}
+
+/* --- Mobile (≤640px) --- */
+@media (max-width: 640px) {
+  .project-members-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .kpi-grid-row {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-metric-card {
+    padding: 1rem;
+  }
+
+  .kpi-icon-badge {
+    width: 28px;
+    height: 28px;
+  }
+
+  .kpi-card-value {
+    font-size: 1.5rem;
+  }
+
+  .kpi-card-label {
+    font-size: 0.75rem;
+  }
+
+  .filters-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .search-input-wrapper {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .custom-select-wrapper {
+    min-width: 120px;
+  }
+
+  .filter-group {
+    flex: 1 1 100%;
+  }
+
+  .members-directory-card {
+    padding: 1rem;
+  }
+
+  .directory-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .members-table th {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.65rem;
+  }
+
+  .members-table td {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .member-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .member-identity-cell {
+    gap: 0.5rem;
+  }
+
+  .btn-action-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .action-svg {
+    font-size: 0.95rem;
+  }
+
+  .table-state-box {
+    padding: 1.5rem 1rem;
+  }
+
+  .empty-table-cell {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .empty-icon {
+    font-size: 1.75rem;
+  }
+
+  .empty-title {
+    font-size: 0.95rem;
+  }
+
+  .empty-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .alert-banner {
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-add-member-cyan {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- Small Mobile (≤480px) --- */
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .modal-title {
+    font-size: 0.95rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .directory-card-title {
+    font-size: 1rem;
+  }
+
+  .count-pill {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.65rem;
+  }
 }

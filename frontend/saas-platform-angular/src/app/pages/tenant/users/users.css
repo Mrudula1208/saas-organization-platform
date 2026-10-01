@@ -1027,3 +1027,67 @@
 .info-val.mono {
   font-family: monospace;
 }
+
+/* =========================================================================
+   MOBILE RESPONSIVE FIXES (max-width: 480px)
+   ========================================================================= */
+
+@media (max-width: 480px) {
+  .search-input-wrapper {
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .directory-card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .modal-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .top-controls-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .user-directory-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .modal-card {
+    padding: 1rem;
+  }
+
+  .filters-and-action-block {
+    width: 100%;
+  }
+
+  .filter-role-wrapper {
+    flex: 1 1 100%;
+  }
+
+  .custom-role-select {
+    width: 100%;
+  }
+
+  .btn-add-cyan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .directory-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination-buttons-row {
+    width: 100%;
+    justify-content: center;
+  }
+}

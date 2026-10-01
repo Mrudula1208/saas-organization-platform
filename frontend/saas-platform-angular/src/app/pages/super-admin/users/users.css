@@ -135,11 +135,17 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .custom-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -458,4 +464,44 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-heading);
+}
+
+/* Responsive fixes for mobile (360px, 390px), tablet (768px), and desktop (1024px) */
+@media (max-width: 768px) {
+  .users-title {
+    font-size: 1.4rem;
+  }
+
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-wrap {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .filter-select {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-card {
+    padding: 1rem;
+  }
+
+  .modal-container {
+    padding: 1rem;
+  }
+
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions button {
+    flex: 1;
+  }
 }

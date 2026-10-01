@@ -329,6 +329,7 @@
 
 .project-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.8rem;
   text-align: left;
@@ -1070,4 +1071,203 @@
 
 .empty-members-icon {
   font-size: 2.2rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* --- Tablet (≤1024px) --- */
+@media (max-width: 1024px) {
+  .top-controls-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .project-directory-card {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* --- Small Tablet / Large Phone (≤768px) --- */
+@media (max-width: 768px) {
+  .gauge-svg-wrapper {
+    width: 56px;
+    height: 56px;
+  }
+
+  .gauge-big-stat {
+    font-size: 1.2rem;
+  }
+
+  .gauge-pct {
+    font-size: 0.8rem;
+  }
+
+  .gauge-title {
+    font-size: 0.68rem;
+  }
+
+  .directory-card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .project-table th,
+  .project-table td {
+    padding: 0.45rem 0.6rem;
+  }
+
+  .modal-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Mobile (≤640px) --- */
+@media (max-width: 640px) {
+  .top-controls-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .progress-gauge-block {
+    justify-content: center;
+  }
+
+  .filters-and-action-block {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .search-input-wrapper {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .filter-status-wrapper {
+    width: 100%;
+  }
+
+  .custom-select-wrapper {
+    width: 100%;
+  }
+
+  .custom-status-select {
+    width: 100%;
+  }
+
+  .btn-create-cyan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gauge-svg-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .gauge-big-stat {
+    font-size: 1.1rem;
+  }
+
+  .gauge-pct {
+    font-size: 0.72rem;
+  }
+
+  .gauge-title {
+    font-size: 0.62rem;
+  }
+
+  .project-desc-sub {
+    max-width: 150px;
+  }
+
+  .actions-flex-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .more-dropdown-panel {
+    width: 140px;
+  }
+
+  .btn-page-step,
+  .btn-page-number {
+    min-width: 24px;
+    height: 24px;
+    font-size: 0.68rem;
+  }
+
+  .empty-table-cell {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .empty-icon {
+    font-size: 1.75rem;
+  }
+
+  .table-state-box {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .directory-footer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination-buttons-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* --- Small Mobile (≤480px) --- */
+@media (max-width: 480px) {
+  .modal-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 1rem;
+  }
+
+  .modal-card.wide {
+    max-width: 100%;
+  }
+
+  .add-member-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-select-block {
+    width: 100%;
+  }
+
+  .btn-add-member-cyan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .member-item-row {
+    flex-wrap: wrap;
+  }
+
+  .confirm-icon-circle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .confirm-icon-circle span {
+    font-size: 1.2rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .confirm-title {
+    font-size: 1rem;
+  }
 }

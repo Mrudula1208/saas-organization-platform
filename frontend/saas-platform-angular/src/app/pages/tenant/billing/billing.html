@@ -23,7 +23,7 @@
       <div style="border: 3px solid var(--border-color); border-top-color: var(--primary-color); width: 2.5rem; height: 2.5rem; border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
     </div>
   } @else {
-    <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem;" class="chart-grid">
+    <div class="chart-grid">
       <!-- Active plan overview -->
       <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 380px;">
         <div>
@@ -40,7 +40,7 @@
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="billing-info-grid">
               <div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary);">Billing Frequency</div>
                 <div style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-top: 0.25rem;">{{ currentPlan.billingFrequency || 'Monthly' }}</div>
@@ -53,7 +53,7 @@
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="billing-info-grid">
               <div>
                 <div style="font-size: 0.85rem; color: var(--text-secondary);">Payment Method</div>
                 <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
@@ -262,7 +262,7 @@
             <label class="form-label">Card Number</label>
             <input type="text" class="form-input" [(ngModel)]="cardForm.cardNumber" name="cardNumber" required />
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="card-form-grid">
             <div class="form-group">
               <label class="form-label">Expiry (MM/YY)</label>
               <input type="text" class="form-input" [(ngModel)]="cardForm.expiry" name="expiry" required />

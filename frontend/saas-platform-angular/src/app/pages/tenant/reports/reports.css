@@ -951,3 +951,121 @@
 :host-context([data-theme="light"]) .feed-footer-row {
   border-top-color: #E2E8F0;
 }
+
+/* =========================================================================
+   MOBILE & TABLET RESPONSIVE FIXES (max-width: 768px and max-width: 480px)
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .reports-filter-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .filter-group-left {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  .filter-control-box,
+  .select-wrapper,
+  .date-picker-button {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .filter-group-right,
+  .export-buttons-row {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .export-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .card-header-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .gauge-and-legend-row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .projects-progress-card,
+  .reports-table-card,
+  .activity-feed-card {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-picker-button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .select-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .card-header-between {
+    flex-wrap: wrap;
+  }
+
+  .gauge-and-legend-row {
+    flex-wrap: wrap;
+  }
+
+  .date-input-row {
+    flex-direction: column;
+  }
+
+  .reports-filter-strip {
+    padding: 0.85rem 1rem;
+  }
+
+  .filter-group-left {
+    width: 100%;
+  }
+
+  .filter-control-box {
+    width: 100%;
+  }
+
+  .export-buttons-row {
+    width: 100%;
+  }
+
+  .export-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .projects-progress-card,
+  .reports-table-card,
+  .activity-feed-card {
+    padding: 1rem;
+  }
+
+  .gauge-card {
+    padding: 0.85rem 1rem;
+  }
+
+  .bar-chart-wrapper {
+    height: 180px;
+  }
+
+  .y-axis-labels {
+    min-width: 24px;
+  }
+}

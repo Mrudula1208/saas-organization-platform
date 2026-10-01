@@ -628,12 +628,15 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .table-actions-group {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .btn-table-action {
@@ -688,6 +691,7 @@
 
 .dash-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.78rem;
   text-align: left;

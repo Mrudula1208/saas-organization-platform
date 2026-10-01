@@ -36,6 +36,7 @@
 
 .custom-table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -98,4 +99,48 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Billing info grid (replaces inline styles) */
+.billing-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Card form grid (replaces inline styles) */
+.card-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* =========================================================================
+   MOBILE & TABLET RESPONSIVE FIXES
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .billing-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .summary-card {
+    padding: 0.85rem;
+  }
 }

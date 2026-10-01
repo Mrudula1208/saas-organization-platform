@@ -1,10 +1,7 @@
 <div class="system-logs-container animate-fade">
   <!-- Top Header Area: System Audit Logs -->
   <div class="logs-header">
-    <div style="display: flex; justify-content: space-between; align-items: baseline; width: 100%;">
-      <h1 class="logs-title">System Audit Logs</h1>
-      <span class="logs-file-ref">src/pages/admin/SystemLogs.tsx</span>
-    </div>
+    <h1 class="logs-title">System Audit Logs</h1>
   </div>
 
   @if (errorMessage) {
@@ -19,62 +16,52 @@
     <div class="filters-row">
       <!-- 1. Date Range Filter -->
       <div class="filter-field">
-        <label class="filter-label">Date Range</label>
-        <div class="date-picker-wrap">
-          <span class="material-symbols-outlined date-icon">calendar_month</span>
-          <input
-            type="date"
-            class="filter-date-input"
-            [(ngModel)]="startDate"
-            (change)="onFilterChange()"
-            title="Start date"
-          />
-          <span class="date-sep">&ndash;</span>
-          <input
-            type="date"
-            class="filter-date-input"
-            [(ngModel)]="endDate"
-            (change)="onFilterChange()"
-            title="End date"
-          />
+          <label class="filter-label">Date Range</label>
+          <div class="date-picker-wrap">
+            <span class="material-symbols-outlined date-icon">calendar_month</span>
+            <input type="date" class="filter-date-input" [(ngModel)]="startDate" (change)="onFilterChange()"
+              title="Start date" />
+            <span class="date-sep">&ndash;</span>
+            <input type="date" class="filter-date-input" [(ngModel)]="endDate" (change)="onFilterChange()"
+              title="End date" />
+          </div>
         </div>
-      </div>
 
-      <!-- 2. Action Type Filter -->
-      <div class="filter-field">
-        <label class="filter-label">Action Type</label>
-        <div class="select-picker-wrap">
-          <select class="filter-select" [(ngModel)]="actionFilter" (change)="onFilterChange()">
-            <option value="">Action Type</option>
-            <option value="LOGIN">LOGIN</option>
-            <option value="TENANT_CREATE">TENANT_CREATE</option>
-            <option value="PROJECT_CREATE">PROJECT_CREATE</option>
-            <option value="ERROR">ERROR</option>
-          </select>
+        <!-- 2. Action Type Filter -->
+        <div class="filter-field">
+          <label class="filter-label">Action Type</label>
+          <div class="select-picker-wrap">
+            <select class="filter-select" [(ngModel)]="actionFilter" (change)="onFilterChange()">
+              <option value="">Action Type</option>
+              <option value="LOGIN">LOGIN</option>
+              <option value="TENANT_CREATE">TENANT_CREATE</option>
+              <option value="PROJECT_CREATE">PROJECT_CREATE</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Logs Table Card matching reference screenshot columns: Timestamp, Action Type, User, Tenant, Message -->
-  <div class="logs-table-card">
-    <div style="overflow-x: auto;">
-      <table class="logs-custom-table">
-        <thead>
-          <tr>
-            <th style="width: 220px;">Timestamp</th>
-            <th style="width: 160px;">Action Type</th>
-            <th style="width: 170px;">User</th>
-            <th style="width: 150px;">Tenant</th>
-            <th>Message</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (log of filteredLogs; track log.id) {
+    <!-- Logs Table Card matching reference screenshot columns: Timestamp, Action Type, User, Tenant, Message -->
+    <div class="logs-table-card">
+      <div style="overflow-x: auto;">
+        <table class="logs-custom-table">
+          <thead>
             <tr>
-              <!-- Timestamp: formatted yyyy-MM-dd hh:mm:ss a (with AM/PM) -->
+              <th style="width: 220px;">Timestamp</th>
+              <th style="width: 160px;">Action Type</th>
+              <th style="width: 170px;">User</th>
+              <th style="width: 150px;">Tenant</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of filteredLogs; track log.id) {
+            <tr>
+              <!-- Timestamp: formatted in real-time user local timezone (yyyy-MM-dd hh:mm:ss AM/PM) -->
               <td class="log-timestamp-cell">
-                {{ log.createdAt | date:'yyyy-MM-dd hh:mm:ss a' }}
+                {{ formatTimestamp(log.createdAt) }}
               </td>
 
               <!-- Action Type Badge: [LOGIN], [TENANT_CREATE], [PROJECT_CREATE], [ERROR] -->
@@ -99,36 +86,42 @@
                 {{ log.description }}
               </td>
             </tr>
-          } @empty {
+            } @empty {
             <tr>
               <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 4rem 2rem;">
-                <span class="material-symbols-outlined" style="font-size: 2.75rem; margin-bottom: 0.5rem;">history</span>
-                <div>{{ loading ? 'Loading system audit logs...' : 'No system audit logs found for the selected criteria.' }}</div>
+                <span class="material-symbols-outlined"
+                  style="font-size: 2.75rem; margin-bottom: 0.5rem;">history</span>
+                <div>{{ loading ? 'Loading system audit logs...' : 'No system audit logs found for the selected
+                  criteria.' }}</div>
               </td>
             </tr>
-          }
-        </tbody>
-      </table>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- Pagination Footer matching reference screenshot -->
-  <div class="logs-pagination-row">
-    <span class="logs-entry-count">
-      Showing {{ minDisplayRecord }} of {{ totalCount }} entries
-    </span>
+    <!-- Pagination Footer matching reference screenshot -->
+    <div class="logs-pagination-row">
+      <span class="logs-entry-count">
+        Showing {{ minDisplayRecord }} of {{ totalCount }} entries
+      </span>
 
-    <div class="logs-pagination-controls">
-      <span class="logs-page-label">Page {{ page }} of {{ totalPages }}</span>
-      <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="goToPage(1)" title="First Page">&laquo;</button>
-      <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="prevPage()" title="Previous Page">&lsaquo;</button>
-      
-      @for (p of pagesList; track p) {
+      <div class="logs-pagination-controls">
+        <span class="logs-page-label">Page {{ page }} of {{ totalPages }}</span>
+        <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="goToPage(1)"
+          title="First Page">&laquo;</button>
+        <button class="logs-page-btn" [disabled]="loading || page <= 1" (click)="prevPage()"
+          title="Previous Page">&lsaquo;</button>
+
+        @for (p of pagesList; track p) {
         <button class="logs-page-btn" [class.active]="p === page" (click)="goToPage(p)">{{ p }}</button>
-      }
+        }
 
-      <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="nextPage()" title="Next Page">&rsaquo;</button>
-      <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="goToPage(totalPages)" title="Last Page">&raquo;</button>
+        <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="nextPage()"
+          title="Next Page">&rsaquo;</button>
+        <button class="logs-page-btn" [disabled]="loading || page >= totalPages" (click)="goToPage(totalPages)"
+          title="Last Page">&raquo;</button>
+      </div>
     </div>
   </div>
-</div>

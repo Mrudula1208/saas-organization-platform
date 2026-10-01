@@ -128,12 +128,12 @@
 
               <!-- Created Date -->
               <td style="color: var(--text-secondary); font-size: 0.84rem;">
-                {{ user.createdAt | date:'d MMM y' }}
+                {{ formatCreatedDate(user.createdAt) }}
               </td>
 
               <!-- Last Login -->
               <td style="color: var(--text-secondary); font-size: 0.84rem;">
-                {{ user.lastLogin ? (user.lastLogin | date:'d MMM y, hh:mm a') : 'Recently' }}
+                {{ user.lastLogin ? formatLastLoginDate(user.lastLogin) : 'Recently' }}
               </td>
 
               <!-- Actions: View, Edit, Disable/Enable, More Dropdown (Reset, Delete) -->

@@ -16,6 +16,7 @@ import { TaskItem } from '../../../models/task.model';
 import { CurrentPlan } from '../../../models/payment.model';
 import { SystemLog } from '../../../models/system-log.model';
 import { AppNotification } from '../../../models/notification.model';
+import { formatRelativeTime } from '../../../core/helpers';
 
 export interface SprintTaskCard {
   id: string;
@@ -501,15 +502,8 @@ export class Dashboard implements OnInit {
     return name.slice(0, 2).toUpperCase();
   }
 
-  private formatRelativeTime(dateStr?: string | Date): string {
-    if (!dateStr) return '1 day ago';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-    if (diffMonths > 0) return `${diffMonths} months ago`;
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays > 0) return `${diffDays} days ago`;
-    return 'Just now';
+  formatRelativeTime(dateStr?: string | Date): string {
+    return formatRelativeTime(dateStr);
   }
 }
 

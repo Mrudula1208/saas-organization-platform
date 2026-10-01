@@ -23,14 +23,24 @@
 /* 2-Column Layout matching Image 1 */
 .revenue-layout-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.revenue-layout-grid > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
   .revenue-layout-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -40,6 +50,10 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.35rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .card-header-flex {
@@ -100,15 +114,22 @@
 /* SVG Bar Chart Container */
 .svg-bar-chart-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 250px;
   position: relative;
   margin-top: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 .revenue-bar-svg {
+  min-width: 580px;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  display: block;
 }
 
 .bar-svg-group {
@@ -197,12 +218,19 @@
 
 .tenants-table-wrap {
   flex: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 1rem;
+  box-sizing: border-box;
 }
 
 .leaderboard-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -418,5 +446,37 @@
     background: #F1F5F9 !important;
     border: 1px solid #CBD5E1 !important;
     color: #1E293B !important;
+  }
+}
+
+/* Responsive fixes for mobile (360px, 390px), tablet (768px), and desktop (1024px) */
+@media (max-width: 768px) {
+  .revenue-main-title {
+    font-size: 1.25rem;
+  }
+
+  .export-actions-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-card {
+    padding: 0.85rem 0.75rem;
+  }
+
+  .export-actions-row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .btn-export-doc {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .svg-bar-chart-container {
+    height: 200px;
   }
 }

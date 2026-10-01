@@ -55,9 +55,19 @@
 /* Top 5 KPI Cards Row */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.kpi-row > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
@@ -326,4 +336,88 @@
 .btn-plan-action:hover {
   background: var(--bg-card-hover);
   color: var(--text-heading);
+}
+
+/* ==========================================================================
+   Mobile & Tablet Responsive Enhancements (Strict Cascade: 1200px -> 768px -> 480px)
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+  .pricing-deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .sub-plans-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .btn-add-plan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sub-plans-title {
+    font-size: 1.4rem;
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .pricing-deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .kpi-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .kpi-card {
+    padding: 1rem !important;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem !important;
+  }
+
+  .plan-card {
+    padding: 1.25rem;
+  }
+
+  .plan-features-list {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .modal-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
+  }
 }

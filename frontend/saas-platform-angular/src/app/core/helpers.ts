@@ -130,3 +130,96 @@ export function openBlobInNewTab(blob: Blob, mimeType = 'application/pdf'): void
   }, 120000);
 }
 
+/**
+ * Safely parses any UTC date string from API/database and converts it to a local JavaScript Date object.
+ * Fixes the issue where UTC dates without a trailing 'Z' are mistakenly parsed as local time.
+ */
+export function parseUtcDate(dateStr?: string | Date | null): Date | null {
+  if (!dateStr) return null;
+  if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+  let str = String(dateStr).trim();
+  if (!str) return null;
+  // If no timezone offset (+05:30 / Z) is present, append Z to force UTC interpretation
+  if (!str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+    str = `${str}Z`;
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Formats a UTC date string into the user's real local browser date & time:
+ * Example: "2026-09-30 09:35:18 AM"
+ */
+export function formatLocalDateTime(dateStr?: string | Date | null, includeSeconds = true): string {
+  const d = parseUtcDate(dateStr);
+  if (!d) return '—';
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+
+  if (includeSeconds) {
+    return `${year}-${month}-${day} ${strHours}:${minutes}:${seconds} ${ampm}`;
+  }
+  return `${year}-${month}-${day} ${strHours}:${minutes} ${ampm}`;
+}
+
+/**
+ * Formats a UTC date into clean local readable date: "30 Sep 2026"
+ */
+export function formatLocalDate(dateStr?: string | Date | null): string {
+  const d = parseUtcDate(dateStr);
+  if (!d) return '—';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/**
+ * Formats a UTC date into clean local date + time: "30 Sep 2026, 09:35 AM"
+ */
+export function formatLocalDateWithTime(dateStr?: string | Date | null): string {
+  const d = parseUtcDate(dateStr);
+  if (!d) return '—';
+  const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+  return `${datePart}, ${strHours}:${minutes} ${ampm}`;
+}
+
+/**
+ * Formats a UTC date string into a real-time relative string ("Just now", "2m ago", "1h ago", "3d ago"):
+ */
+export function formatRelativeTime(dateStr?: string | Date | null): string {
+  const d = parseUtcDate(dateStr);
+  if (!d) return 'Just now';
+
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0 && diffMs > -30000) return 'Just now';
+
+  const diffSecs = Math.floor(diffMs / 1000);
+  if (diffSecs < 45) return 'Just now';
+
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60) return `${diffMins}m ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}d ago`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+}

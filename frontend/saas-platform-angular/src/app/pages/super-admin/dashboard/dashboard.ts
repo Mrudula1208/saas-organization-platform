@@ -10,6 +10,7 @@ import { SystemLogService } from '../../../core/services/system-log';
 import { Tenant } from '../../../models/tenant.model';
 import { User } from '../../../models/user.model';
 import { SystemLog } from '../../../models/system-log.model';
+import { formatRelativeTime } from '../../../core/helpers';
 
 export interface ActivityFeedItem {
   id: string;
@@ -78,6 +79,12 @@ export class Dashboard implements OnInit {
   chartY4 = 40;
   chartY5 = 20;
   chartMonths: string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+
+  // Dynamic Bar Chart Y-Axis Labels
+  barY1 = 80;
+  barY2 = 60;
+  barY3 = 40;
+  barY4 = 20;
 
   // Plan price mapping for revenue calculation when not explicitly set
   private readonly planPriceMap: Record<string, number> = {
@@ -149,17 +156,23 @@ export class Dashboard implements OnInit {
           this.tenantRows = tenants.map((t, idx) => {
             const planName = t.plan || 'Basic';
             const revenue = Number(t.monthlyRevenue) > 0 ? Number(t.monthlyRevenue) : (this.planPriceMap[planName] || 15);
-            return {
-              id: t.id || `${idx + 1}`,
-              name: t.name,
-              subtitle: t.domain ? `${t.domain}.saasapp.com` : 'Tenant Workspace',
-              initials: this.getInitials(t.name),
-              plan: planName,
-              lastUsed: this.formatRelativeTime(t.createdAt),
-              revenue: revenue,
-              status: t.isActive !== false ? (t.status || 'Active') : 'Suspended',
-              isSelected: false
-            };
+              let cleanDomain = t.domain || 'workspace';
+              if (cleanDomain.includes('.saasapp.com')) {
+                // already has suffix
+              } else if (!cleanDomain.includes('.')) {
+                cleanDomain = `${cleanDomain}.saasapp.com`;
+              }
+              return {
+                id: t.id || `${idx + 1}`,
+                name: t.name,
+                subtitle: cleanDomain,
+                initials: this.getInitials(t.name),
+                plan: planName,
+                lastUsed: this.formatRelativeTime(t.createdAt),
+                revenue: revenue,
+                status: t.isActive !== false ? (t.status || 'Active') : 'Suspended',
+                isSelected: false
+              };
           });
 
           // 3. Dynamic Activity Feed from System Logs and Events
@@ -238,21 +251,39 @@ export class Dashboard implements OnInit {
       months.push(d.toLocaleString('default', { month: 'short' }));
     }
 
-    return months.map((m, idx) => {
-      const count = users.filter(u => {
+    const monthCounts = months.map(m => {
+      return users.filter(u => {
         if (!u.createdAt) return false;
         const d = new Date(u.createdAt);
         return d.toLocaleString('default', { month: 'short' }) === m;
       }).length;
+    });
 
-      // Dynamic proportional height based on actual records
-      const baseHeight = Math.max(12, count * 15 + (idx + 1) * 10);
+    const maxCount = Math.max(4, ...monthCounts);
+    const ceiling = Math.max(10, Math.ceil(maxCount / 5) * 5);
+    this.barY1 = ceiling;
+    this.barY2 = Math.round(ceiling * 0.75);
+    this.barY3 = Math.round(ceiling * 0.5);
+    this.barY4 = Math.round(ceiling * 0.25);
+
+    const maxBarHeight = 90; // Maximum total bar height in pixels so it never overflows
+
+    return months.map((m, idx) => {
+      const count = monthCounts[idx];
+      // Scale height smoothly between 12px and maxBarHeight (90px)
+      const ratio = count > 0 ? (count / ceiling) : 0.08;
+      const totalH = Math.max(12, Math.min(maxBarHeight, Math.round(ratio * maxBarHeight)));
+
+      const bottomH = Math.max(3, Math.round(totalH * 0.28));
+      const middleH = Math.max(4, Math.round(totalH * 0.36));
+      const topH = Math.max(4, totalH - bottomH - middleH);
+
       return {
         month: m,
         count: count,
-        bottomH: Math.round(baseHeight * 0.4),
-        middleH: Math.round(baseHeight * 0.5),
-        topH: Math.round(baseHeight * 0.7)
+        bottomH,
+        middleH,
+        topH
       };
     });
   }
@@ -279,18 +310,8 @@ export class Dashboard implements OnInit {
     this.selectAllTenants = this.tenantRows.length > 0 && this.tenantRows.every(t => t.isSelected);
   }
 
-  formatRelativeTime(dateStr?: string): string {
-    if (!dateStr) return 'Just now';
-    const diffMs = Date.now() - new Date(dateStr).getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) return `${diffDays}d ago`;
-    const diffMonths = Math.floor(diffDays / 30);
-    return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  formatRelativeTime(dateStr?: string | Date): string {
+    return formatRelativeTime(dateStr);
   }
 
   getLogIcon(action?: string): string {

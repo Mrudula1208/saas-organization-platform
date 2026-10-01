@@ -135,3 +135,26 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .confirm-logout-modal-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .logout-icon-bubble {
+    width: 48px;
+    height: 48px;
+  }
+
+  .logout-icon-bubble span {
+    font-size: 1.5rem;
+  }
+
+  .confirm-logout-heading {
+    font-size: 1.35rem;
+  }
+
+  .confirm-logout-sub {
+    margin: 0 0 1rem 0;
+  }
+}

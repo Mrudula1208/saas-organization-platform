@@ -6,6 +6,7 @@ import { UserService } from '../../../core/services/user';
 import { TenantService } from '../../../core/services/tenant';
 import { Auth } from '../../../core/services/auth';
 import { SystemLog } from '../../../models/system-log.model';
+import { formatLocalDateTime } from '../../../core/helpers';
 
 @Component({
   selector: 'app-system-logs',
@@ -15,6 +16,7 @@ import { SystemLog } from '../../../models/system-log.model';
   styleUrl: './system-logs.css',
 })
 export class SystemLogs implements OnInit {
+  formatTimestamp = formatLocalDateTime;
   filteredLogs: SystemLog[] = [];
 
   // Filters matching Image 2: Date Range, Action Type

@@ -16,10 +16,37 @@
   height: 70px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   border-bottom: 1px solid var(--border-color);
 }
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-close-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-heading);
+}
+
 
 .logo-icon {
   width: 2.35rem;
@@ -119,11 +146,19 @@
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
+    width: 280px;
+    max-width: 85vw;
+    box-shadow: none;
+    z-index: 1000;
   }
   
   :host-context(body.sidebar-open) .sidebar,
   .sidebar.open {
     transform: translateX(0);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  }
+
+  .sidebar-close-btn {
+    display: flex;
   }
 }

@@ -120,3 +120,39 @@
     display: none;
   }
 }
+
+@media (max-width: 900px) {
+  .login-left {
+    padding: 2rem;
+  }
+
+  .brand-wrapper {
+    margin-bottom: 1.5rem;
+  }
+
+  .left-content h1 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-right {
+    padding: 1rem;
+  }
+
+  .login-card {
+    padding: 1.5rem;
+  }
+
+  .login-card h2 {
+    font-size: 1.35rem;
+  }
+
+  .login-card p {
+    margin-bottom: 1rem;
+  }
+
+  .form-actions-row {
+    margin: 0.75rem 0 1rem;
+  }
+}

@@ -8,6 +8,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .reports-main-title {
@@ -41,9 +43,12 @@
 /* 1. Top 5 KPI Cards Row - Compact Height */
 .kpi-grid-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
@@ -60,6 +65,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 
@@ -121,15 +129,25 @@
 /* 2. Middle Section: Charts Duo - Compact Height */
 .charts-duo-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.charts-duo-grid > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
   .charts-duo-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -140,6 +158,10 @@
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .card-header-flex {
@@ -575,13 +597,20 @@
 }
 
 .table-responsive-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
+  box-sizing: border-box;
 }
 
 .reports-data-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.8rem;
@@ -742,4 +771,39 @@
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(56, 189, 248, 0.4);
   color: #38BDF8;
+}
+
+/* Responsive fixes for mobile (360px, 390px), tablet (768px), and desktop (1024px) */
+@media (max-width: 768px) {
+  .kpi-grid-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .table-header-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .mini-charts-col {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid-row {
+    grid-template-columns: 1fr;
+  }
+
+  .table-actions-toolbar {
+    flex-wrap: wrap;
+  }
 }

@@ -5,7 +5,7 @@ import { UserService } from '../../../core/services/user';
 import { TenantService } from '../../../core/services/tenant';
 import { User } from '../../../models/user.model';
 import { Tenant } from '../../../models/tenant.model';
-import { getErrorMessage } from '../../../core/helpers';
+import { getErrorMessage, formatLocalDate, formatLocalDateWithTime } from '../../../core/helpers';
 
 @Component({
   selector: 'app-users',
@@ -15,6 +15,8 @@ import { getErrorMessage } from '../../../core/helpers';
   styleUrl: './users.css',
 })
 export class Users implements OnInit {
+  formatCreatedDate = formatLocalDate;
+  formatLastLoginDate = formatLocalDateWithTime;
   filteredUsers: User[] = [];
   tenants: Tenant[] = [];
 

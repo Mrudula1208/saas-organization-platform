@@ -3,7 +3,7 @@
   <div class="dash-header">
     <h1 class="dash-title">Dashboard</h1>
 
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <div class="dash-header-actions">
       <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
         <span class="material-symbols-outlined" style="font-size: 0.95rem; color: var(--success-color);">check_circle</span>
         Synced {{ lastSyncedAt | date:'shortTime' }}
@@ -16,6 +16,7 @@
       </button>
     </div>
   </div>
+
 
   <!-- Main 2-Column Dashboard Grid: Left Content (75%) + Right Activity Feed (25%) -->
   <div class="dash-page-layout">
@@ -212,25 +213,25 @@
             <div class="chart-tier-legend">
               <span class="legend-badge" title="Enterprise Tier (Tenant Admins)">
                 <span class="legend-dot dot-black"></span>
-                <span>Black: Enterprise</span>
+                <span>Enterprise</span>
               </span>
               <span class="legend-badge" title="Professional Tier (Project Managers)">
                 <span class="legend-dot dot-dark-blue"></span>
-                <span>Dark Blue: Pro</span>
+                <span>Pro</span>
               </span>
               <span class="legend-badge" title="Basic Tier (Team Members)">
                 <span class="legend-dot dot-light-blue"></span>
-                <span>Light Blue: Basic</span>
+                <span>Basic</span>
               </span>
             </div>
           </div>
 
           <div class="stacked-chart-wrap">
             <div class="y-axis-col">
-              <span>$80k</span>
-              <span>$60k</span>
-              <span>$40k</span>
-              <span>$20k</span>
+              <span>{{ barY1 }}</span>
+              <span>{{ barY2 }}</span>
+              <span>{{ barY3 }}</span>
+              <span>{{ barY4 }}</span>
               <span>0</span>
             </div>
 
@@ -270,12 +271,12 @@
           </div>
         </div>
 
-        <div style="overflow-x: auto;">
+        <div class="table-scroll-container">
           <table class="dash-table">
             <thead>
               <tr>
                 <th>Tenant name</th>
-                <th>Starting</th>
+                <th>Plan</th>
                 <th>Last Used</th>
                 <th>Monthly Revenue</th>
                 <th>Status</th>

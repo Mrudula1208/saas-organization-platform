@@ -89,11 +89,21 @@
   grid-template-columns: minmax(0, 1fr) 290px;
   gap: 1.25rem;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-@media (max-width: 1200px) {
+.dash-page-layout > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
   .dash-page-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -101,18 +111,35 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* 5 KPI Metric Cards Row */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
   .kpi-row {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .kpi-row {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -252,13 +279,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 240px;
+  min-height: 200px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .chart-svg {
   width: 100%;
-  height: 220px;
-  overflow: visible;
+  height: 200px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .chart-grid-line {
@@ -280,6 +313,10 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: 0.25rem 0 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .donut-legend {
@@ -323,6 +360,38 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.table-scroll-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+  box-sizing: border-box;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  height: 5px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-card-hover);
+  border-radius: 9999px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 9999px;
 }
 
 .tenant-card-header {
@@ -418,6 +487,7 @@
 /* Custom Table in Tenant Management */
 .dash-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -744,7 +814,26 @@
   font-size: 0.88rem;
 }
 
-/* Mobile & Tablet Responsive Enhancements */
+/* ==========================================================================
+   Mobile & Tablet Responsive Enhancements (Strict Cascade: 1200px -> 768px -> 480px)
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+  .dash-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .dash-header {
     flex-direction: column;
@@ -752,25 +841,31 @@
     gap: 0.75rem;
   }
 
-  .kpi-row {
-    grid-template-columns: repeat(2, 1fr);
+  .dash-title {
+    font-size: 1.4rem;
   }
 
-  .kpi-card:last-child {
-    grid-column: span 2;
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 
   .donut-chart-container {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 1.25rem !important;
+    padding: 0.5rem 0 !important;
   }
 
   .donut-legend {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem 1rem;
-    width: 100%;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.5rem 1rem !important;
+    width: 100% !important;
   }
 
   .tenant-card-header {
@@ -783,6 +878,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    gap: 0.65rem;
   }
 
   .search-input-wrap,
@@ -790,20 +886,46 @@
   .btn-view-data,
   .btn-create-tenant-cyan {
     width: 100%;
+    min-width: 0;
     justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   .kpi-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
   }
 
-  .kpi-card:last-child {
-    grid-column: span 1;
+  .kpi-card {
+    padding: 1rem !important;
   }
 
-  .donut-legend {
-    grid-template-columns: 1fr;
+  .kpi-value {
+    font-size: 1.5rem !important;
+  }
+
+  .dash-card {
+    padding: 1rem !important;
+  }
+
+  .tenant-bottom-card {
+    padding: 1rem !important;
+  }
+
+  .modal-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
   }
 }
