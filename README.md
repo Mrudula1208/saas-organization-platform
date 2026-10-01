@@ -1,12 +1,12 @@
 # 🚀 Multi-Tenant SaaS Organization Platform
 
 [![.NET 8](https://img.shields.io/badge/.NET%208-ASP.NET%20Core%20Web%20API-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![Angular 18](https://img.shields.io/badge/Angular%2018-Standalone%20%2B%20Signals-DD0031?logo=angular&logoColor=white)](https://angular.dev/)
+[![Angular 21](https://img.shields.io/badge/Angular%2021-Standalone%20%2B%20Signals-DD0031?logo=angular&logoColor=white)](https://angular.dev/)
 [![SQL Server](https://img.shields.io/badge/Database-Microsoft%20SQL%20Server-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Tests Passed](https://img.shields.io/badge/xUnit%20Tests-258%20Passed%20(100%25)-brightgreen?logo=checkmarx&logoColor=white)](backend/SaaSPlatform.Tests)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20RBAC-blue)](#-multi-tenancy-architecture--data-isolation)
 
-A production-grade, enterprise-ready Multi-Tenant SaaS Organization Platform built with **.NET 8 Web API** and **Angular 18**, styled with an **Enterprise Royal Blue + Deep Slate** modern corporate design system.
+A production-grade, enterprise-ready Multi-Tenant SaaS Organization Platform built with **.NET 8 Web API** and **Angular 21**, styled with an **Enterprise Royal Blue + Deep Slate** modern corporate design system.
 
 ---
 
@@ -24,7 +24,7 @@ SaaSOrganizationPlatform/
 │   └── SaaSPlatform.Tests/                       # Unit & Integration Tests (xUnit, Moq - 258 Tests Passed)
 │
 ├── frontend/
-│   └── saas-platform-angular/                    # Standalone Angular 18 Architecture (Signals, Services, Guards)
+│   └── saas-platform-angular/                    # Standalone Angular 21 Architecture (Signals, Services, Guards)
 │
 └── docker-compose.yml                            # Production Docker orchestration (SQL Server + API + Nginx Frontend)
 ```
@@ -35,12 +35,12 @@ SaaSOrganizationPlatform/
 
 ### 1. Data Isolation Strategy
 * **Tenant Isolation Column:** Every organization is assigned a unique `TenantId` (GUID). All tenant-owned records (`Users`, `Projects`, `Tasks`, `Payments`, `AuditLogs`, etc.) have an indexed `TenantId` foreign key.
-* **EF Core Global Query Filters:** When queries execute, Entity Framework Core automatically appends `WHERE TenantId = @currentTenantId` to SQL queries behind the scenes. This guarantees that **Tenant A can never see, modify, or leak Tenant B's data**.
-* **Zero-Leakage Assurance:** Application developers do not need to manually write `.Where(p => p.TenantId == tenantId)` on each repository query; the filter is baked directly into the `DbContext` model pipeline.
+* **Repository-Level Parameterized Scoping:** Every repository query mandates a `tenantId` parameter extracted directly from the verified JWT claims (`User.GetTenantId()`). Queries explicitly filter with `WHERE TenantId = @tenantId` and `IsDeleted = false`, ensuring **Tenant A can never see, modify, or leak Tenant B's data**.
+* **Zero-Trust Payload Overwrite:** In mutation operations (creating or updating projects, tasks, or users), the backend ignores any `TenantId` submitted in the client request body and always forces the verified `TenantId` from the cryptographically signed JWT.
 
 ### 2. Tenant Context Resolution
 * **Claims-Based JWT:** When a user logs in, their `TenantId` and `Role` are embedded securely into their signed JWT (JSON Web Token).
-* **Automatic Pipeline Injection:** The API validates the token on every incoming request and extracts the `TenantId` directly from the authenticated claims principal via `TenantResolutionMiddleware`.
+* **ClaimsPrincipal Extension:** The API validates the token on every incoming request. Controllers access the caller's tenant directly via strongly-typed `User.GetTenantId()` and `User.GetUserId()` extension methods.
 * **Tamper-Proof:** Client requests cannot forge or change the `TenantId` in query strings or request headers.
 
 ---
