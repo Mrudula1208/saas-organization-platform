@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SaaSPlatform.API.Configurations;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tenants;
 using SaaSPlatform.Application.Interfaces;
@@ -59,7 +60,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("settings")]
         public async Task<ActionResult> GetSettings()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null)
             {
                 return Unauthorized(new { success = false, message = "No tenant found for the authenticated user." });
@@ -78,7 +79,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "TenantAdmin")]
         public async Task<ActionResult> UpdateSettings([FromBody] TenantSettingsDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null)
             {
                 return Unauthorized(new { success = false, message = "No tenant found for the authenticated user." });
@@ -86,7 +87,7 @@ namespace SaaSPlatform.API.Controllers
 
             try
             {
-                var result = await _tenantService.UpdateSettingsAsync(tenantId.Value, dto, GetUserId());
+                var result = await _tenantService.UpdateSettingsAsync(tenantId.Value, dto, User.GetUserId());
                 if (!result)
                 {
                     return NotFound(new { success = false, message = "Tenant settings not found." });
@@ -104,9 +105,9 @@ namespace SaaSPlatform.API.Controllers
         public async Task<ActionResult<Tenant>> GetById(Guid Id)
         {
             // Tenant isolation: a TenantAdmin may only load their own tenant.
-            if (!User.IsInRole("SuperAdmin"))
+            if (!User.IsSuperAdmin())
             {
-                var callerTenantId = GetTenantId();
+                var callerTenantId = User.GetTenantId();
                 if (callerTenantId == null || callerTenantId.Value != Id)
                 {
                     return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "You do not have access to this tenant." });
@@ -139,7 +140,7 @@ namespace SaaSPlatform.API.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var created = await _tenantService.CreateAsync(tenant, GetUserId());
+                var created = await _tenantService.CreateAsync(tenant, User.GetUserId());
                 return CreatedAtAction(nameof(GetById), new { Id = created.Id }, created);
             }
             catch (Exception ex)
@@ -155,9 +156,9 @@ namespace SaaSPlatform.API.Controllers
             try
             {
                 // Tenant isolation: a TenantAdmin may only update their own tenant.
-                if (!User.IsInRole("SuperAdmin"))
+                if (!User.IsSuperAdmin())
                 {
-                    var callerTenantId = GetTenantId();
+                    var callerTenantId = User.GetTenantId();
                     if (callerTenantId == null || callerTenantId.Value != Id)
                     {
                         return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "You do not have access to this tenant." });
@@ -166,7 +167,7 @@ namespace SaaSPlatform.API.Controllers
 
                 // TenantAdmins cannot change the active status; only SuperAdmins can.
                 bool applyStatus = dto.IsActive;
-                if (!User.IsInRole("SuperAdmin"))
+                if (!User.IsSuperAdmin())
                 {
                     var existing = await _tenantService.GetByIdAsync(Id);
                     if (existing == null)
@@ -184,16 +185,16 @@ namespace SaaSPlatform.API.Controllers
                     IsActive = applyStatus
                 };
 
-                var result = await _tenantService.UpdateAsync(Id, tenant, GetUserId());
+                var result = await _tenantService.UpdateAsync(Id, tenant, User.GetUserId());
                 if (!result)
                 {
                     return NotFound(new { success = false, message = "Tenant not found." });
                 }
 
                 // SuperAdmins can change the subscription plan
-                if (User.IsInRole("SuperAdmin") && dto.SubscriptionPlanId.HasValue && dto.SubscriptionPlanId.Value != Guid.Empty)
+                if (User.IsSuperAdmin() && dto.SubscriptionPlanId.HasValue && dto.SubscriptionPlanId.Value != Guid.Empty)
                 {
-                    await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId.Value, GetUserId());
+                    await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId.Value, User.GetUserId());
                 }
 
                 return Ok(new { success = true, message = "Tenant updated successfully." });
@@ -210,7 +211,7 @@ namespace SaaSPlatform.API.Controllers
         {
             try
             {
-                var result = await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId, GetUserId());
+                var result = await _tenantService.ChangePlanAsync(Id, dto.SubscriptionPlanId, User.GetUserId());
                 if (!result)
                 {
                     return NotFound(new { success = false, message = "Tenant not found." });
@@ -227,7 +228,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            var result = await _tenantService.DeleteAsync(Id, GetUserId());
+            var result = await _tenantService.DeleteAsync(Id, User.GetUserId());
             if (!result)
             {
                 return NotFound(new { success = false, message = "Tenant not found." });
@@ -250,9 +251,9 @@ namespace SaaSPlatform.API.Controllers
                 }
 
                 // Tenant isolation: a TenantAdmin may only change their own tenant's logo.
-                if (!User.IsInRole("SuperAdmin"))
+                if (!User.IsSuperAdmin())
                 {
-                    var callerTenantId = GetTenantId();
+                    var callerTenantId = User.GetTenantId();
                     if (callerTenantId == null || callerTenantId.Value != Id)
                     {
                         return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "You do not have access to this tenant." });
@@ -330,7 +331,7 @@ namespace SaaSPlatform.API.Controllers
                 // Replace the previous logo file once the new one is safely saved.
                 DeleteExistingLogo(tenant.LogoImageUrl);
 
-                await _tenantService.UpdateLogoAsync(Id, relativeUrl, GetUserId());
+                await _tenantService.UpdateLogoAsync(Id, relativeUrl, User.GetUserId());
 
                 return Ok(new { success = true, logoUrl = relativeUrl, message = "Logo uploaded successfully." });
             }
@@ -344,7 +345,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "TenantAdmin,SuperAdmin")]
         public async Task<IActionResult> ExportWorkspace()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var tenant = await _tenantService.GetByIdAsync(tenantId.Value);
@@ -355,7 +356,7 @@ namespace SaaSPlatform.API.Controllers
             var exportPayload = new
             {
                 ExportedAt = DateTime.UtcNow,
-                ExportedByUserId = GetUserId(),
+                ExportedByUserId = User.GetUserId(),
                 Platform = "Multi-Tenant SaaS Organization Platform",
                 Workspace = new
                 {
@@ -414,22 +415,6 @@ namespace SaaSPlatform.API.Controllers
             {
                 System.IO.File.Delete(fileFullPath);
             }
-        }
-
-        private Guid? GetUserId()
-        {
-            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (claim != null && Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }

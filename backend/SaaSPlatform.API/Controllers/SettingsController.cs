@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS.Settings;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform_Utility;
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -38,7 +38,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> UpdateSettings([FromBody] UpdatePlatformSettingsDto dto)
         {
-            var adminUserId = GetCurrentUserId();
+            var adminUserId = User.GetUserId();
             var updated = await _settingsService.UpdateSettingsAsync(dto, adminUserId);
             return Ok(new ApiResponse<PlatformSettingsDto>
             {
@@ -62,14 +62,6 @@ namespace SaaSPlatform.API.Controllers
                 allowRegistrations = settings.AllowRegistrations,
                 mfaRequired = settings.MfaRequired
             });
-        }
-
-        private Guid? GetCurrentUserId()
-        {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (claim != null && Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
         }
     }
 }

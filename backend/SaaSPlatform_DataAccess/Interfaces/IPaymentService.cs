@@ -12,8 +12,8 @@ namespace SaaSPlatform.Application.Interfaces
     {
         Task<IEnumerable<Payment>> GetAllAsync(Guid tenantId);
         Task<IReadOnlyList<AdminTransactionDto>> GetAdminTransactionsAsync();
-        Task<Payment> GetByIdAsync(Guid Id);
-        Task<Payment>CreateAsync(Payment payment, Guid? userId = null);
+        Task<Payment?> GetByIdAsync(Guid Id);
+        Task<Payment> CreateAsync(Payment payment, Guid? userId = null);
         Task<bool>DeleteAsync(Guid Id, Guid? userId = null);
     }
 }

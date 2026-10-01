@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
 using SaaSPlatform.Infrastructure.Data;
@@ -36,7 +36,7 @@ namespace SaaSPlatform.Application.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<SubscriptionPlan> GetByIdAsync(Guid Id)
+        public async Task<SubscriptionPlan?> GetByIdAsync(Guid Id)
         {
             return await _context.SubscriptionPlans.FindAsync(Id);
         }

@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Projects;
 using SaaSPlatform.Application.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -33,7 +31,7 @@ namespace SaaSPlatform.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             page = Math.Max(page, 1);
@@ -46,7 +44,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProjectViewDto>> GetById(Guid id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var project = await _projectService.GetByIdAsync(id, tenantId.Value);
@@ -66,8 +64,8 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<ProjectViewDto>> Create(CreateProjectDto dto)
         {
-            var tenantId = GetTenantId();
-            var userId = GetCurrentUserId();
+            var tenantId = User.GetTenantId();
+            var userId = User.GetUserId();
             if (tenantId == null || userId == null) return Unauthorized();
 
             dto.TenantId = tenantId.Value;
@@ -83,7 +81,7 @@ namespace SaaSPlatform.API.Controllers
                     {
                         await _notificationService.CreateAsync(tenantId.Value, $"New project '{project.Name}' was created.");
                     }
-                    catch { /* Safe catch */ }
+                    catch { /* Best effort notification */ }
                 }
 
                 return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
@@ -102,7 +100,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Update(Guid id, UpdateProjectDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             try
@@ -128,7 +126,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             try
@@ -141,7 +139,7 @@ namespace SaaSPlatform.API.Controllers
                     {
                         await _notificationService.CreateAsync(tenantId.Value, "A project was deleted from the workspace.");
                     }
-                    catch { /* Safe catch */ }
+                    catch { /* Best effort notification */ }
                 }
 
                 return NoContent();
@@ -154,22 +152,6 @@ namespace SaaSPlatform.API.Controllers
             {
                 return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = ex.Message });
             }
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
-        }
-
-        private Guid? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
         }
     }
 }

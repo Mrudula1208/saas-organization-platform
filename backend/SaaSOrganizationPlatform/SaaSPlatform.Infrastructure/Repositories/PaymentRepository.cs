@@ -108,7 +108,7 @@ namespace SaaSPlatform.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Payment> GetByIdAsync(Guid Id)
+        public async Task<Payment?> GetByIdAsync(Guid Id)
         {
             return await _context.Payments.FindAsync(Id);
         }

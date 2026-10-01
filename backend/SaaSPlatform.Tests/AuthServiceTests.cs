@@ -38,10 +38,9 @@ namespace SaaSPlatform.Tests
             _unitOfWork.Setup(x => x.Settings).Returns(_settings.Object);
             _unitOfWork.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
-            _service = new AuthService(_unitOfWork.Object, CreateConfig(), null!);
+            _service = new AuthService(_unitOfWork.Object, CreateConfig());
         }
 
-        // AuthService does not use AutoMapper, so no mapper is passed.
         private static IConfiguration CreateConfig()
         {
             return new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -352,7 +351,7 @@ namespace SaaSPlatform.Tests
             _users.Setup(x => x.UpdateUser(user.Id, It.IsAny<User>())).ReturnsAsync(true);
 
             var mockEmail = new Mock<IEmailService>();
-            var serviceWithEmail = new AuthService(_unitOfWork.Object, CreateConfig(), null!, mockEmail.Object);
+            var serviceWithEmail = new AuthService(_unitOfWork.Object, CreateConfig(), mockEmail.Object);
 
             var result = await serviceWithEmail.ForgotPasswordAsync(new ForgotPasswordDto { Email = user.Email });
 

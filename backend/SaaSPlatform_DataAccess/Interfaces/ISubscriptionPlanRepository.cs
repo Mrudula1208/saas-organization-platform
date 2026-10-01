@@ -1,4 +1,4 @@
-﻿using SaaSPlatform.Domain.Entities;
+using SaaSPlatform.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace SaaSPlatform.Application.Interfaces
     {
         Task<IEnumerable<SubscriptionPlan>> GetAllAsync();
         Task<SubscriptionPlan?> GetByNameAsync(string name);
-        Task<SubscriptionPlan> GetByIdAsync(Guid Id);
+        Task<SubscriptionPlan?> GetByIdAsync(Guid Id);
         Task<SubscriptionPlan> AddAsync(SubscriptionPlan subscriptionPlan);
         Task<bool> UpdateAsync(SubscriptionPlan subscriptionPlan);
         Task<bool> DeleteAsync(SubscriptionPlan subscriptionPlan);

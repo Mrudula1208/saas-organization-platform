@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Users;
 using SaaSPlatform.Application.Interfaces;
@@ -37,14 +38,14 @@ namespace SaaSPlatform.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             page = Math.Max(page, 1);
             pageSize = Math.Clamp(pageSize, 1, 200);
 
             // Super admins manage users of every tenant; every other role only sees its own tenant.
-            var users = IsSuperAdmin()
+            var users = User.IsSuperAdmin()
                 ? await _userService.GetPlatformUsersPage(search, role, isActive, page, pageSize)
                 : await _userService.GetUsersPage(tenantId.Value, search, role, isActive, page, pageSize);
             return Ok(users);
@@ -53,7 +54,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("{Id}")]
         public async Task<ActionResult<User>> GetUserById(Guid Id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var user = await _userService.GetUserById(Id);
@@ -68,7 +69,7 @@ namespace SaaSPlatform.API.Controllers
             }
 
             // A user can only be read from inside the caller's tenant (super admins may read any user).
-            if (user.TenantId != tenantId.Value && !IsSuperAdmin())
+            if (user.TenantId != tenantId.Value && !User.IsSuperAdmin())
             {
                 return Forbid();
             }
@@ -87,7 +88,7 @@ namespace SaaSPlatform.API.Controllers
         {
             try
             {
-                var tenantId = GetTenantId();
+                var tenantId = User.GetTenantId();
                 if (tenantId == null) return Unauthorized();
 
                 var role = string.IsNullOrWhiteSpace(dto.Role) ? "Member" : dto.Role;
@@ -129,7 +130,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<ActionResult<User>> UpdateUser(Guid Id, [FromBody] UpdateUserDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existingUser = await _userService.GetUserById(Id);
@@ -143,13 +144,13 @@ namespace SaaSPlatform.API.Controllers
                 });
             }
 
-            if (existingUser.TenantId != tenantId.Value && !IsSuperAdmin())
+            if (existingUser.TenantId != tenantId.Value && !User.IsSuperAdmin())
             {
                 return Forbid();
             }
 
             // No tenant admin can ever grant the SuperAdmin role, and only known roles are accepted.
-            if (dto.Role == "SuperAdmin" && !IsSuperAdmin())
+            if (dto.Role == "SuperAdmin" && !User.IsSuperAdmin())
             {
                 return Forbid();
             }
@@ -200,7 +201,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<ActionResult> DeleteUser(Guid Id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existingUser = await _userService.GetUserById(Id);
@@ -215,7 +216,7 @@ namespace SaaSPlatform.API.Controllers
             }
 
             // A user can only be deleted inside the caller's tenant (super admins may delete any user).
-            if (existingUser.TenantId != tenantId.Value && !IsSuperAdmin())
+            if (existingUser.TenantId != tenantId.Value && !User.IsSuperAdmin())
             {
                 return Forbid();
             }
@@ -245,7 +246,7 @@ namespace SaaSPlatform.API.Controllers
         {
             try
             {
-                var tenantId = GetTenantId();
+                var tenantId = User.GetTenantId();
                 if (tenantId == null) return Unauthorized();
 
                 var role = string.IsNullOrWhiteSpace(dto.Role) ? "Member" : dto.Role;
@@ -257,8 +258,8 @@ namespace SaaSPlatform.API.Controllers
 
                 var invitedUser = await _userService.InviteUserAsync(tenantId.Value, dto);
                 invitedUser.PasswordHash = string.Empty;
-                invitedUser.Tenant = null;
-                invitedUser.AssignedTasks = null;
+                invitedUser.Tenant = null!;
+                invitedUser.AssignedTasks = null!;
 
                 return Ok(new ApiResponse<User>
                 {
@@ -277,7 +278,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin")]
         public async Task<IActionResult> ToggleStatus(Guid Id, [FromBody] ToggleStatusRequest request)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existingUser = await _userService.GetUserById(Id);
@@ -287,7 +288,7 @@ namespace SaaSPlatform.API.Controllers
             }
 
             // A status can only be changed inside the caller's tenant (super admins may change any user).
-            if (existingUser.TenantId != tenantId.Value && !IsSuperAdmin())
+            if (existingUser.TenantId != tenantId.Value && !User.IsSuperAdmin())
             {
                 return Forbid();
             }
@@ -304,7 +305,7 @@ namespace SaaSPlatform.API.Controllers
         public async Task<IActionResult> GetProfile()
         {
             // User identity always comes from the JWT claims of the authenticated request.
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
 
             var profile = await _userService.GetProfileAsync(userId.Value);
@@ -329,7 +330,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
 
             var result = await _userService.UpdateProfileAsync(userId.Value, dto);
@@ -357,7 +358,7 @@ namespace SaaSPlatform.API.Controllers
         {
             // Target user is always the authenticated user from JWT claims.
             // There is no user id parameter, so a user can never change another user's password here.
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             if (userId == null) return Unauthorized();
 
             try
@@ -390,33 +391,11 @@ namespace SaaSPlatform.API.Controllers
             }
         }
 
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
-        }
-
-        private Guid? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
-        }
-
-        private bool IsSuperAdmin()
-        {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
-            return role == "SuperAdmin";
-        }
-
         // Only a super admin can hand out the SuperAdmin role; all callers are limited to known roles.
         private bool CanAssignRole(string role)
         {
             if (!KnownRoles.Contains(role)) return false;
-            if (role == "SuperAdmin" && !IsSuperAdmin()) return false;
+            if (role == "SuperAdmin" && !User.IsSuperAdmin()) return false;
             return true;
         }
     }

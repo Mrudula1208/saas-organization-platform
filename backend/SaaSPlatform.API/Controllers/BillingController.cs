@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS.Billing;
 using SaaSPlatform.Application.Interfaces;
-using SaaSPlatform.Domain.Entities;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -24,7 +23,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("current-plan")]
         public async Task<IActionResult> GetCurrentPlan()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var plan = await _billingService.GetCurrentPlanAsync(tenantId.Value);
@@ -38,7 +37,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("payments")]
         public async Task<IActionResult> GetPayments()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var payments = await _billingService.GetPaymentHistoryAsync(tenantId.Value);
@@ -48,7 +47,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("payments/{id}")]
         public async Task<IActionResult> GetPayment(Guid id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var payment = await _billingService.GetPaymentAsync(tenantId.Value, id);
@@ -62,19 +61,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetSummary()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var summary = await _billingService.GetBillingSummaryAsync(tenantId.Value);
             return Ok(summary);
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }

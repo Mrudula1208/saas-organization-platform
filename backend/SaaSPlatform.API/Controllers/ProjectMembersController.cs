@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS.ProjectMembers;
 using SaaSPlatform.Application.Interfaces;
 using System;
@@ -23,7 +24,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("project/{projectId}")]
         public async Task<ActionResult<IEnumerable<ProjectMemberDto>>> GetMembersByProject(Guid projectId)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var members = await _projectMemberService.GetMembersByProjectAsync(projectId, tenantId.Value);
@@ -34,7 +35,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<ProjectMemberDto>> AddMember([FromBody] AddProjectMemberDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             try
@@ -56,7 +57,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> RemoveMember(Guid memberId)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var removed = await _projectMemberService.RemoveMemberAsync(memberId, tenantId.Value);
@@ -64,14 +65,6 @@ namespace SaaSPlatform.API.Controllers
                 return NotFound(new { success = false, message = "Project member not found." });
 
             return NoContent();
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.Interfaces;
-using System.Security.Claims;
+using System;
+using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -11,6 +13,7 @@ namespace SaaSPlatform.API.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
+
         public ReportsController(IReportService reportService)
         {
             _reportService = reportService;
@@ -19,7 +22,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var data = await _reportService.GetTenantDashboardAsync(tenantId.Value);
@@ -37,7 +40,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("tenant-report")]
         public async Task<IActionResult> GetTenantReport()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var data = await _reportService.GetTenantReportAsync(tenantId.Value);
@@ -86,7 +89,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("export/pdf")]
         public async Task<IActionResult> ExportPdf()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             try
@@ -103,7 +106,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("export/excel")]
         public async Task<IActionResult> ExportExcel()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             try
@@ -115,14 +118,6 @@ namespace SaaSPlatform.API.Controllers
             {
                 return StatusCode(500, new { message = $"Failed to generate Excel report: {ex.Message}" });
             }
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }

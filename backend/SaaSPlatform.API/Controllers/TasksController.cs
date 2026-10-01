@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.DTOS.Tasks;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
-using System.Security.Claims;
+using System;
+using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -30,7 +32,7 @@ namespace SaaSPlatform.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             page = Math.Max(page, 1);
@@ -43,17 +45,17 @@ namespace SaaSPlatform.API.Controllers
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateTaskStatusDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(id);
-            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
+            if (existing == null || (existing.TenantId != tenantId.Value && !User.IsSuperAdmin()))
             {
                 return NotFound(new { success = false, message = "Task not found." });
             }
 
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
-            var userId = GetCurrentUserId();
+            var userRole = User.GetRole();
+            var userId = User.GetUserId();
             if (string.Equals(userRole, "Member", StringComparison.OrdinalIgnoreCase) && existing.AssignedUserId != userId)
             {
                 return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "Members can only update the status of their own assigned tasks." });
@@ -80,11 +82,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("single/{Id}")]
         public async Task<ActionResult<TaskItem>> GetById(Guid Id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var task = await _taskService.GetByIdAsync(Id);
-            if (task == null || (task.TenantId != tenantId.Value && !IsSuperAdmin()))
+            if (task == null || (task.TenantId != tenantId.Value && !User.IsSuperAdmin()))
                 return NotFound();
 
             return Ok(task);
@@ -94,7 +96,7 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<ActionResult<TaskItem>> Create(CreateTaskDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             dto.TenantId = tenantId.Value;
@@ -108,7 +110,7 @@ namespace SaaSPlatform.API.Controllers
             }
             if (dto.AssignedUserId == Guid.Empty)
             {
-                var currentUserId = GetCurrentUserId();
+                var currentUserId = User.GetUserId();
                 if (currentUserId.HasValue)
                 {
                     dto.AssignedUserId = currentUserId.Value;
@@ -129,9 +131,8 @@ namespace SaaSPlatform.API.Controllers
                 }
 
                 // Clear navigation references to avoid a JSON reference cycle
-                // (the tracked Project will navigate back to this task).
-                task.Project = null;
-                task.AssignedUser = null;
+                task.Project = null!;
+                task.AssignedUser = null!;
 
                 return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
             }
@@ -145,11 +146,11 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Update(Guid Id, UpdateTaskDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(Id);
-            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
+            if (existing == null || (existing.TenantId != tenantId.Value && !User.IsSuperAdmin()))
                 return NotFound();
 
             if (string.IsNullOrWhiteSpace(dto.Name) && !string.IsNullOrWhiteSpace(dto.Title))
@@ -182,11 +183,11 @@ namespace SaaSPlatform.API.Controllers
         [Authorize(Roles = "SuperAdmin,TenantAdmin,Manager")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var existing = await _taskService.GetByIdAsync(Id);
-            if (existing == null || (existing.TenantId != tenantId.Value && !IsSuperAdmin()))
+            if (existing == null || (existing.TenantId != tenantId.Value && !User.IsSuperAdmin()))
                 return NotFound();
 
             await _taskService.DeleteAsync(Id);
@@ -201,28 +202,6 @@ namespace SaaSPlatform.API.Controllers
             }
 
             return NoContent();
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
-        }
-
-        private Guid? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
-        }
-
-        private bool IsSuperAdmin()
-        {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
-            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
         }
     }
 

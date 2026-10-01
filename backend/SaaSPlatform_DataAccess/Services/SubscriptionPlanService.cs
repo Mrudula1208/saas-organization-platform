@@ -1,4 +1,4 @@
-﻿using SaaSPlatform.Application.Interfaces;
+using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -27,7 +27,7 @@ namespace SaaSPlatform.Application.Services
 
         }
 
-        public async Task<SubscriptionPlan> GetByIdAsync(Guid Id)
+        public async Task<SubscriptionPlan?> GetByIdAsync(Guid Id)
         {
             return await _subscriptionPlanRepository.GetByIdAsync(Id);
         }

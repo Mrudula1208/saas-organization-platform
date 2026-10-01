@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SaaSPlatform.Application.DTOS.Auth;
@@ -19,18 +18,15 @@ namespace SaaSPlatform.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _config;
-        private readonly IMapper _mapper;
         private readonly IEmailService? _emailService;
 
         public AuthService(
             IUnitOfWork unitOfWork, 
             IConfiguration config, 
-            IMapper mapper,
             IEmailService? emailService = null)
         {
             _unitOfWork = unitOfWork;
             _config = config;
-            _mapper = mapper;
             _emailService = emailService;
         }
 
@@ -393,7 +389,8 @@ namespace SaaSPlatform.Application.Services
                 new Claim(ClaimTypes.Name, user.FullName)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var jwtKey = _config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
@@ -427,12 +424,15 @@ namespace SaaSPlatform.Application.Services
         {
             try
             {
+                var jwtKey = _config["Jwt:Key"];
+                if (string.IsNullOrEmpty(jwtKey)) return null;
+
                 var tokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = false,
                     ValidateIssuer = false,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                     ValidateLifetime = false // Here we map key details from expired token
                 };
 
@@ -451,14 +451,6 @@ namespace SaaSPlatform.Application.Services
             {
                 return null;
             }
-        }
-    }
-
-    public static class MathExtension
-    {
-        public static int CeRounding(double value)
-        {
-            return (int)Math.Ceiling(value);
         }
     }
 }

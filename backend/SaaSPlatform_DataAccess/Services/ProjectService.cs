@@ -37,15 +37,6 @@ namespace SaaSPlatform.Application.Services
         // One page of the tenant project list; the database does the filtering and paging.
         public async Task<PagedResult<ProjectViewDto>> GetProjectsPage(Guid tenantId, string? search = null, string? status = null, string? priority = null, int page = 1, int pageSize = 20)
         {
-            // The projection is the normal path: it selects only API fields and
-            // computes task totals in SQL. The entity fallback keeps existing
-            // repository implementations and older callers compatible.
-            var projected = await _projectRepository.GetProjectViewsPage(tenantId, search, status, priority, page, pageSize);
-            if (projected != null)
-            {
-                return projected;
-            }
-
             var result = await _projectRepository.GetProjectsPage(tenantId, search, status, priority, page, pageSize);
             return new PagedResult<ProjectViewDto>
             {
@@ -58,19 +49,10 @@ namespace SaaSPlatform.Application.Services
 
         public async Task<ProjectViewDto?> GetByIdAsync(Guid Id, Guid tenantId)
         {
-            var projected = await _projectRepository.GetProjectViewByIdAsync(Id, tenantId);
-            if (projected != null)
-            {
-                return projected;
-            }
-
-            // Compatibility path for older repository implementations. The
-            // normal repository path above never loads the owner/task graph for
-            // a read request.
             var project = await _projectRepository.GetByIdAsync(Id);
             if (project == null || project.IsDeleted) return null;
 
-            // Never expose another tenant's project, regardless of what the caller sends.
+            // Never expose another tenant's project
             if (project.TenantId != tenantId) return null;
 
             return MapToDto(project);

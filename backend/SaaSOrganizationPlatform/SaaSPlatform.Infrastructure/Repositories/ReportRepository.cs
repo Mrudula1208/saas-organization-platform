@@ -164,8 +164,8 @@ namespace SaaSPlatform.Infrastructure.Repositories
 
             // Monthly completed task counts for last 6 months
             var monthlyTasksCompleted = await _context.TaskItems
-                .Where(t => t.TenantId == tenantId && !t.IsDeleted && t.CompletedAt.HasValue && t.CompletedAt >= sixMonthsAgo)
-                .GroupBy(t => new { t.CompletedAt.Value.Year, t.CompletedAt.Value.Month })
+                .Where(t => t.TenantId == tenantId && !t.IsDeleted && t.CompletedAt != null && t.CompletedAt >= sixMonthsAgo)
+                .GroupBy(t => new { Year = t.CompletedAt!.Value.Year, Month = t.CompletedAt!.Value.Month })
                 .Select(g => new MonthlyStatDto
                 {
                     Year = g.Key.Year,

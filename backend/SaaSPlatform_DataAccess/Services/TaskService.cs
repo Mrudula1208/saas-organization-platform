@@ -66,18 +66,10 @@ namespace SaaSPlatform.Application.Services
                 throw new Exception("Task name is required.");
             }
 
-            var projectTenantId = await _projectRepository.GetTenantIdAsync(dto.ProjectId);
-            if (projectTenantId.HasValue)
+            var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
+            if (project == null || project.IsDeleted || project.TenantId != dto.TenantId)
             {
-                if (projectTenantId.Value != dto.TenantId)
-                    throw new Exception("Selected project was not found in this tenant.");
-            }
-            else
-            {
-                // Compatibility path for older repository implementations.
-                var project = await _projectRepository.GetByIdAsync(dto.ProjectId);
-                if (project == null || project.IsDeleted || project.TenantId != dto.TenantId)
-                    throw new Exception("Selected project was not found in this tenant.");
+                throw new Exception("Selected project was not found in this tenant.");
             }
 
             if (dto.AssignedUserId != Guid.Empty && _userRepository != null)

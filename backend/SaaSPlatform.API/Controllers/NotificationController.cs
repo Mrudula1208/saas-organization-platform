@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Application.DTOS.Notifications;
 using SaaSPlatform_Utility;
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -24,7 +24,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var notifications = await _notificationService.GetAllAsync(tenantId.Value);
@@ -38,7 +38,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpGet("unread-count")]
         public async Task<IActionResult> GetUnreadCount()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var count = await _notificationService.GetUnreadCountAsync(tenantId.Value);
@@ -52,7 +52,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateNotificationDto dto)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(dto.Message))
@@ -69,7 +69,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpPut("{id}/mark-read")]
         public async Task<IActionResult> MarkRead(Guid id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var result = await _notificationService.MarkReadAsync(id, tenantId.Value);
@@ -81,7 +81,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpPut("mark-all-read")]
         public async Task<IActionResult> MarkAllRead()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             await _notificationService.MarkAllReadAsync(tenantId.Value);
@@ -91,7 +91,7 @@ namespace SaaSPlatform.API.Controllers
         [HttpDelete("clear-all")]
         public async Task<IActionResult> ClearAll()
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             await _notificationService.ClearAllAsync(tenantId.Value);
@@ -101,21 +101,13 @@ namespace SaaSPlatform.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var tenantId = GetTenantId();
+            var tenantId = User.GetTenantId();
             if (tenantId == null) return Unauthorized();
 
             var result = await _notificationService.DeleteAsync(id, tenantId.Value);
             if (!result) return NotFound();
 
             return Ok(new ApiResponse<object> { Success = true });
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }

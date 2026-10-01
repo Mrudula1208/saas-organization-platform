@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SaaSPlatform.Application.DTOS.Auth;
 using SaaSPlatform.Application.Interfaces;
+using SaaSPlatform.API.Extensions;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -116,10 +117,10 @@ namespace SaaSPlatform.API.Controllers
         public async Task<IActionResult> Logout()
         {
             // Identity comes from the JWT; revokes the refresh token and writes a LOGOUT audit entry.
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(claim, out var userId))
+            var userId = User.GetUserId();
+            if (userId.HasValue)
             {
-                await _authService.LogoutAsync(userId);
+                await _authService.LogoutAsync(userId.Value);
             }
             return Ok(new { success = true, message = "Logged out successfully." });
         }

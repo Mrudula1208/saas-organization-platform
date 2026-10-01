@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS.SubscriptionPlans;
 using SaaSPlatform.Application.Interfaces;
 using SaaSPlatform.Domain.Entities;
+using System;
+using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
 {
@@ -49,7 +52,7 @@ namespace SaaSPlatform.API.Controllers
                 IsActive = true
             };
 
-            var created = await _subscriptionPlanService.AddAsync(plan, GetUserId());
+            var created = await _subscriptionPlanService.AddAsync(plan, User.GetUserId());
             return Ok(created);
         }
 
@@ -67,7 +70,7 @@ namespace SaaSPlatform.API.Controllers
                 IsActive = dto.IsActive
             };
 
-            var result = await _subscriptionPlanService.UpdateAsync(Id, plan, GetUserId());
+            var result = await _subscriptionPlanService.UpdateAsync(Id, plan, User.GetUserId());
             if (!result)
                 return NotFound();
 
@@ -78,19 +81,11 @@ namespace SaaSPlatform.API.Controllers
         [HttpDelete("{Id}")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            var result = await _subscriptionPlanService.DeleteAsync(Id, GetUserId());
+            var result = await _subscriptionPlanService.DeleteAsync(Id, User.GetUserId());
             if (!result)
                 return NotFound();
 
             return NoContent();
-        }
-
-        private Guid? GetUserId()
-        {
-            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (claim != null && Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
-                return userId;
-            return null;
         }
     }
 }

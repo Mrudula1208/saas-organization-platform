@@ -75,19 +75,8 @@ namespace SaaSPlatform.API
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // 🔄 AutoMapper & FluentValidation
-            builder.Services.AddAutoMapper(typeof(Program).Assembly);
+            // 🔄 FluentValidation
             builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-
-            // 🌐 Enable CORS for the Angular frontend.
-            // The allowed origins come from configuration: appsettings.Development.json
-            // for local work, the Cors__AllowedOrigins environment variable in production.
-            var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (allowedOrigins.Length == 0)
-            {
-                throw new InvalidOperationException("Cors:AllowedOrigins must be configured as a comma separated list of frontend origins (set the Cors__AllowedOrigins environment variable), e.g. https://app.example.com.");
-            }
 
             builder.Services.AddCors(options =>
             {
@@ -101,18 +90,16 @@ namespace SaaSPlatform.API
                 });
             });
 
-            // Secrets and connection strings are never committed: they come from
-            // environment variables in production and from local user secrets in development.
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
             {
-                throw new InvalidOperationException("Jwt:Key must be configured (set the Jwt__Key environment variable or user secret) and must be at least 32 characters.");
+                throw new InvalidOperationException("Jwt:Key is not configured or is less than 32 characters.");
             }
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             if (string.IsNullOrWhiteSpace(connectionString))
             {
-                throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured (set the ConnectionStrings__DefaultConnection environment variable or user secret).");
+                throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
             }
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -174,7 +161,7 @@ namespace SaaSPlatform.API
             });
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(connectionString));
             
             // 🩺 Health Checks for container orchestrators (Docker, Kubernetes) and load balancers
             builder.Services.AddHealthChecks()

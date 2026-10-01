@@ -16,8 +16,8 @@ namespace SaaSPlatform.Application.Interfaces
         Task<BillingSummaryDto> GetPaymentSummaryAsync(Guid tenantId);
         Task<DateTime?> GetLastSuccessfulPaymentDateAsync(Guid tenantId);
         Task<IReadOnlyList<AdminTransactionDto>> GetAdminTransactionsAsync();
-        Task<Payment> GetByIdAsync(Guid Id);
-        Task<Payment>AddAsync(Payment payment);
+        Task<Payment?> GetByIdAsync(Guid Id);
+        Task<Payment> AddAsync(Payment payment);
         Task<bool> DeleteAsync(Payment payment);
     }
 }

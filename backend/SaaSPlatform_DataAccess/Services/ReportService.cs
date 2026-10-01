@@ -57,7 +57,7 @@ namespace SaaSPlatform.Application.Services
         public async Task<ReportExportFileDto> ExportTenantReportPdfAsync(Guid tenantId)
         {
             var (tenantName, report, projects) = await LoadExportDataAsync(tenantId);
-            var generatedAt = DateTime.UtcNow;
+            var generatedAt = DateTime.UtcNow.AddMinutes(330);
             var monthlyRows = BuildMonthlyRows(report);
             var metrics = BuildMetrics(report);
 
@@ -72,9 +72,9 @@ namespace SaaSPlatform.Application.Services
                     page.Header().Column(header =>
                     {
                         header.Item().Text("Workspace Analytics Report").FontSize(20).Bold();
-                        header.Item().Text(tenantName).FontSize(13).FontColor("#9F1239");
-                        header.Item().Text($"Generated {generatedAt:yyyy-MM-dd HH:mm} UTC").FontSize(9).FontColor("#6B7280");
-                        header.Item().PaddingTop(6).LineHorizontal(1).LineColor("#9F1239");
+                        header.Item().Text(tenantName).FontSize(13).FontColor("#2563EB");
+                        header.Item().Text($"Generated on {generatedAt:dd MMM yyyy, hh:mm:ss tt}").FontSize(9).FontColor("#6B7280");
+                        header.Item().PaddingTop(6).LineHorizontal(1).LineColor("#2563EB");
                     });
 
                     page.Content().Column(content =>
@@ -308,7 +308,7 @@ namespace SaaSPlatform.Application.Services
         {
             var report = await _reportRepository.GetAdminReportDataAsync();
             var tenants = await _reportRepository.GetAdminTenantBreakdownAsync();
-            var generatedAt = DateTime.UtcNow;
+            var generatedAt = DateTime.UtcNow.AddMinutes(330);
 
             var bytes = Document.Create(document =>
             {
@@ -321,9 +321,9 @@ namespace SaaSPlatform.Application.Services
                     page.Header().Column(header =>
                     {
                         header.Item().Text("Platform Executive Analytics").FontSize(20).Bold();
-                        header.Item().Text("Global SaaS Operations & Multi-Tenant Performance").FontSize(13).FontColor("#4F46E5");
-                        header.Item().Text($"Generated {generatedAt:yyyy-MM-dd HH:mm} UTC").FontSize(9).FontColor("#6B7280");
-                        header.Item().PaddingTop(6).LineHorizontal(1).LineColor("#4F46E5");
+                        header.Item().Text("Global SaaS Operations & Multi-Tenant Performance").FontSize(13).FontColor("#2563EB");
+                        header.Item().Text($"Generated on {generatedAt:dd MMM yyyy, hh:mm:ss tt}").FontSize(9).FontColor("#6B7280");
+                        header.Item().PaddingTop(6).LineHorizontal(1).LineColor("#2563EB");
                     });
 
                     page.Content().Column(content =>
@@ -464,14 +464,14 @@ namespace SaaSPlatform.Application.Services
                                     table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(tenant.PlanName);
                                     table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(tenant.IsActive ? "Active" : "Inactive");
                                     table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(tenant.UserCount.ToString());
-                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(tenant.CreatedAt.ToString("yyyy-MM-dd"));
+                                    table.Cell().BorderBottom(1).BorderColor("#E5E7EB").Padding(5).Text(tenant.CreatedAt.AddMinutes(330).ToString("dd MMM yyyy"));
                                 }
                             });
                         }
                     });
 
                     page.Footer().AlignCenter().PaddingTop(10)
-                        .Text($"SaaS Platform — Executive Analytics Report — {generatedAt:yyyy-MM-dd}")
+                        .Text($"SaaS Platform — Executive Analytics Report — {generatedAt:dd MMM yyyy}")
                         .FontSize(8).FontColor("#9CA3AF");
                 });
             }).GeneratePdf();

@@ -39,21 +39,21 @@ namespace SaaSPlatform.Application.Services
             return await _paymentRepository.GetAdminTransactionsAsync();
         }
 
-        public async Task <Payment>GetByIdAsync(Guid Id)
+        public async Task<Payment?> GetByIdAsync(Guid Id)
         {
             return await _paymentRepository.GetByIdAsync(Id);
         }
 
 
-        public async Task<Payment>CreateAsync(Payment payement, Guid? userId = null)
+        public async Task<Payment> CreateAsync(Payment payment, Guid? userId = null)
         {
-            if (payement.Amount < 0)
-                throw new Exception("Invalide Amount");
+            if (payment.Amount < 0)
+                throw new Exception("Invalid Amount");
 
-            payement.PaymentDate = DateTime.UtcNow;
-            payement.TransactionId = Guid.NewGuid().ToString();
-            payement.PaymentStatus = "Success";
-            var created = await _paymentRepository.AddAsync(payement);
+            payment.PaymentDate = DateTime.UtcNow;
+            payment.TransactionId = Guid.NewGuid().ToString();
+            payment.PaymentStatus = "Success";
+            var created = await _paymentRepository.AddAsync(payment);
 
             // The acting user comes from the JWT via the controller; fall back to the payer on the payment.
             Guid? actorId = userId;
@@ -69,18 +69,18 @@ namespace SaaSPlatform.Application.Services
                 actorId, created.TenantId);
 
             // If this payment is for a subscription plan, update the tenant's plan
-            if (_tenantRepository != null && payement.SubscriptionPlanId != Guid.Empty)
+            if (_tenantRepository != null && payment.SubscriptionPlanId != Guid.Empty)
             {
-                var tenant = await _tenantRepository.GetByIdAsync(payement.TenantId);
+                var tenant = await _tenantRepository.GetByIdAsync(payment.TenantId);
                 if (tenant != null && !tenant.IsDeleted)
                 {
-                    tenant.SubscriptionPlanId = payement.SubscriptionPlanId;
+                    tenant.SubscriptionPlanId = payment.SubscriptionPlanId;
                     await _tenantRepository.UpdateAsync(tenant);
 
                     string planName = "new";
                     if (_planRepository != null)
                     {
-                        var plan = await _planRepository.GetByIdAsync(payement.SubscriptionPlanId);
+                        var plan = await _planRepository.GetByIdAsync(payment.SubscriptionPlanId);
                         if (plan != null) planName = plan.Name;
                     }
 

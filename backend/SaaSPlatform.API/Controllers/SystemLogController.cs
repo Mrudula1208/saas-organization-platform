@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SaaSPlatform.API.Extensions;
 using SaaSPlatform.Application.DTOS;
 using SaaSPlatform.Application.Interfaces;
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SaaSPlatform.API.Controllers
@@ -31,13 +31,10 @@ namespace SaaSPlatform.API.Controllers
         {
             // SuperAdmin sees global system logs (all tenants).
             // Everyone else only sees the logs of their own tenant.
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value;
-            var isSuperAdmin = string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
-
             Guid? tenantId = null;
-            if (!isSuperAdmin)
+            if (!User.IsSuperAdmin())
             {
-                tenantId = GetTenantId();
+                tenantId = User.GetTenantId();
                 if (tenantId == null) return Unauthorized();
             }
 
@@ -46,14 +43,6 @@ namespace SaaSPlatform.API.Controllers
 
             var logs = await _systemLogRepository.GetLogsPage(tenantId, actionType, search, startDate, endDate, page, pageSize);
             return Ok(logs);
-        }
-
-        private Guid? GetTenantId()
-        {
-            var tenantClaim = User.FindFirst("TenantId")?.Value;
-            if (tenantClaim != null && Guid.TryParse(tenantClaim, out var tenantId) && tenantId != Guid.Empty)
-                return tenantId;
-            return null;
         }
     }
 }
