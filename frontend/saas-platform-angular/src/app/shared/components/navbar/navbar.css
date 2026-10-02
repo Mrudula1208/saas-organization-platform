@@ -305,6 +305,7 @@
   .navbar {
     left: 0;
     padding: 0 1rem;
+    height: 65px;
   }
   
   .search-box {
@@ -313,6 +314,42 @@
 
   .mobile-toggle {
     display: grid;
+    place-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0 0.75rem;
+    height: 60px;
+  }
+
+  .nav-right {
+    gap: 0.5rem;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .dropdown-panel {
+    position: fixed;
+    top: 65px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: 65px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
   }
 }
 
