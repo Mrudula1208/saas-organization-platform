@@ -5,7 +5,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "http://saasplatform-backend.somee.com/api/:splat"
+  to = "https://saasplatform-backend.somee.com/api/:splat"
   status = 200
   force = true
 
