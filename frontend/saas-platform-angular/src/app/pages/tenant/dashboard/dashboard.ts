@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -67,7 +67,7 @@ export interface DualBarItem {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   // Top breadcrumb / tenant metadata
   tenantName = 'TechNova Solutions';
 
@@ -140,8 +140,10 @@ export class Dashboard implements OnInit {
   donutDashOffset = 339.29;
   dualBars: DualBarItem[] = [];
 
-  // 4. Right Column: Recent Activity Feed
+  // 4. Right Column: Recent Activity Feed (Real-Time)
   recentActivities: ActivityFeedItem[] = [];
+  isRefreshingActivities = false;
+  private pollIntervalSub: any = null;
 
   // 5. Bottom Table: Organization Projects Workspace
   tableRows: ProjectTableRow[] = [];
@@ -165,6 +167,47 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.loadTenantDashboard();
+    this.startRealtimePolling();
+  }
+
+  ngOnDestroy() {
+    if (this.pollIntervalSub) {
+      clearInterval(this.pollIntervalSub);
+      this.pollIntervalSub = null;
+    }
+  }
+
+  startRealtimePolling() {
+    this.pollIntervalSub = setInterval(() => {
+      this.pollRecentActivities();
+    }, 5000);
+  }
+
+  pollRecentActivities() {
+    this.systemLogService.getLogs('', '', '', '', 1, 10).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 10 }))
+    ).subscribe((res) => {
+      const rawLogs = (res as any)?.data ?? (res as any)?.Data ?? (Array.isArray(res) ? res : []);
+      if (Array.isArray(rawLogs) && rawLogs.length > 0) {
+        this.buildRecentActivities(rawLogs, []);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  refreshActivities() {
+    this.isRefreshingActivities = true;
+    this.cdr.markForCheck();
+    this.systemLogService.getLogs('', '', '', '', 1, 10).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 10 }))
+    ).subscribe((res) => {
+      const rawLogs = (res as any)?.data ?? (res as any)?.Data ?? (Array.isArray(res) ? res : []);
+      if (Array.isArray(rawLogs)) {
+        this.buildRecentActivities(rawLogs, []);
+      }
+      this.isRefreshingActivities = false;
+      this.cdr.markForCheck();
+    });
   }
 
   loadTenantDashboard() {

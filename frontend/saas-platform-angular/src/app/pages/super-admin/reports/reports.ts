@@ -8,7 +8,7 @@ import { ReportService } from '../../../core/services/report';
 import { TenantService } from '../../../core/services/tenant';
 import { UserService } from '../../../core/services/user';
 import { SystemLogService } from '../../../core/services/system-log';
-import { triggerServerDownload } from '../../../core/helpers';
+import { triggerServerDownload, formatRelativeTime } from '../../../core/helpers';
 import { AdminReportData } from '../../../models/report.model';
 import { Tenant } from '../../../models/tenant.model';
 
@@ -392,14 +392,7 @@ export class Reports implements OnInit {
   }
 
   formatRelativeTime(dateStr?: string | Date): string {
-    if (!dateStr) return 'Recently';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-    if (diffMonths > 0) return `${diffMonths} month ago`;
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays > 0) return `${diffDays} days ago`;
-    return 'Today';
+    return formatRelativeTime(dateStr);
   }
 
   get pdfExportUrl(): string {

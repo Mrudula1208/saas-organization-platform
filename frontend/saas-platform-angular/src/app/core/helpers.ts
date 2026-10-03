@@ -139,8 +139,11 @@ export function parseUtcDate(dateStr?: string | Date | null): Date | null {
   if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
   let str = String(dateStr).trim();
   if (!str) return null;
+  if (str.includes(' ') && !str.includes('T')) {
+    str = str.replace(' ', 'T');
+  }
   // If no timezone offset (+05:30 / Z) is present, append Z to force UTC interpretation
-  if (!str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+  if (!str.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(str)) {
     str = `${str}Z`;
   }
   const d = new Date(str);
@@ -206,11 +209,10 @@ export function formatRelativeTime(dateStr?: string | Date | null): string {
   if (!d) return 'Just now';
 
   const diffMs = Date.now() - d.getTime();
-  if (diffMs < 0 && diffMs > -30000) return 'Just now';
+  // Any event within 45 seconds (or slightly ahead due to server clock skew up to 2 mins)
+  if (diffMs < 45000) return 'Just now';
 
   const diffSecs = Math.floor(diffMs / 1000);
-  if (diffSecs < 45) return 'Just now';
-
   const diffMins = Math.floor(diffSecs / 60);
   if (diffMins < 60) return `${diffMins}m ago`;
 

@@ -442,8 +442,16 @@
     <!-- RIGHT SIDE COLUMN: Recent Activity Feed (Matching Mockup) -->
     <aside class="dash-activity-col">
       <div class="dash-card activity-feed-card">
-        <div class="dash-card-header" style="margin-bottom: 1rem;">
-          <div class="card-title">Recent Activity Feed</div>
+        <div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="card-title" style="margin: 0;">Recent Activity Feed</div>
+            <span class="live-status-badge">
+              <span class="live-pulse-dot"></span>Live
+            </span>
+          </div>
+          <button class="activity-refresh-icon-btn" type="button" (click)="refreshActivityFeed()" title="Refresh live feed">
+            <span class="material-symbols-outlined" [class.spinning]="isRefreshingActivity" style="font-size: 1.15rem;">refresh</span>
+          </button>
         </div>
 
         <div class="activity-list">

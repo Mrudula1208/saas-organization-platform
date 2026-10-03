@@ -343,8 +343,16 @@
     <!-- RIGHT SIDE COLUMN: Recent Activity Feed (Full Height) -->
     <aside class="dash-activity-col">
       <div class="dash-card activity-feed-card">
-        <div class="dash-card-header" style="margin-bottom: 1rem;">
-          <div class="card-title">Recent Activity Feed</div>
+        <div class="dash-card-header" style="margin-bottom: 1rem; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div class="card-title">Recent Activity Feed</div>
+            <span class="live-status-badge">
+              <span class="live-pulse-dot"></span>Live
+            </span>
+          </div>
+          <button class="activity-refresh-icon-btn" type="button" (click)="refreshActivityFeed()" title="Refresh live feed">
+            <span class="material-symbols-outlined" [class.spinning]="isRefreshingActivity" style="font-size: 1.15rem;">refresh</span>
+          </button>
         </div>
 
         <div class="activity-list">
@@ -355,18 +363,20 @@
               </div>
               <div class="activity-details">
                 <div class="activity-title">{{ item.title }}</div>
-                <div class="activity-sub">{{ item.subtitle }}</div>
+                <div class="activity-sub" [title]="item.subtitle">{{ item.subtitle }}</div>
                 <div class="activity-time">{{ item.timeAgo }}</div>
               </div>
             </div>
           } @empty {
-            <div style="text-align: center; color: var(--text-muted); padding: 3rem 0; font-size: 0.85rem;">
-              No recent activity recorded
+            <div class="empty-activity-state">
+              <span class="material-symbols-outlined" style="font-size: 2.2rem; color: var(--text-muted); opacity: 0.7;">wifi_tethering</span>
+              <div style="font-weight: 600; color: var(--text-heading); margin-top: 0.5rem; font-size: 0.85rem;">No recent activity yet</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Live listener active. Actions will appear here instantly in real time.</div>
             </div>
           }
         </div>
 
-        <button class="show-all-btn" type="button" routerLink="/admin/system-logs">Show all</button>
+        <button class="show-all-btn" type="button" routerLink="/admin/system-logs">Show all logs</button>
       </div>
     </aside>
   </div>

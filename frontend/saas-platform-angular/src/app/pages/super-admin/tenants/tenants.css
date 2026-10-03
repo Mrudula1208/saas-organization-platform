@@ -929,3 +929,69 @@
     justify-content: center;
   }
 }
+
+/* Real-Time Live Activity Indicators & Controls */
+.live-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.live-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: live-pulse-dot-anim 1.8s infinite;
+}
+
+@keyframes live-pulse-dot-anim {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.activity-refresh-icon-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.activity-refresh-icon-btn:hover {
+  color: var(--text-heading);
+  background: var(--bg-card-hover);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.spinning {
+  animation: refresh-spin 0.8s linear infinite;
+}
+
+@keyframes refresh-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}

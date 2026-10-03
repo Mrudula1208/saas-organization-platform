@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,7 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { TenantService } from '../../../core/services/tenant';
 import { SystemLogService } from '../../../core/services/system-log';
 import { Tenant } from '../../../models/tenant.model';
-import { getErrorMessage } from '../../../core/helpers';
+import { getErrorMessage, formatRelativeTime } from '../../../core/helpers';
 
 export interface TenantActivityItem {
   id: string;
@@ -26,8 +26,12 @@ export interface TenantActivityItem {
   templateUrl: './tenants.html',
   styleUrl: './tenants.css',
 })
-export class Tenants implements OnInit {
+export class Tenants implements OnInit, OnDestroy {
   filteredTenants: Tenant[] = [];
+
+  // Real-Time Activity Feed States
+  isRefreshingActivity = false;
+  private pollIntervalSub: any = null;
 
   // Search & Filter
   searchQuery = '';
@@ -256,6 +260,62 @@ export class Tenants implements OnInit {
   ngOnInit() {
     this.loadTenants();
     this.loadActivityFeed();
+    this.startRealtimePolling();
+  }
+
+  ngOnDestroy() {
+    if (this.pollIntervalSub) {
+      clearInterval(this.pollIntervalSub);
+      this.pollIntervalSub = null;
+    }
+  }
+
+  startRealtimePolling() {
+    this.pollIntervalSub = setInterval(() => {
+      this.pollActivityFeed();
+    }, 5000);
+  }
+
+  pollActivityFeed() {
+    this.systemLogService.getLogs(undefined, undefined, undefined, undefined, 1, 8).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 8 }))
+    ).subscribe((res) => {
+      const logs = (res as any)?.data ?? (res as any)?.Data ?? (Array.isArray(res) ? res : []);
+      if (Array.isArray(logs) && logs.length > 0) {
+        this.updateActivityFeed(logs);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  refreshActivityFeed() {
+    this.isRefreshingActivity = true;
+    this.cdr.markForCheck();
+    this.systemLogService.getLogs(undefined, undefined, undefined, undefined, 1, 8).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 8 }))
+    ).subscribe((res) => {
+      const logs = (res as any)?.data ?? (res as any)?.Data ?? (Array.isArray(res) ? res : []);
+      if (Array.isArray(logs)) {
+        this.updateActivityFeed(logs);
+      }
+      this.isRefreshingActivity = false;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private updateActivityFeed(logs: any[]) {
+    this.activityFeed = logs.map(log => {
+      const style = this.getLogStyle(log.action);
+      return {
+        id: log.id,
+        icon: style.icon,
+        iconBg: style.bg,
+        iconColor: style.color,
+        title: this.formatActionTitle(log.action),
+        subtitle: log.description || 'System event recorded',
+        timeAgo: this.formatRelativeTime(log.createdAt)
+      };
+    });
   }
 
   get totalPages(): number {
@@ -346,24 +406,17 @@ export class Tenants implements OnInit {
       catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 8 }))
     ).subscribe({
       next: (res) => {
-        if (res.data && res.data.length > 0) {
-          this.activityFeed = res.data.map(log => ({
-            id: log.id,
-            icon: this.getLogIcon(log.action),
-            iconBg: 'rgba(6, 182, 212, 0.12)',
-            iconColor: '#06B6D4',
-            title: this.formatActionTitle(log.action),
-            subtitle: log.description || 'System event recorded',
-            timeAgo: this.formatRelativeTime(log.createdAt)
-          }));
+        const logs = (res as any)?.data ?? (res as any)?.Data ?? (Array.isArray(res) ? res : []);
+        if (Array.isArray(logs) && logs.length > 0) {
+          this.updateActivityFeed(logs);
         } else {
-          this.activityFeed = [...this.defaultFeed];
+          this.activityFeed = [];
         }
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
       error: () => {
-        this.activityFeed = [...this.defaultFeed];
+        this.activityFeed = [];
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       }
@@ -377,27 +430,33 @@ export class Tenants implements OnInit {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  formatRelativeTime(dateStr?: string): string {
-    if (!dateStr) return '2 months ago';
-    const diffMs = Date.now() - new Date(dateStr).getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) return `${diffDays}d ago`;
-    const diffMonths = Math.floor(diffDays / 30);
-    return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  formatRelativeTime(dateStr?: string | Date): string {
+    return formatRelativeTime(dateStr);
+  }
+
+  private getLogStyle(action?: string): { icon: string; bg: string; color: string } {
+    if (!action) return { icon: 'bolt', bg: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6' };
+    const act = action.toUpperCase();
+    if (act.includes('LOGIN_SUCCESS')) {
+      return { icon: 'login', bg: 'rgba(16, 185, 129, 0.12)', color: '#10B981' };
+    }
+    if (act.includes('LOGIN_FAILED') || act.includes('FAIL')) {
+      return { icon: 'error', bg: 'rgba(239, 68, 68, 0.12)', color: '#EF4444' };
+    }
+    if (act.includes('TENANT_CREATED') || act.includes('TENANT')) {
+      return { icon: 'corporate_fare', bg: 'rgba(37, 99, 235, 0.12)', color: '#2563EB' };
+    }
+    if (act.includes('USER_REGISTERED') || act.includes('USER')) {
+      return { icon: 'person_add', bg: 'rgba(79, 70, 229, 0.12)', color: '#6366F1' };
+    }
+    if (act.includes('PLAN') || act.includes('UPGRAD')) {
+      return { icon: 'upgrade', bg: 'rgba(217, 119, 6, 0.12)', color: '#D97706' };
+    }
+    return { icon: 'notifications', bg: 'rgba(6, 182, 212, 0.12)', color: '#06B6D4' };
   }
 
   private getLogIcon(action?: string): string {
-    if (!action) return 'info';
-    const act = action.toUpperCase();
-    if (act.includes('TENANT')) return 'corporate_fare';
-    if (act.includes('USER') || act.includes('LOGIN')) return 'person';
-    if (act.includes('PLAN') || act.includes('UPGRAD')) return 'upgrade';
-    return 'notifications';
+    return this.getLogStyle(action).icon;
   }
 
   private formatActionTitle(action?: string): string {

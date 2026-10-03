@@ -7,7 +7,7 @@ import { UserService } from '../../../core/services/user';
 import { TenantService } from '../../../core/services/tenant';
 import { NotificationService } from '../../../core/services/notification';
 import { ThemeService } from '../../../core/services/theme';
-import { downloadBlobAsFile } from '../../../core/helpers';
+import { downloadBlobAsFile, formatRelativeTime } from '../../../core/helpers';
 
 export interface ActivityItem {
   id: number;
@@ -214,17 +214,8 @@ export class Settings implements OnInit {
     });
   }
 
-  private formatRelativeTime(dateStr?: string): string {
-    if (!dateStr) return 'Recently';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 30) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+  private formatRelativeTime(dateStr?: string | Date): string {
+    return formatRelativeTime(dateStr);
   }
 
   onAvatarFileSelected(event: Event) {

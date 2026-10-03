@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { SettingsService } from '../../../core/services/settings';
 import { SystemLogService } from '../../../core/services/system-log';
 import { Auth } from '../../../core/services/auth';
-import { getErrorMessage } from '../../../core/helpers';
+import { getErrorMessage, formatRelativeTime } from '../../../core/helpers';
 import { SystemLog } from '../../../models/system-log.model';
 
 export interface ActivityFeedItem {
@@ -329,13 +329,6 @@ export class Settings implements OnInit {
   }
 
   private formatRelativeTime(dateStr?: string | Date): string {
-    if (!dateStr) return '2 months ago';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-    if (diffMonths > 0) return `${diffMonths} months ago`;
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays > 0) return `${diffDays} days ago`;
-    return 'Just now';
+    return formatRelativeTime(dateStr);
   }
 }

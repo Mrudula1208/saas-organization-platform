@@ -1485,7 +1485,7 @@ body.light-theme .gauge-center-value,
     width: 100% !important;
   }
 
-  .header-actions,
+  .header-actions:not(.landing-header .header-actions),
   .view-switch-group,
   .actions-cluster,
   .top-actions-cluster {
@@ -1551,10 +1551,16 @@ body.light-theme .gauge-center-value,
   .btn-create-task-cyan,
   .btn-export,
   .strip-btn-export,
-  .btn-primary,
-  .btn-secondary {
+  .btn-primary:not(.header-actions *):not(.nav-btn-register),
+  .btn-secondary:not(.header-actions *) {
     width: 100% !important;
     justify-content: center !important;
+  }
+
+  .header-actions .btn,
+  .landing-header .btn {
+    width: auto !important;
+    flex: none !important;
   }
 
   /* KPI Card Refinement */

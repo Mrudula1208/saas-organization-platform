@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build && node -e \"const fs=require('fs'); const p='dist/saas-platform-angular/browser/index.csr.html'; if(fs.existsSync(p)){fs.copyFileSync(p,'dist/saas-platform-angular/browser/index.html');}\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:saas-platform-angular": "node dist/saas-platform-angular/server/server.mjs"

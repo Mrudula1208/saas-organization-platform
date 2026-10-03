@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 import { SettingsService } from '../../../core/services/settings';
 import { getErrorMessage, isValidEmail } from '../../../core/helpers';
@@ -57,11 +57,16 @@ export class Register implements OnInit {
   constructor(
     private auth: Auth,
     private router: Router,
+    private route: ActivatedRoute,
     private settingsService: SettingsService
   ) {}
 
   ngOnInit() {
     this.loadPlatformConfig();
+    const planParam = this.route.snapshot.queryParams['plan'];
+    if (planParam && ['Basic', 'Pro', 'Enterprise'].includes(planParam)) {
+      this.plan = planParam;
+    }
   }
 
   loadPlatformConfig() {

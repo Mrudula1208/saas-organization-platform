@@ -269,7 +269,17 @@
 
     <!-- Card 3: Recent Activity Feed -->
     <div class="console-card recent-activity-card">
-      <h2 class="activity-feed-title">Recent Activity Feed</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <h2 class="activity-feed-title" style="margin: 0;">Recent Activity Feed</h2>
+          <span class="live-status-badge">
+            <span class="live-pulse-dot"></span>Live
+          </span>
+        </div>
+        <button class="activity-refresh-icon-btn" type="button" (click)="refreshActivities()" title="Refresh live feed">
+          <span class="material-symbols-outlined" [class.spinning]="isRefreshingActivities" style="font-size: 1.15rem;">refresh</span>
+        </button>
+      </div>
 
       <div class="activity-items-stack">
         @for (feed of recentActivities; track feed.id) {
@@ -282,6 +292,11 @@
               <div class="feed-desc-line">{{ feed.subtitle }}</div>
               <div class="feed-time-line">{{ feed.timeAgo }}</div>
             </div>
+          </div>
+        } @empty {
+          <div style="text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; font-size: 0.85rem;">
+            <span class="material-symbols-outlined" style="font-size: 2rem; opacity: 0.6; display: block; margin-bottom: 0.4rem;">wifi_tethering</span>
+            No recent activity recorded yet
           </div>
         }
       </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -49,7 +49,7 @@ export interface MonthlyBarData {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   // Dynamic KPI Metrics (loaded from database)
   totalTenants = 0;
   totalUsers = 0;
@@ -63,8 +63,10 @@ export class Dashboard implements OnInit {
   isLoading = true;
   lastSyncedAt: Date = new Date();
 
-  // Dynamic Activity Feed
+  // Dynamic Real-Time Activity Feed
   activityFeed: ActivityFeedItem[] = [];
+  isRefreshingActivity = false;
+  private pollTimer: any = null;
 
   // Dynamic Tenant Table
   tenantRows: TenantTableItem[] = [];
@@ -102,6 +104,70 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.loadDashboardData();
+    this.startRealtimePolling();
+  }
+
+  ngOnDestroy() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  startRealtimePolling() {
+    // Live update recent activity feed every 5 seconds
+    this.pollTimer = setInterval(() => {
+      this.pollRecentActivity();
+    }, 5000);
+  }
+
+  pollRecentActivity() {
+    this.systemLogService.getLogs(undefined, undefined, undefined, undefined, 1, 10).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 10 }))
+    ).subscribe((logRes) => {
+      const rawLogs = (logRes as any)?.data ?? (logRes as any)?.Data ?? (Array.isArray(logRes) ? logRes : []);
+      const logs: SystemLog[] = Array.isArray(rawLogs) ? rawLogs : [];
+      if (logs.length > 0) {
+        this.updateActivityFeedFromLogs(logs);
+      }
+    });
+  }
+
+  refreshActivityFeed() {
+    this.isRefreshingActivity = true;
+    this.cdr.markForCheck();
+    this.systemLogService.getLogs(undefined, undefined, undefined, undefined, 1, 10).pipe(
+      catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 10 }))
+    ).subscribe((logRes) => {
+      const rawLogs = (logRes as any)?.data ?? (logRes as any)?.Data ?? (Array.isArray(logRes) ? logRes : []);
+      const logs: SystemLog[] = Array.isArray(rawLogs) ? rawLogs : [];
+      this.updateActivityFeedFromLogs(logs);
+      this.isRefreshingActivity = false;
+      this.lastSyncedAt = new Date();
+      this.cdr.markForCheck();
+    });
+  }
+
+  updateActivityFeedFromLogs(logs: SystemLog[]) {
+    if (!logs || logs.length === 0) {
+      this.activityFeed = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.activityFeed = logs.slice(0, 10).map(log => {
+      const style = this.getLogStyle(log.action);
+      return {
+        id: log.id,
+        icon: style.icon,
+        iconBg: style.bg,
+        iconColor: style.color,
+        title: this.formatActionTitle(log.action),
+        subtitle: log.description || 'Platform activity recorded',
+        timeAgo: this.formatRelativeTime(log.createdAt)
+      };
+    });
+    this.cdr.markForCheck();
   }
 
   loadDashboardData() {
@@ -175,44 +241,8 @@ export class Dashboard implements OnInit {
               };
           });
 
-          // 3. Dynamic Activity Feed from System Logs and Events
-          if (logs.length > 0) {
-            this.activityFeed = logs.slice(0, 8).map(log => ({
-              id: log.id,
-              icon: this.getLogIcon(log.action),
-              iconBg: 'rgba(79, 70, 229, 0.12)', // Royal blue/indigo
-              iconColor: '#6366F1', // Royal blue/indigo
-              title: this.formatActionTitle(log.action),
-              subtitle: log.description || 'System activity logged',
-              timeAgo: this.formatRelativeTime(log.createdAt)
-            }));
-          } else {
-            // Synthesize dynamic activity from recent tenants & users
-            const fallbackFeed: ActivityFeedItem[] = [];
-            tenants.slice(0, 4).forEach((t, i) => {
-              fallbackFeed.push({
-                id: `t-${i}`,
-                icon: 'corporate_fare',
-                iconBg: 'rgba(79, 70, 229, 0.12)',
-                iconColor: '#6366F1',
-                title: `${t.name} Created`,
-                subtitle: `${t.name} workspace active on ${t.plan || 'Standard'} plan`,
-                timeAgo: this.formatRelativeTime(t.createdAt)
-              });
-            });
-            users.slice(0, 4).forEach((u, i) => {
-              fallbackFeed.push({
-                id: `u-${i}`,
-                icon: 'person',
-                iconBg: 'rgba(59, 130, 246, 0.12)',
-                iconColor: '#3B82F6',
-                title: 'User registered',
-                subtitle: `${u.fullName} registered (${u.role})`,
-                timeAgo: this.formatRelativeTime(u.createdAt)
-              });
-            });
-            this.activityFeed = fallbackFeed.slice(0, 8);
-          }
+          // 3. Dynamic Real-Time Activity Feed from System Logs (Never static dummy items)
+          this.updateActivityFeedFromLogs(logs);
 
           // 4. Dynamic Monthly Registrations Bar Chart
           this.monthlyBars = this.generateMonthlyBars(users);
@@ -314,15 +344,47 @@ export class Dashboard implements OnInit {
     return formatRelativeTime(dateStr);
   }
 
-  getLogIcon(action?: string): string {
-    if (!action) return 'info';
+  getLogStyle(action?: string): { icon: string; bg: string; color: string } {
+    if (!action) return { icon: 'notifications', bg: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6' };
     const act = action.toUpperCase();
-    if (act.includes('TENANT')) return 'corporate_fare';
-    if (act.includes('USER') || act.includes('LOGIN')) return 'person';
-    if (act.includes('PLAN') || act.includes('SUBSCRIPTION')) return 'upgrade';
-    if (act.includes('PROJECT')) return 'folder';
-    if (act.includes('PAYMENT') || act.includes('BILLING')) return 'payments';
-    return 'notifications';
+    if (act.includes('LOGIN_SUCCESS') || act.includes('AUTHENTICATED')) {
+      return { icon: 'login', bg: 'rgba(16, 185, 129, 0.12)', color: '#10B981' };
+    }
+    if (act.includes('LOGIN_FAIL') || act.includes('LOCKOUT') || act.includes('BLOCKED')) {
+      return { icon: 'gpp_bad', bg: 'rgba(239, 68, 68, 0.12)', color: '#EF4444' };
+    }
+    if (act.includes('LOGOUT')) {
+      return { icon: 'logout', bg: 'rgba(100, 116, 139, 0.12)', color: '#94A3B8' };
+    }
+    if (act.includes('TENANT_CREATED') || act.includes('TENANT')) {
+      return { icon: 'corporate_fare', bg: 'rgba(37, 99, 235, 0.12)', color: '#2563EB' };
+    }
+    if (act.includes('USER_REGISTERED') || act.includes('USER_CREATED') || act.includes('USER_INVITED')) {
+      return { icon: 'person_add', bg: 'rgba(79, 70, 229, 0.12)', color: '#6366F1' };
+    }
+    if (act.includes('PLAN') || act.includes('SUBSCRIPTION')) {
+      return { icon: 'upgrade', bg: 'rgba(217, 119, 6, 0.12)', color: '#D97706' };
+    }
+    if (act.includes('PROJECT')) {
+      return { icon: 'folder', bg: 'rgba(14, 165, 233, 0.12)', color: '#0EA5E9' };
+    }
+    if (act.includes('TASK')) {
+      return { icon: 'task_alt', bg: 'rgba(20, 184, 166, 0.12)', color: '#14B8A6' };
+    }
+    if (act.includes('PAYMENT') || act.includes('BILLING')) {
+      return { icon: 'payments', bg: 'rgba(34, 197, 94, 0.12)', color: '#22C55E' };
+    }
+    if (act.includes('SETTINGS')) {
+      return { icon: 'settings', bg: 'rgba(100, 116, 139, 0.12)', color: '#64748B' };
+    }
+    if (act.includes('PASSWORD') || act.includes('SECURITY')) {
+      return { icon: 'lock_reset', bg: 'rgba(168, 85, 247, 0.12)', color: '#A855F7' };
+    }
+    return { icon: 'bolt', bg: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6' };
+  }
+
+  getLogIcon(action?: string): string {
+    return this.getLogStyle(action).icon;
   }
 
   formatActionTitle(action?: string): string {
