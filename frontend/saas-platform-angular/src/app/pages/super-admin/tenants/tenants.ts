@@ -46,8 +46,8 @@ export class Tenants implements OnInit, OnDestroy {
   // Server-side pagination
   page = 1;
   pageSize = 20;
-  totalCount = 1240;
-  loading = false;
+  totalCount = 0;
+  loading = true;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals state
@@ -62,195 +62,6 @@ export class Tenants implements OnInit, OnDestroy {
 
   // Activity Feed
   activityFeed: TenantActivityItem[] = [];
-
-  private readonly defaultTenants: Tenant[] = [
-    {
-      id: 't-1',
-      name: 'Acme Corp',
-      domain: 'acmexample.com',
-      contactEmail: 'admin@acmexample.com',
-      contactPhone: '+1 (555) 234-5678',
-      subscriptionPlanId: 'eeee1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Enterprise',
-      status: 'Awaited',
-      isActive: true,
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 42,
-      projectsCount: 14,
-      monthlyRevenue: 4500
-    },
-    {
-      id: 't-2',
-      name: 'TechFlow Systems',
-      domain: 'techflow.io',
-      contactEmail: 'contact@techflow.io',
-      contactPhone: '+1 (555) 345-6789',
-      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Pro',
-      status: 'Upgraded',
-      isActive: true,
-      createdAt: new Date(Date.now() - 210 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 28,
-      projectsCount: 9,
-      monthlyRevenue: 2800
-    },
-    {
-      id: 't-3',
-      name: 'CloudPeak Solutions',
-      domain: 'cloudpeak.saasapp.com',
-      contactEmail: 'ops@cloudpeak.saasapp.com',
-      contactPhone: '+1 (555) 456-7890',
-      subscriptionPlanId: 'eeee1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Enterprise',
-      status: 'Active',
-      isActive: true,
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 65,
-      projectsCount: 22,
-      monthlyRevenue: 5200
-    },
-    {
-      id: 't-4',
-      name: 'Apex Dynamics',
-      domain: 'apexdynamics.co',
-      contactEmail: 'support@apexdynamics.co',
-      contactPhone: '+1 (555) 567-8901',
-      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Pro',
-      status: 'Active',
-      isActive: true,
-      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 19,
-      projectsCount: 6,
-      monthlyRevenue: 1900
-    },
-    {
-      id: 't-5',
-      name: 'Horizon Global',
-      domain: 'horizonglobal.com',
-      contactEmail: 'admin@horizonglobal.com',
-      contactPhone: '+1 (555) 678-9012',
-      subscriptionPlanId: 'bbbb1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Basic',
-      status: 'Active',
-      isActive: true,
-      createdAt: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 8,
-      projectsCount: 3,
-      monthlyRevenue: 850
-    },
-    {
-      id: 't-6',
-      name: 'Lumina Labs',
-      domain: 'lumina-labs.com',
-      contactEmail: 'security@lumina-labs.com',
-      contactPhone: '+1 (555) 789-0123',
-      subscriptionPlanId: 'eeee1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Enterprise',
-      status: 'Suspended',
-      isActive: false,
-      createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 35,
-      projectsCount: 11,
-      monthlyRevenue: 3600
-    },
-    {
-      id: 't-7',
-      name: 'Quantum Spark',
-      domain: 'quantumspark.dev',
-      contactEmail: 'dev@quantumspark.dev',
-      contactPhone: '+1 (555) 890-1234',
-      subscriptionPlanId: 'cccc1111-2222-3333-4444-555566667777',
-      logoImageUrl: null,
-      isDeleted: false,
-      plan: 'Pro',
-      status: 'Active',
-      isActive: true,
-      createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-      usersCount: 24,
-      projectsCount: 8,
-      monthlyRevenue: 2100
-    }
-  ];
-
-  private readonly defaultFeed: TenantActivityItem[] = [
-    {
-      id: 'act-1',
-      icon: 'corporate_fare',
-      iconBg: 'rgba(6, 182, 212, 0.12)',
-      iconColor: '#06B6D4',
-      title: 'Acme Corp Tenant Created',
-      subtitle: 'Acme Corp Tenant Created',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-2',
-      icon: 'person',
-      iconBg: 'rgba(59, 130, 246, 0.12)',
-      iconColor: '#3B82F6',
-      title: 'User registered',
-      subtitle: 'User registered at X558335',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-3',
-      icon: 'upgrade',
-      iconBg: 'rgba(16, 185, 129, 0.12)',
-      iconColor: '#10B981',
-      title: 'Plan upgraded',
-      subtitle: 'Acme upgraded at $375,100',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-4',
-      icon: 'upgrade',
-      iconBg: 'rgba(6, 182, 212, 0.12)',
-      iconColor: '#06B6D4',
-      title: 'Plan upgraded',
-      subtitle: 'User registered at $385,931',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-5',
-      icon: 'upgrade',
-      iconBg: 'rgba(59, 130, 246, 0.12)',
-      iconColor: '#3B82F6',
-      title: 'Plan upgraded',
-      subtitle: 'Acme Corp Tenant Created',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-6',
-      icon: 'upgrade',
-      iconBg: 'rgba(139, 92, 246, 0.12)',
-      iconColor: '#8B5CF6',
-      title: 'Plan upgraded',
-      subtitle: 'Acme Corp Tenant Created',
-      timeAgo: '2 months ago'
-    },
-    {
-      id: 'act-7',
-      icon: 'upgrade',
-      iconBg: 'rgba(16, 185, 129, 0.12)',
-      iconColor: '#10B981',
-      title: 'Plan upgraded',
-      subtitle: 'Acme Corp Tenant Created',
-      timeAgo: '2 months ago'
-    }
-  ];
-
   constructor(
     private tenantService: TenantService,
     private systemLogService: SystemLogService,
@@ -323,22 +134,19 @@ export class Tenants implements OnInit, OnDestroy {
   }
 
   get displayTotalCount(): number {
-    return this.totalCount > 0 ? this.totalCount : 1240;
+    return this.totalCount;
   }
 
   get activeCount(): number {
-    if (this.totalCount > 50) return 1195;
     return this.filteredTenants.filter(t => t.isActive !== false && t.status !== 'Suspended').length;
   }
 
   get newTenants30d(): number {
-    if (this.totalCount > 50) return 39;
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return this.filteredTenants.filter(t => t.createdAt && new Date(t.createdAt).getTime() >= thirtyDaysAgo).length;
   }
 
   get pendingCount(): number {
-    if (this.totalCount > 50) return 23;
     return this.filteredTenants.filter(t => t.isActive === false || t.status === 'Suspended' || t.status === 'Awaited').length;
   }
 
@@ -379,21 +187,15 @@ export class Tenants implements OnInit, OnDestroy {
       catchError(() => of({ data: [], totalCount: 0, page: 1, pageSize: 20 }))
     ).subscribe({
       next: (res) => {
-        if (res.data && res.data.length > 0) {
-          this.filteredTenants = res.data;
-          this.totalCount = res.totalCount;
-        } else {
-          // Graceful fallback from rich default mock matching the prompt screenshot
-          this.filteredTenants = [...this.defaultTenants];
-          this.totalCount = 1240;
-        }
+        this.filteredTenants = res?.data ?? [];
+        this.totalCount = res?.totalCount ?? this.filteredTenants.length;
         this.loading = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
       error: () => {
-        this.filteredTenants = [...this.defaultTenants];
-        this.totalCount = 1240;
+        this.filteredTenants = [];
+        this.totalCount = 0;
         this.loading = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
