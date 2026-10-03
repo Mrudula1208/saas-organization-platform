@@ -1,2 +1,2 @@
-/api/*  https://saasplatform-backend.somee.com/api/:splat  200!
+/api/*  http://saasplatform-backend.somee.com/api/:splat  200!
 /*      /index.csr.html                                    200
