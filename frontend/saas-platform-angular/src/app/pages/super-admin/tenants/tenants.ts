@@ -62,11 +62,44 @@ export class Tenants implements OnInit, OnDestroy {
 
   // Activity Feed
   activityFeed: TenantActivityItem[] = [];
+
+  // Cache key for instant load without 0-flicker
+  private readonly CACHE_KEY = 'saas_superadmin_tenants_cache';
+
   constructor(
     private tenantService: TenantService,
     private systemLogService: SystemLogService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    this.restoreCachedData();
+  }
+
+  private restoreCachedData() {
+    if (typeof window === 'undefined') return;
+    try {
+      const cachedStr = sessionStorage.getItem(this.CACHE_KEY) || localStorage.getItem(this.CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached && Array.isArray(cached.tenants) && cached.tenants.length > 0) {
+          this.filteredTenants = cached.tenants;
+          this.totalCount = cached.totalCount ?? cached.tenants.length;
+          this.loading = false;
+        }
+      }
+    } catch {}
+  }
+
+  private persistCache() {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload = {
+        tenants: this.filteredTenants,
+        totalCount: this.totalCount
+      };
+      sessionStorage.setItem(this.CACHE_KEY, JSON.stringify(payload));
+      localStorage.setItem(this.CACHE_KEY, JSON.stringify(payload));
+    } catch {}
+  }
 
   ngOnInit() {
     this.loadTenants();
@@ -189,6 +222,7 @@ export class Tenants implements OnInit, OnDestroy {
       next: (res) => {
         this.filteredTenants = res?.data ?? [];
         this.totalCount = res?.totalCount ?? this.filteredTenants.length;
+        this.persistCache();
         this.loading = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();

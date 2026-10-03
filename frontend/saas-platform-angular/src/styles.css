@@ -1665,3 +1665,15 @@ body.light-theme .gauge-center-value,
     text-align: center !important;
   }
 }
+
+.skeleton-metric {
+  display: inline-block;
+  opacity: 0.5;
+  animation: pulse-metric 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-metric {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+}
+
